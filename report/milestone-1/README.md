@@ -8,11 +8,12 @@
 
 <font size=6><b>Review History</b></font>
 
-| Date | Revision Version | Description | Author |
-| ---- | ---------------- | ----------- | ------ |
-|      |                  |             |        |
-|      |                  |             |        |
-|      |                  |             |        |
+| **Date**  | **Revision Version** | **Description**                      | **Author** |
+| --------- | -------------------- | ------------------------------------ | ---------- |
+| 2023-2-27 | v0.1                 | Initial Draft Created                | 张闻城     |
+| 2023-3-2  | v0.2                 | Requirement detail                   | 黄北辰     |
+| 2023-3-7  | v1.0                 | The first version of the plan passed | 全体组员   |
+| 2023-3-9  | v1.1                 | Revise suggested deliverables        | 余乃蔚     |
 
 # 1. Overview
 
