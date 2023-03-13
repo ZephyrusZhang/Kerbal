@@ -79,6 +79,18 @@ We chose the Agile Scrum model because it offers several benefits, including:
 
 The Agile Scrum process model for the CPU/GPU server management platform will consist of sprints, each of which will be two weeks long. At the end of each sprint, a working product increment will be delivered, and the team will hold a sprint review meeting to receive feedback from stakeholders and customers. The team will also hold a sprint retrospective meeting to identify areas for improvement and discuss ways to optimize the development process.
 
+## 2.2 Project Schedule
+
+Project Manager: 黄北辰
+
+Business Manager: 张闻城 
+
+Technical Architect: 邬一帆，黄北辰
+
+Testing engineer: 余乃蔚，刘晟淇
+
+![image-20230313112546573](./assets/image-20230313112546573.png)
+
 # 3. Suggested Deliverables
 
 ## 3.1 Milestone 2 Deliverable
