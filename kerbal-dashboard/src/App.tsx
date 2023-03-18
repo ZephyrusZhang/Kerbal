@@ -4,7 +4,7 @@ import {
 } from "@chakra-ui/react"
 import { Route, Routes } from "react-router-dom";
 import SignIn from "./screens/SignIn";
-import Layout from "./Layout";
+import Layout from "./layouts/Layout";
 import Dashboard from "./screens/Dashboard";
 
 export const App = () => {

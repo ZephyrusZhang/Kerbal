@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Box, Button,
   Flex,
-  FormControl, FormLabel, IconButton,
+  FormControl, FormErrorMessage, FormLabel, IconButton,
   Input,
   InputGroup,
   InputLeftElement,
@@ -11,10 +11,34 @@ import {
   VStack
 } from "@chakra-ui/react";
 import { FiLock, HiOutlineMail, ImGithub, ImGoogle } from "react-icons/all";
+import { Form, Formik } from "formik";
+
+interface FormProps {
+  email: string,
+  password: string,
+  rememberMe: boolean
+}
 
 const SignIn = () => {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+  const validate = (form: FormProps) => {
+    const errors: Partial<FormProps> = {}
+    if (!emailRegex.test(form.email)) errors.email = 'Invalid email'
+    if (form.email === '') errors.email = 'Email is required'
+
+    if (form.password === '') errors.password = 'Password is required'
+
+    return errors
+  }
+
+  const formInitialValue: FormProps = {
+    email: '',
+    password: '',
+    rememberMe: false
+  }
+
+  const handleSubmit = () => {
+  }
 
   return (
     <Box
@@ -34,7 +58,7 @@ const SignIn = () => {
         justifyContent='center'
         alignItems='center'
       >
-        <VStack spacing='5'>
+        <VStack>
           <Box
             w='100%'
             h='15vh'
@@ -45,7 +69,7 @@ const SignIn = () => {
             alignItems='center'
             mt='-70px'
             mb='20px'
-            >
+          >
             <Stack alignItems='center'>
               <Text fontSize='2xl' fontWeight='bold' color='white' mb='10px'>Sign In</Text>
               <Flex justifyContent='space-between' alignItems='center'>
@@ -55,24 +79,34 @@ const SignIn = () => {
             </Stack>
           </Box>
 
-          <FormControl>
-            <InputGroup>
-              <InputLeftElement children={<HiOutlineMail/>}/>
-              <Input w='22vw' borderWidth={2} placeholder='Email' value={email} onChange={(e) => setEmail(e.target.value)}/>
-            </InputGroup>
-          </FormControl>
-          <FormControl>
-            <InputGroup>
-              <InputLeftElement children={<FiLock/>}/>
-              <Input w='22vw' borderWidth={2} placeholder='Password' value={password} onChange={(e) => setPassword(e.target.value)}/>
-            </InputGroup>
-          </FormControl>
-          <FormControl display='flex' alignItems='center'>
-            <Switch/>
-            <FormLabel color='gray' ml='20px' mb='1'>Remember Me</FormLabel>
-          </FormControl>
+          <Formik initialValues={formInitialValue} onSubmit={handleSubmit} validate={validate}>
+            {({errors, touched, handleSubmit, handleChange}) => (
+              <Form onSubmit={handleSubmit}>
+                <VStack spacing={7}>
+                  <FormControl isInvalid={!!(errors.email && touched.email)}>
+                    <InputGroup>
+                      <InputLeftElement children={<HiOutlineMail/>}/>
+                      <Input id='email' name='email' type='email' w='22vw' onChange={handleChange} borderWidth={2} placeholder='Email'/>
+                    </InputGroup>
+                    <FormErrorMessage>{errors.email}</FormErrorMessage>
+                  </FormControl>
+                  <FormControl isInvalid={!!(errors.password && touched.password)}>
+                    <InputGroup>
+                      <InputLeftElement children={<FiLock/>}/>
+                      <Input id='password' name='password' type='password' onChange={handleChange} w='22vw' borderWidth={2} placeholder='Password'/>
+                    </InputGroup>
+                    <FormErrorMessage>{errors.password}</FormErrorMessage>
+                  </FormControl>
+                  <Flex alignItems='center'>
+                    <Switch id='rememberMe' name='rememberMe' onChange={handleChange}/>
+                    <FormLabel color='gray' ml='20px' mb='1'>Remember me</FormLabel>
+                  </Flex>
 
-          <Button w='100%' colorScheme='blue' >SIGN IN</Button>
+                  <Button type='submit' w='100%' colorScheme='blue'>SIGN IN</Button>
+                </VStack>
+              </Form>
+            )}
+          </Formik>
         </VStack>
       </Box>
     </Box>
