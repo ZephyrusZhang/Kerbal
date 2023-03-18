@@ -49,7 +49,8 @@ const Navbar = () => {
                 leftIcon={prop.leftIcon}
                 colorScheme='linkedin'
                 variant={selected === index ? 'solid' : 'ghost'}
-                onClick={() => setSelected(index)}>
+                onClick={() => setSelected(index)}
+              >
                 {prop.text}
               </Button>
             )
