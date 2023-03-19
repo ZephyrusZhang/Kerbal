@@ -1,5 +1,5 @@
 import React, { ReactElement, useState } from 'react';
-import { Box, VStack, useColorModeValue, Button, useColorMode } from '@chakra-ui/react';
+import { Box, VStack, useColorModeValue, Button, useColorMode, Link } from '@chakra-ui/react';
 import { MdDeveloperBoard } from 'react-icons/md'
 import { FaSignInAlt } from 'react-icons/fa'
 import { BsFillPersonPlusFill } from 'react-icons/bs'
@@ -8,14 +8,15 @@ import { IconType } from "react-icons";
 
 interface NavbarButtonProp {
   leftIcon: ReactElement<IconType>,
-  text: string
+  text: string,
+  to: string
 }
 
 const Navbar = () => {
   const buttonsProp: Array<NavbarButtonProp> = [
-    {leftIcon: <MdDeveloperBoard/>, text: 'Dashboard'},
-    {leftIcon: <FaSignInAlt/>, text: 'Sign In'},
-    {leftIcon: <BsFillPersonPlusFill/>, text: 'Sign Up'}
+    {leftIcon: <MdDeveloperBoard/>, text: 'Dashboard', to: '/dashboard'},
+    {leftIcon: <FaSignInAlt/>, text: 'Sign In', to: '/sign-in'},
+    {leftIcon: <BsFillPersonPlusFill/>, text: 'Sign Up', to: '/sign-up'}
   ]
 
   const bgColor = useColorModeValue('gray.800', 'gray.200')
@@ -43,16 +44,22 @@ const Navbar = () => {
         >
           {buttonsProp.map((prop, index) => {
             return (
-              <Button
-                key={index}
+              <Link
                 w='100%'
-                leftIcon={prop.leftIcon}
-                colorScheme='linkedin'
-                variant={selected === index ? 'solid' : 'ghost'}
-                onClick={() => setSelected(index)}
+                href={prop.to}
+                sx={{_hover: {textDecoration: 'none'}}}
               >
-                {prop.text}
-              </Button>
+                <Button
+                  key={index}
+                  w='100%'
+                  leftIcon={prop.leftIcon}
+                  colorScheme='linkedin'
+                  variant={selected === index ? 'solid' : 'ghost'}
+                  onClick={() => setSelected(index)}
+                >
+                  {prop.text}
+                </Button>
+              </Link>
             )
           })}
           <Button variant='ghost' w='100%' leftIcon={<IoMdColorPalette/>} colorScheme='teal' onClick={toggleColorMode}>Theme</Button>
