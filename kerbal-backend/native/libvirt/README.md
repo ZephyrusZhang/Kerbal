@@ -7,7 +7,7 @@
 ## To load the NIF:
 
 ```elixir
-defmodule Libvirt do
+defmodule Kerbal.Libvirt do
   use Rustler, otp_app: :kerbal, crate: "libvirt"
 
   # When your NIF is loaded, it will override this function.
