@@ -1,14 +1,14 @@
 import React from 'react';
-import Navbar from "../components/Navbar";
+import Sidebar from "../components/Sidebar";
 import { Outlet } from "react-router-dom";
-import { Box } from "@chakra-ui/react";
+import { Flex } from "@chakra-ui/react";
 
 const Layout = () => {
   return (
-    <Box display='flex'>
-      <Navbar/>
+    <Flex>
+      <Sidebar/>
       <Outlet/>
-    </Box>
+    </Flex>
   );
 };
 

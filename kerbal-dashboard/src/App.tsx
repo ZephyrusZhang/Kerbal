@@ -6,6 +6,8 @@ import { Route, Routes } from "react-router-dom";
 import SignIn from "./screens/SignIn";
 import Layout from "./layouts/Layout";
 import Dashboard from "./screens/Dashboard";
+import SignUp from "./screens/SignUp";
+import Test from "./test/Test";
 
 export const App = () => {
 
@@ -13,6 +15,8 @@ export const App = () => {
     <ChakraProvider theme={theme}>
       <Routes>
         <Route path='/sign-in' element={<SignIn/>}/>
+        <Route path='/sign-up' element={<SignUp/>}/>
+        <Route path='/test' element={<Test/>}/>
         <Route path='/' element={<Layout/>}>
           <Route path='dashboard' element={<Dashboard/>}/>
         </Route>
