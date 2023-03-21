@@ -1,12 +1,12 @@
 defmodule KerbalWeb.Router do
   use KerbalWeb, :router
 
+  import KerbalWeb.UserAuth
+
   pipeline :api do
     plug :accepts, ["json"]
-  end
-
-  scope "/api", KerbalWeb do
-    pipe_through :api
+    plug :fetch_session
+    plug :fetch_current_user
   end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development
@@ -24,5 +24,32 @@ defmodule KerbalWeb.Router do
       live_dashboard "/dashboard", metrics: KerbalWeb.Telemetry
       forward "/mailbox", Plug.Swoosh.MailboxPreview
     end
+  end
+
+  ## Authentication routes
+
+  scope "/api", KerbalWeb do
+    pipe_through [:api, :redirect_if_user_is_authenticated]
+
+    post "/users/register", UserRegistrationController, :create
+    post "/users/log_in", UserSessionController, :create
+    post "/users/reset_password", UserResetPasswordController, :create
+    get "/users/reset_password/:token", UserResetPasswordController, :query
+    put "/users/reset_password/:token", UserResetPasswordController, :update
+  end
+
+  scope "/api", KerbalWeb do
+    pipe_through [:api, :require_authenticated_user]
+
+    put "/users/settings", UserSettingsController, :update
+    get "/users/settings/confirm_email/:token", UserSettingsController, :confirm_email
+  end
+
+  scope "/api", KerbalWeb do
+    pipe_through [:api]
+
+    delete "/users/log_out", UserSessionController, :delete
+    post "/users/confirm", UserConfirmationController, :create
+    post "/users/confirm/:token", UserConfirmationController, :update
   end
 end
