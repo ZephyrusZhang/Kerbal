@@ -19,7 +19,7 @@ defmodule Kerbal.MixProject do
   def application do
     [
       mod: {Kerbal.Application, []},
-      extra_applications: [:logger, :runtime_tools]
+      extra_applications: [:logger, :runtime_tools, :eex, :crypto]
     ]
   end
 
@@ -46,7 +46,7 @@ defmodule Kerbal.MixProject do
       {:telemetry_poller, "~> 1.0"},
       {:gettext, "~> 0.20"},
       {:jason, "~> 1.2"},
-      {:plug_cowboy, "~> 2.5"},
+      {:bandit, ">= 0.7.3"},
       {:rustler, "~> 0.27.0"}
     ]
   end
