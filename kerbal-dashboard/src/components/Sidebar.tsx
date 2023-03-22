@@ -35,7 +35,7 @@ const Sidebar = () => {
     {leftIcon: <BsFillPersonPlusFill/>, text: 'Sign Up', to: '/sign-up'}
   ]
   const variants = {
-    hidden: {opacity: 0, x: '-100vw'},
+    hidden: {opacity: 1, x: '-100vw', width: '0'},
     visible: {opacity: 1, x: '0'}
   }
 
@@ -48,7 +48,8 @@ const Sidebar = () => {
   return (
     <MotionBox
       h='100vh'
-      ml='30px'
+      position='fixed'
+      px='30px'
       display='flex'
       alignItems='center'
       initial='visible'
