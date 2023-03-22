@@ -2,7 +2,6 @@ defmodule KerbalWeb.UserSettingsController do
   use KerbalWeb, :controller
 
   alias Kerbal.Accounts
-  alias KerbalWeb.UserAuth
 
   plug :assign_email_and_password_changesets
 

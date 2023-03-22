@@ -12,6 +12,7 @@ config :kerbal,
 
 # Configures the endpoint
 config :kerbal, KerbalWeb.Endpoint,
+  adapter: Bandit.PhoenixAdapter,
   url: [host: "localhost"],
   render_errors: [
     formats: [json: KerbalWeb.ErrorJSON],
