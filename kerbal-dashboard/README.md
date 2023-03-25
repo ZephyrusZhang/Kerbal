@@ -1,3 +1,11 @@
+- 本地安装依赖：
+  `npm i`
+- 运行：
+  `npm start`
+- 语法检查：
+  `npx eslint ./src --fix`
+
+
 This project was bootstrapped with
 [Create React App](https://github.com/facebook/create-react-app).
 
