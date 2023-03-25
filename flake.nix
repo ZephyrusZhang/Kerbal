@@ -19,6 +19,12 @@
           pkg-config
           libvirt
 
+          # bcrypt
+          gnumake
+          stdenv.cc.cc
+
+          beamPackages.hex
+
           elixir_ls
           rust-analyzer
         ];
