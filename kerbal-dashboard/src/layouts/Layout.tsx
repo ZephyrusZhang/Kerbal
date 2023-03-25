@@ -1,8 +1,8 @@
-import React from 'react';
-import Sidebar from "../components/Sidebar";
-import { Outlet } from "react-router-dom";
-import { Flex } from "@chakra-ui/react";
-import Navbar from "../components/Navbar";
+import React from 'react'
+import Sidebar from '../components/Sidebar'
+import { Outlet } from 'react-router-dom'
+import { Flex } from '@chakra-ui/react'
+import Navbar from '../components/Navbar'
 
 const Layout = () => {
   return (
@@ -11,7 +11,7 @@ const Layout = () => {
       <Navbar/>
       <Outlet/>
     </Flex>
-  );
-};
+  )
+}
 
-export default Layout;
+export default Layout

@@ -1,4 +1,4 @@
-import React, { ReactElement, useState } from 'react';
+import React, { type ReactElement, useState } from 'react'
 import {
   Box,
   VStack,
@@ -10,17 +10,17 @@ import {
   Text,
   Flex,
   Icon, chakra, shouldForwardProp, useMediaQuery
-} from '@chakra-ui/react';
+} from '@chakra-ui/react'
 import { MdDeveloperBoard } from 'react-icons/md'
 import { FaSignInAlt } from 'react-icons/fa'
 import { BsFillPersonPlusFill } from 'react-icons/bs'
-import { BiAperture, IoMdColorPalette } from "react-icons/all";
-import { IconType } from "react-icons";
-import { isValidMotionProp, motion } from "framer-motion";
+import { BiAperture, IoMdColorPalette } from 'react-icons/all'
+import { type IconType } from 'react-icons'
+import { isValidMotionProp, motion } from 'framer-motion'
 
 interface NavbarButtonProp {
-  leftIcon: ReactElement<IconType>,
-  text: string,
+  leftIcon: ReactElement<IconType>
+  text: string
   to: string
 }
 
@@ -29,20 +29,20 @@ const MotionBox = chakra(motion.div, {
 })
 
 const Sidebar = () => {
-  const buttonsProp: Array<NavbarButtonProp> = [
-    {leftIcon: <MdDeveloperBoard/>, text: 'Dashboard', to: '/dashboard'},
-    {leftIcon: <FaSignInAlt/>, text: 'Sign In', to: '/sign-in'},
-    {leftIcon: <BsFillPersonPlusFill/>, text: 'Sign Up', to: '/sign-up'}
+  const buttonsProp: NavbarButtonProp[] = [
+    { leftIcon: <MdDeveloperBoard/>, text: 'Dashboard', to: '/dashboard' },
+    { leftIcon: <FaSignInAlt/>, text: 'Sign In', to: '/sign-in' },
+    { leftIcon: <BsFillPersonPlusFill/>, text: 'Sign Up', to: '/sign-up' }
   ]
   const variants = {
-    hidden: {opacity: 1, x: '-100vw', width: '0'},
-    visible: {opacity: 1, x: '0'}
+    hidden: { opacity: 1, x: '-100vw', width: '0' },
+    visible: { opacity: 1, x: '0' }
   }
 
   const bgColor = useColorModeValue('gray.800', 'gray.200')
   const normalColor = useColorModeValue('white', 'gray.600')
   const [selected, setSelected] = useState(0)
-  const {toggleColorMode} = useColorMode()
+  const { toggleColorMode } = useColorMode()
   const [expanded] = useMediaQuery('(min-width: 768px)')
 
   return (
@@ -55,8 +55,8 @@ const Sidebar = () => {
       initial='visible'
       animate={expanded ? 'visible' : 'hidden'}
       variants={variants}
-      // @ts-ignore
-      transition={{duration: 0.5}}
+      // @ts-expect-error
+      transition={{ duration: 0.5 }}
     >
       <Box
         w='250px'
@@ -85,14 +85,14 @@ const Sidebar = () => {
                 key={index}
                 w='100%'
                 href={prop.to}
-                sx={{_hover: {textDecoration: 'none'}}}
+                sx={{ _hover: { textDecoration: 'none' } }}
               >
                 <Button
                   w='100%'
                   leftIcon={prop.leftIcon}
                   colorScheme='linkedin'
                   variant={selected === index ? 'solid' : 'ghost'}
-                  onClick={() => setSelected(index)}
+                  onClick={() => { setSelected(index) }}
                 >
                   {prop.text}
                 </Button>
@@ -111,7 +111,7 @@ const Sidebar = () => {
         </VStack>
       </Box>
     </MotionBox>
-  );
-};
+  )
+}
 
-export default Sidebar;
+export default Sidebar
