@@ -1,10 +1,10 @@
-import React from 'react';
-import { Box } from "@chakra-ui/react";
-import { motion } from "framer-motion";
+import React from 'react'
+import { Box } from '@chakra-ui/react'
+import { motion } from 'framer-motion'
 
 const Test = () => {
-  // @ts-ignore
-  // @ts-ignore
+  // @ts-expect-error
+  // @ts-expect-error
   return (
     <Box
       w='100vw'
@@ -19,19 +19,19 @@ const Test = () => {
           scale: [1, 2, 2, 1, 1],
           rotate: [0, 0, 270, 270, 0]
         }}
-        // @ts-ignore
+        // @ts-expect-error
         transition={{
           duration: 3,
-          ease: "easeInOut",
+          ease: 'easeInOut',
           repeat: Infinity,
-          repeatType: "loop",
+          repeatType: 'loop'
         }}
         w='50vw'
         h='50vh'
         bgColor='cyan'
       />
     </Box>
-  );
-};
+  )
+}
 
-export default Test;
+export default Test

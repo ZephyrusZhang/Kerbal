@@ -1,4 +1,4 @@
-import React from 'react';
+import React from 'react'
 import {
   Box, Button,
   Flex,
@@ -9,13 +9,13 @@ import {
   Stack, Switch,
   Text,
   VStack
-} from "@chakra-ui/react";
-import { FiLock, HiOutlineMail, ImGithub, ImGoogle } from "react-icons/all";
-import { Form, Formik } from "formik";
+} from '@chakra-ui/react'
+import { FiLock, HiOutlineMail, ImGithub, ImGoogle } from 'react-icons/all'
+import { Form, Formik } from 'formik'
 
 interface FormProps {
-  email: string,
-  password: string,
+  email: string
+  password: string
   rememberMe: boolean
 }
 
@@ -80,7 +80,7 @@ const SignIn = () => {
           </Box>
 
           <Formik initialValues={formInitialValue} onSubmit={handleSubmit} validate={validate}>
-            {({errors, touched, handleSubmit, handleChange}) => (
+            {({ errors, touched, handleSubmit, handleChange }) => (
               <Form onSubmit={handleSubmit}>
                 <VStack spacing={7}>
                   <FormControl isInvalid={!!(errors.email && touched.email)}>
@@ -110,7 +110,7 @@ const SignIn = () => {
         </VStack>
       </Box>
     </Box>
-  );
-};
+  )
+}
 
-export default SignIn;
+export default SignIn
