@@ -55,7 +55,7 @@ const Sidebar = () => {
       initial='visible'
       animate={expanded ? 'visible' : 'hidden'}
       variants={variants}
-      // @ts-expect-error
+      // @ts-ignore
       transition={{ duration: 0.5 }}
     >
       <Box

@@ -3,7 +3,7 @@ import { HStack, IconButton } from '@chakra-ui/react'
 import { IoIosSettings, MdMenu } from 'react-icons/all'
 
 const Navbar = () => {
-  const [navbarWidth, setNavbarWidth] = useState(0)
+  const [navbarWidth, setNavbarWidth] = useState(window.innerWidth - 310)
 
   useEffect(() => {
     const handleResize = () => { setNavbarWidth(window.innerWidth - 310) }
