@@ -1,15 +1,21 @@
 import React, { useEffect, useState } from 'react'
 import { HStack, IconButton } from '@chakra-ui/react'
 import { IoIosSettings, MdMenu } from 'react-icons/all'
+import { useKerbalUIController } from "../context";
 
 const Navbar = () => {
   const [navbarWidth, setNavbarWidth] = useState(window.innerWidth - 310)
+  const {controller, dispatch} = useKerbalUIController()
 
   useEffect(() => {
     const handleResize = () => { setNavbarWidth(window.innerWidth - 310) }
     window.addEventListener('resize', handleResize)
     return () => { window.removeEventListener('resize', handleResize) }
   }, [])
+
+  const handleToggleSidebar = () => {
+    dispatch({...controller, isSidebarCollapse: !controller.isSidebarCollapse})
+  }
 
   return (
     <HStack
@@ -22,8 +28,17 @@ const Navbar = () => {
       spacing={5}
       css={{ backdropFilter: 'blur(10px)' }}
     >
-      <IconButton icon={<MdMenu style={{ fontSize: '20px' }}/>} bg='transparent' aria-label='Menu'/>
-      <IconButton icon={<IoIosSettings style={{ fontSize: '20px' }}/>} bg='transparent' aria-label='Setting'/>
+      <IconButton
+        icon={<MdMenu style={{ fontSize: '20px' }}/>}
+        bg='transparent'
+        aria-label='Menu'
+        onClick={handleToggleSidebar}
+      />
+      <IconButton
+        icon={<IoIosSettings style={{ fontSize: '20px' }}/>}
+        bg='transparent'
+        aria-label='Setting'
+      />
     </HStack>
   )
 }
