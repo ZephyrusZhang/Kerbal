@@ -55,7 +55,7 @@ const Sidebar = () => {
       display='flex'
       alignItems='center'
       initial='visible'
-      animate={expanded && !controller.isSidebarCollapse ? 'visible' : 'hidden'}
+      animate={expanded || !controller.isSidebarCollapse ? 'visible' : 'hidden'}
       variants={variants}
       // @ts-ignore
       transition={{ duration: 0.5 }}
