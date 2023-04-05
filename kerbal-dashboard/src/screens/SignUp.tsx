@@ -11,6 +11,7 @@ import {
 } from '@chakra-ui/react'
 import { Form, Formik } from 'formik'
 import { AiOutlineUser, FiLock, HiOutlineMail, IoIosShareAlt } from 'react-icons/all'
+import bgImage from  "../assets/images/night-ocean-landscape-full-moon-stars-shine.jpg"
 
 interface FormProps {
   username: string
@@ -20,7 +21,7 @@ interface FormProps {
 }
 
 const SignUp = () => {
-  const bgImage = require('../assets/images/night-ocean-landscape-full-moon-stars-shine.jpg')
+  // const bgImage = require('../assets/images/night-ocean-landscape-full-moon-stars-shine.jpg')
 
   const formInitialValue: FormProps = {
     username: '',

@@ -3,8 +3,6 @@ import { Box } from '@chakra-ui/react'
 import { motion } from 'framer-motion'
 
 const Test = () => {
-  // @ts-expect-error
-  // @ts-expect-error
   return (
     <Box
       w='100vw'
@@ -19,7 +17,7 @@ const Test = () => {
           scale: [1, 2, 2, 1, 1],
           rotate: [0, 0, 270, 270, 0]
         }}
-        // @ts-expect-error
+        // @ts-ignore
         transition={{
           duration: 3,
           ease: 'easeInOut',

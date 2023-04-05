@@ -17,6 +17,7 @@ import { BsFillPersonPlusFill } from 'react-icons/bs'
 import { BiAperture, IoMdColorPalette } from 'react-icons/all'
 import { type IconType } from 'react-icons'
 import { isValidMotionProp, motion } from 'framer-motion'
+import { useKerbalUIController } from "../context";
 
 interface NavbarButtonProp {
   leftIcon: ReactElement<IconType>
@@ -38,6 +39,7 @@ const Sidebar = () => {
     hidden: { opacity: 1, x: '-100vw', width: '0' },
     visible: { opacity: 1, x: '0' }
   }
+  const {controller} = useKerbalUIController()
 
   const bgColor = useColorModeValue('gray.800', 'gray.200')
   const normalColor = useColorModeValue('white', 'gray.600')
@@ -53,9 +55,9 @@ const Sidebar = () => {
       display='flex'
       alignItems='center'
       initial='visible'
-      animate={expanded ? 'visible' : 'hidden'}
+      animate={expanded || !controller.isSidebarCollapse ? 'visible' : 'hidden'}
       variants={variants}
-      // @ts-expect-error
+      // @ts-ignore
       transition={{ duration: 0.5 }}
     >
       <Box

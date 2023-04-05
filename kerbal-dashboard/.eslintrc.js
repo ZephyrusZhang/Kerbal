@@ -1,22 +1,32 @@
 module.exports = {
-  env: {
-    browser: true,
-    es2021: true
+  "root": true,
+  "env": {
+    "browser": true,
+    "es2021": true,
+    "node": true
   },
-  extends: [
-    'plugin:react/recommended',
-    'standard-with-typescript'
+  "parser": "@typescript-eslint/parser",
+  "extends": [
+    "plugin:react/recommended",
+    "plugin:react-hooks/recommended",
+    "plugin:@typescript-eslint/recommended"
   ],
-  overrides: [
-  ],
-  parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-    project: ['./tsconfig.json']
+  "parserOptions": {
+    "ecmaFeatures": {
+      "jsx": true
+    },
+    "ecmaVersion": 13,
+    "sourceType": "module"
   },
-  plugins: [
-    'react'
+  "plugins": [
+    "react",
+    "react-hooks",
+    "@typescript-eslint"
   ],
-  rules: {
+  "rules": {
+    "react-hooks/rules-of-hooks": "error",
+    "@typescript-eslint/no-empty-function": "warn",
+    "react/no-children-prop": "warn",
+    "@typescript-eslint/ban-ts-comment": "off"
   }
-}
+};
