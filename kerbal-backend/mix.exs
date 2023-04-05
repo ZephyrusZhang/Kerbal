@@ -33,6 +33,7 @@ defmodule Kerbal.MixProject do
   defp deps do
     [
       {:bcrypt_elixir, "~> 3.0"},
+      {:bureaucrat, "~> 0.2.9"},
       {:phoenix, "~> 1.7.0"},
       {:phoenix_ecto, "~> 4.4"},
       {:ecto_sql, "~> 3.6"},
@@ -47,7 +48,6 @@ defmodule Kerbal.MixProject do
       {:gettext, "~> 0.20"},
       {:jason, "~> 1.2"},
       {:bandit, ">= 0.7.3"},
-      {:rustler, "~> 0.27.0"}
     ]
   end
 
