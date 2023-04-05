@@ -9,7 +9,8 @@ defmodule KerbalWeb.UserSettingsControllerTest do
   describe "PUT /api/users/settings (change password form)" do
     test "updates the user password and resets tokens", %{conn: conn, user: user} do
       new_password_conn =
-        put(conn, ~p"/api/users/settings", %{
+        conn
+        |> put(~p"/api/users/settings", %{
           "action" => "update_password",
           "current_password" => valid_user_password(),
           "user_params" => %{
@@ -17,6 +18,7 @@ defmodule KerbalWeb.UserSettingsControllerTest do
             "password_confirmation" => "new valid password"
           }
         })
+        |> doc()
 
       assert %{"status" => "ok"} = json_response(new_password_conn, 200)
 
@@ -25,7 +27,8 @@ defmodule KerbalWeb.UserSettingsControllerTest do
 
     test "does not update password on invalid data", %{conn: conn} do
       old_password_conn =
-        put(conn, ~p"/api/users/settings", %{
+        conn
+        |> put(~p"/api/users/settings", %{
           "action" => "update_password",
           "current_password" => "invalid",
           "user_params" => %{
@@ -33,6 +36,7 @@ defmodule KerbalWeb.UserSettingsControllerTest do
             "password_confirmation" => "does not match"
           }
         })
+        |> doc()
 
       assert %{"status" => "err"} = json_response(old_password_conn, 200)
 
@@ -44,11 +48,13 @@ defmodule KerbalWeb.UserSettingsControllerTest do
     @tag :capture_log
     test "updates the user email", %{conn: conn, user: user} do
       conn =
-        put(conn, ~p"/api/users/settings", %{
+        conn
+        |> put(~p"/api/users/settings", %{
           "action" => "update_email",
           "current_password" => valid_user_password(),
           "user_params" => %{"email" => unique_user_email()}
         })
+        |> doc()
 
       assert %{"status" => "ok"} = json_response(conn, 200)
 
@@ -57,11 +63,13 @@ defmodule KerbalWeb.UserSettingsControllerTest do
 
     test "does not update email on invalid data", %{conn: conn} do
       conn =
-        put(conn, ~p"/api/users/settings", %{
+        conn
+        |> put(~p"/api/users/settings", %{
           "action" => "update_email",
           "current_password" => "invalid",
           "user_params" => %{"email" => "with spaces"}
         })
+        |> doc()
 
         assert %{"status" => "err"} = json_response(conn, 200)
     end
@@ -80,7 +88,10 @@ defmodule KerbalWeb.UserSettingsControllerTest do
     end
 
     test "updates the user email once", %{conn: conn, user: user, token: token, email: email} do
-      conn = get(conn, ~p"/api/users/settings/confirm_email/#{token}")
+      conn =
+        conn
+        |> get(~p"/api/users/settings/confirm_email/#{token}")
+        |> doc()
       assert %{"status" => "ok"} = json_response(conn, 200)
 
       # assert redirected_to(conn) == ~p"/users/settings"
@@ -88,12 +99,18 @@ defmodule KerbalWeb.UserSettingsControllerTest do
       refute Accounts.get_user_by_email(user.email)
       assert Accounts.get_user_by_email(email)
 
-      conn = get(conn, ~p"/api/users/settings/confirm_email/#{token}")
+      conn =
+        conn
+        |> get(~p"/api/users/settings/confirm_email/#{token}")
+        |> doc()
       assert %{"status" => "err"} = json_response(conn, 200)
     end
 
     test "does not update email with invalid token", %{conn: conn, user: user} do
-      conn = get(conn, ~p"/api/users/settings/confirm_email/oops")
+      conn =
+        conn
+        |> get(~p"/api/users/settings/confirm_email/oops")
+        |> doc()
       assert %{"status" => "err"} = json_response(conn, 200)
 
       assert Accounts.get_user_by_email(user.email)

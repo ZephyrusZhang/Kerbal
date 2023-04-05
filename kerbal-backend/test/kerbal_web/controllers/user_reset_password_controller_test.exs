@@ -13,9 +13,11 @@ defmodule KerbalWeb.UserResetPasswordControllerTest do
     @tag :capture_log
     test "sends a new reset password token", %{conn: conn, user: user} do
       conn =
-        post(conn, ~p"/api/users/reset_password", %{
+        conn
+        |> post(~p"/api/users/reset_password", %{
           "user_params" => %{"email" => user.email}
         })
+        |> doc()
 
       assert %{"status" => "ok"} = json_response(conn, 200)
 
@@ -24,9 +26,11 @@ defmodule KerbalWeb.UserResetPasswordControllerTest do
 
     test "does not send reset password token if email is invalid", %{conn: conn} do
       conn =
-        post(conn, ~p"/api/users/reset_password", %{
+        conn
+        |> post(~p"/api/users/reset_password", %{
           "user_params" => %{"email" => "unknown@example.com"}
         })
+        |> doc()
 
       # the return is the same as a valid request to prevent attack
       assert %{"status" => "ok"} = json_response(conn, 200)
@@ -47,12 +51,14 @@ defmodule KerbalWeb.UserResetPasswordControllerTest do
 
     test "resets password once", %{conn: conn, user: user, token: token} do
       conn =
-        put(conn, ~p"/api/users/reset_password/#{token}", %{
+        conn
+        |> put(~p"/api/users/reset_password/#{token}", %{
           "user_params" => %{
             "password" => "new valid password",
             "password_confirmation" => "new valid password"
           }
         })
+        |> doc()
 
       assert %{"status" => "ok"} = json_response(conn, 200)
       refute get_session(conn, :user_token)
@@ -62,24 +68,28 @@ defmodule KerbalWeb.UserResetPasswordControllerTest do
 
     test "does not reset password on invalid data", %{conn: conn, token: token} do
       conn =
-        put(conn, ~p"/api/users/reset_password/#{token}", %{
+        conn
+        |> put(~p"/api/users/reset_password/#{token}", %{
           "user_params" => %{
             "password" => "too short",
             "password_confirmation" => "does not match"
           }
         })
+        |> doc()
 
       assert %{"status" => "err"} = json_response(conn, 200)
     end
 
     test "does not reset password with invalid token", %{conn: conn} do
       conn =
-        put(conn, ~p"/api/users/reset_password/oops", %{
+        conn
+        |> put(~p"/api/users/reset_password/oops", %{
           "user_params" => %{
             "password" => "new valid password",
             "password_confirmation" => "new valid password"
           }
         })
+        |> doc()
 
       assert %{"status" => "err"} = json_response(conn, 200)
     end

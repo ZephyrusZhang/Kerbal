@@ -9,9 +9,11 @@ defmodule KerbalWeb.UserRegistrationControllerTest do
       email = unique_user_email()
 
       conn =
-        post(conn, ~p"/api/users/register", %{
+        conn
+        |> post(~p"/api/users/register", %{
           "user_params" => valid_user_attributes(email: email)
         })
+        |> doc()
 
       assert get_session(conn, :user_token)
       assert %{"status" => "ok"} = json_response(conn, 200)
@@ -19,9 +21,11 @@ defmodule KerbalWeb.UserRegistrationControllerTest do
 
     test "errors for invalid data", %{conn: conn} do
       conn =
-        post(conn, ~p"/api/users/register", %{
+        conn
+        |> post(~p"/api/users/register", %{
           "user_params" => %{"email" => "with spaces", "password" => "too short"}
         })
+        |> doc()
 
       assert %{"status" => "err"} = json_response(conn, 200)
     end

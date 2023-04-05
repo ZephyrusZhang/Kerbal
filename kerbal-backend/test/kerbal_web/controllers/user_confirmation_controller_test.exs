@@ -13,9 +13,11 @@ defmodule KerbalWeb.UserConfirmationControllerTest do
     @tag :capture_log
     test "sends a new confirmation token", %{conn: conn, user: user} do
       conn =
-        post(conn, ~p"/api/users/confirm", %{
+        conn
+        |> post(~p"/api/users/confirm", %{
           "user_params" => %{"email" => user.email}
         })
+        |> doc()
 
       assert %{"status" => "ok"} = json_response(conn, 200)
 
@@ -26,9 +28,11 @@ defmodule KerbalWeb.UserConfirmationControllerTest do
       Repo.update!(Accounts.User.confirm_changeset(user))
 
       conn =
-        post(conn, ~p"/api/users/confirm", %{
+        conn
+        |> post(~p"/api/users/confirm", %{
           "user_params" => %{"email" => user.email}
         })
+        |> doc()
 
       assert %{"status" => "ok"} = json_response(conn, 200)
 
@@ -37,9 +41,11 @@ defmodule KerbalWeb.UserConfirmationControllerTest do
 
     test "does not send confirmation token if email is invalid", %{conn: conn} do
       conn =
-        post(conn, ~p"/api/users/confirm", %{
+        conn
+        |> post(~p"/api/users/confirm", %{
           "user_params" => %{"email" => "unknown@example.com"}
         })
+        |> doc()
 
       assert %{"status" => "err"} = json_response(conn, 200)
 
@@ -76,7 +82,10 @@ defmodule KerbalWeb.UserConfirmationControllerTest do
     end
 
     test "does not confirm email with invalid token", %{conn: conn, user: user} do
-      conn = post(conn, ~p"/api/users/confirm/oops")
+      conn =
+        conn
+        |> post(~p"/api/users/confirm/oops")
+        |> doc()
       assert %{"status" => "err"} = json_response(conn, 200)
 
       refute Accounts.get_user!(user.id).confirmed_at

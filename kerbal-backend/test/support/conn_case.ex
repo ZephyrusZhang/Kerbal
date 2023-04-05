@@ -28,6 +28,7 @@ defmodule KerbalWeb.ConnCase do
       import Plug.Conn
       import Phoenix.ConnTest
       import KerbalWeb.ConnCase
+      import Bureaucrat.Helpers
     end
   end
 
