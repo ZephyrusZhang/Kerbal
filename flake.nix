@@ -17,6 +17,7 @@
           cargo
           elixir
           pkg-config
+          pciutils
           libvirt
 
           # bcrypt
