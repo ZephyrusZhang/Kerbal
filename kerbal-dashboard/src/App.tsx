@@ -2,7 +2,7 @@ import * as React from 'react'
 import {
   ChakraProvider, theme
 } from '@chakra-ui/react'
-import { Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import SignIn from './screens/SignIn'
 import Layout from './layouts/Layout'
 import Dashboard from './screens/Dashboard'
@@ -18,6 +18,7 @@ export const App = () => {
         <Route path='/test' element={<Test/>}/>
         <Route path='/' element={<Layout/>}>
           <Route path='dashboard' element={<Dashboard/>}/>
+          <Route path='/' element={<Navigate to='dashboard' replace/>}/>
         </Route>
       </Routes>
     </ChakraProvider>

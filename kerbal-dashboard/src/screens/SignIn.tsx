@@ -12,6 +12,8 @@ import {
 } from '@chakra-ui/react'
 import { FiLock, HiOutlineMail, ImGithub, ImGoogle } from 'react-icons/all'
 import { Form, Formik } from 'formik'
+import { useNavigate } from "react-router-dom";
+import request from "../util/request";
 
 interface FormProps {
   email: string
@@ -21,6 +23,7 @@ interface FormProps {
 
 const SignIn = () => {
   const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+  const navigate = useNavigate()
   const validate = (form: FormProps) => {
     const errors: Partial<FormProps> = {}
     if (!emailRegex.test(form.email)) errors.email = 'Invalid email'
@@ -37,7 +40,17 @@ const SignIn = () => {
     rememberMe: false
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async (values: FormProps) => {
+    console.log('fuck')
+    try {
+      const response = await request.post('http://localhost:4000/api/users/log_in', JSON.stringify({
+        user_params: values
+      }))
+      localStorage.setItem('token', response.data.token)
+      navigate('/')
+    } catch (error) {
+      console.log(error)
+    }
   }
 
   return (
@@ -80,19 +93,25 @@ const SignIn = () => {
           </Box>
 
           <Formik initialValues={formInitialValue} onSubmit={handleSubmit} validate={validate}>
-            {({ errors, touched, handleSubmit, handleChange }) => (
+            {({
+                errors,
+                touched,
+                handleSubmit,
+                handleChange,
+                isSubmitting
+            }) => (
               <Form onSubmit={handleSubmit}>
                 <VStack spacing={7}>
                   <FormControl isInvalid={!!(errors.email && touched.email)}>
                     <InputGroup>
-                      <InputLeftElement children={<HiOutlineMail/>}/>
+                      <InputLeftElement><HiOutlineMail/></InputLeftElement>
                       <Input id='email' name='email' type='email' w='22vw' onChange={handleChange} borderWidth={2} placeholder='Email'/>
                     </InputGroup>
                     <FormErrorMessage>{errors.email}</FormErrorMessage>
                   </FormControl>
                   <FormControl isInvalid={!!(errors.password && touched.password)}>
                     <InputGroup>
-                      <InputLeftElement children={<FiLock/>}/>
+                      <InputLeftElement><FiLock/></InputLeftElement>
                       <Input id='password' name='password' type='password' onChange={handleChange} w='22vw' borderWidth={2} placeholder='Password'/>
                     </InputGroup>
                     <FormErrorMessage>{errors.password}</FormErrorMessage>
@@ -102,7 +121,7 @@ const SignIn = () => {
                     <FormLabel color='gray' ml='20px' mb='1'>Remember me</FormLabel>
                   </Flex>
 
-                  <Button type='submit' w='100%' colorScheme='blue'>SIGN IN</Button>
+                  <Button type='submit' w='100%' colorScheme='blue' isLoading={isSubmitting}>SIGN IN</Button>
                 </VStack>
               </Form>
             )}
