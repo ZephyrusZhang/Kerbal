@@ -43,9 +43,11 @@ const SignIn = () => {
   const handleSubmit = async (values: FormProps) => {
     console.log('fuck')
     try {
-      const response = await request.post('http://localhost:4000/api/users/log_in', JSON.stringify({
-        user_params: values
-      }))
+      const response = await request.post(
+        '/api/users/log_in',
+        JSON.stringify({user_params: values}),{
+          withCredentials: true
+      })
       localStorage.setItem('token', response.data.token)
       navigate('/')
     } catch (error) {
