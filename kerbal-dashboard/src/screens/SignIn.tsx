@@ -41,17 +41,14 @@ const SignIn = () => {
   }
 
   const handleSubmit = async (values: FormProps) => {
-    try {
-      const response = await request.post(
-        '/api/users/log_in',
-        JSON.stringify({user_params: values}),{
-          withCredentials: true
-      })
-      // localStorage.setItem('token', response.data.token)
+    request.post(
+      '/api/users/log_in',
+      JSON.stringify({user_params: values}),
+      {withCredentials: true}
+    ).then(response => {
+      console.log(response)
       navigate('/')
-    } catch (error) {
-      console.log(error)
-    }
+    })
   }
 
   return (
@@ -100,7 +97,7 @@ const SignIn = () => {
                 handleSubmit,
                 handleChange,
                 isSubmitting
-            }) => (
+              }) => (
               <Form onSubmit={handleSubmit}>
                 <VStack spacing={7}>
                   <FormControl isInvalid={!!(errors.email && touched.email)}>

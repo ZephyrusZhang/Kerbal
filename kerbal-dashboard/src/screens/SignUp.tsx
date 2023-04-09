@@ -87,28 +87,28 @@ const SignUp = () => {
               <VStack spacing={7}>
                 <FormControl isInvalid={!!(errors.username && touched.username)}>
                   <InputGroup>
-                    <InputLeftElement children={<AiOutlineUser/>}/>
+                    <InputLeftElement><AiOutlineUser/></InputLeftElement>
                     <Input type='username' w='22vw' onChange={handleChange} borderWidth={2} placeholder='Username'/>
                   </InputGroup>
                   <FormErrorMessage>{errors.username}</FormErrorMessage>
                 </FormControl>
                 <FormControl isInvalid={!!(errors.email && touched.email)}>
                   <InputGroup>
-                    <InputLeftElement children={<HiOutlineMail/>}/>
+                    <InputLeftElement><HiOutlineMail/></InputLeftElement>
                     <Input type='email' w='22vw' onChange={handleChange} borderWidth={2} placeholder='Email'/>
                   </InputGroup>
                   <FormErrorMessage>{errors.email}</FormErrorMessage>
                 </FormControl>
                 <FormControl isInvalid={!!(errors.password && touched.password)}>
                   <InputGroup>
-                    <InputLeftElement children={<FiLock/>}/>
+                    <InputLeftElement><FiLock/></InputLeftElement>
                     <Input type='password' onChange={handleChange} w='22vw' borderWidth={2} placeholder='Password'/>
                   </InputGroup>
                   <FormErrorMessage>{errors.password}</FormErrorMessage>
                 </FormControl>
                 <FormControl isInvalid={!!(errors.passwordConfirm && touched.passwordConfirm)}>
                   <InputGroup>
-                    <InputLeftElement children={<IoIosShareAlt/>}/>
+                    <InputLeftElement><IoIosShareAlt/></InputLeftElement>
                     <Input type='password' onChange={handleChange} w='22vw' borderWidth={2} placeholder='Confirm Password'/>
                   </InputGroup>
                   <FormErrorMessage>{errors.password}</FormErrorMessage>
