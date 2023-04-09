@@ -1,10 +1,3 @@
-- 本地安装依赖：
-  `npm i`
-- 运行：
-  `npm start`
-- 语法检查：
-  `npx eslint ./src --fix`
-
 
 This project was bootstrapped with
 [Create React App](https://github.com/facebook/create-react-app).
@@ -12,6 +5,14 @@ This project was bootstrapped with
 ## Available Scripts
 
 In the project directory, you can run:
+
+### `npm install`
+
+Install dependencies
+
+### `npm eslint ./src --fix`
+
+Run eslint syntax checking
 
 ### `npm start`
 
