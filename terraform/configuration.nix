@@ -84,6 +84,8 @@
     curl
     git
     helix
+    pciutils
+    elixir
   ];
 
   # Some programs need SUID wrappers, can be configured further or are
@@ -112,7 +114,14 @@
   # networking.firewall.allowedTCPPorts = [ ... ];
   # networking.firewall.allowedUDPPorts = [ ... ];
   # Or disable the firewall altogether.
-  networking.firewall.enable = false;
+  networking = {
+    firewall.enable = false;
+    hosts = {
+      "10.16.97.70" = [ "planet1" ];
+      "10.16.97.116" = [ "planet2" ];
+      "10.16.97.147" = [ "planet3" ];
+    };
+  };
 
   nix = {
     settings = {
