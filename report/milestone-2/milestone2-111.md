@@ -38,6 +38,14 @@ Furthermore, this capability serves as a vital security measure, preventing unau
 
 ## 1.4 Diagrams for Logical view
 
+- Class Diagram
+
+  Since we are using **elixir** as our backend programming language, which is a functional, not object-oriented programming language, thus there is no class concept in our backend system. So we don't provide any class diagram here.
+
+- Component Diagram
+
+  ![Untitled.vpd (1)](https://raw.githubusercontent.com/zephyrszwc/zephyrs-image/master/202304111101427.png)
+
 ## 1.5 Data Design
 
 <img src="https://raw.githubusercontent.com/zephyrszwc/zephyrs-image/master/202304101855907.png" alt="users_tokens" style="zoom:30%;" />
