@@ -40,7 +40,17 @@ Furthermore, this capability serves as a vital security measure, preventing unau
 
 ## 1.5 Data Design
 
+<img src="https://raw.githubusercontent.com/zephyrszwc/zephyrs-image/master/202304101855907.png" alt="users_tokens" style="zoom:30%;" />
 
+The database we will use in this project is listed above. 
+
+The `users` table is a fundamental component of our database architecture, serving as a repository for user account information, such as usernames, email addresses, and password hashes. This information is essential for authentication and authorization purposes, enabling our system to verify the identity of users and control access to various system resources.
+
+Additionally, the `users_toke`n table is a critical element of our database design, responsible for storing a variety of tokens utilized throughout the system, such as session tokens for login, tokens for email authentication, and tokens for password reset. By leveraging this table, we can maintain a secure and efficient token management system, ensuring that sensitive information is protected and user accounts remain secure.
+
+Despite the relative simplicity of our database design, we have made deliberate choices to optimize performance and scalability. Given the dynamic nature of GPU/CPU resource scheduling and other critical system information, we have elected not to store this data in the database. Instead, we have implemented mechanisms for retrieving this information directly from the user's virtual machine via command line interfaces and other methods, thereby maximizing system efficiency and minimizing potential performance bottlenecks.
+
+Overall, our database design represents a carefully considered balance between functionality, performance, and security, enabling our system to provide robust and reliable services to our users.
 
 ## 1.6 UI Design
 
@@ -62,75 +72,27 @@ Furthermore, this capability serves as a vital security measure, preventing unau
 
   <img src="https://raw.githubusercontent.com/zephyrszwc/zephyrs-image/master/202304101206119.png" alt="2023-04-10_120501" style="zoom:50%;" />
 
-- Contribution stats (by author) on the current branch:
+- Contribution stats:
 
-       Frank Wu <56958034+GhostFrankWu@users.noreply.github.com>:
-        insertions:    1      (0%)
-        deletions:     0      (0%)
-        files:         1      (0%)
-        commits:       1      (2%)
-        lines changed: 1      (0%)
-        first commit:  Thu Mar 9 18:28:03 2023 +0800
-        last commit:   Thu Mar 9 18:28:03 2023 +0800
-          
-       zephyrus <2996362441@qq.com>:
-        insertions:    25     (0%)
-        deletions:     2      (0%)
-        files:         2      (1%)
-        commits:       1      (2%)
-        lines changed: 27     (0%)
-        first commit:  Sun Apr 9 20:09:57 2023 +0800
-        last commit:   Sun Apr 9 20:09:57 2023 +0800
-          
-       Frank <FrankssWu@outlook.com>:
-        insertions:    588    (2%)
-        deletions:     120    (11%)
-        files:         17     (8%)
-        commits:       4      (8%)
-        lines changed: 708    (3%)
-        first commit:  Sat Mar 25 19:08:18 2023 +0800
-        last commit:   Sun Apr 9 19:58:01 2023 +0800
-          
-       ZephyrusZhang <2996362441@qq.com>:
-        insertions:    19746  (76%)
-        deletions:     724    (65%)
-        files:         72     (33%)
-        commits:       22     (46%)
-        lines changed: 20470  (75%)
-        first commit:  Wed Mar 15 20:22:20 2023 +0800
-        last commit:   Sun Apr 9 23:53:55 2023 +0800
-          
-       Zephyrus <82928147+ZephyrusZhang@users.noreply.github.com>:
-        insertions:    233    (1%)
-        deletions:     57     (5%)
-        files:         5      (2%)
-        commits:       5      (10%)
-        lines changed: 290    (1%)
-        first commit:  Sun Mar 12 18:29:21 2023 +0800
-        last commit:   Mon Mar 13 11:33:26 2023 +0800
-          
-       Bill Huang <bill.huang2001@gmail.com>:
-        insertions:    5444   (21%)
-        deletions:     207    (19%)
-        files:         118    (55%)
-        commits:       14     (29%)
-        lines changed: 5651   (21%)
-        first commit:  Fri Mar 17 20:31:30 2023 +0800
-        last commit:   Thu Apr 6 23:55:06 2023 +0800
+       Git commits per author:
+       
+               30  ZephyrusZhang           58.9%
+               14  Bill Huang              27.5%
+               5   Frank                   9.8%
+               1   github-classroom[bot]   2.0%
+               1   dkRose                  2.0%
    
-   
-   ​     
-       total:
-        insertions:    26038  (100%)
-        deletions:     1110   (100%)
-        files:         216    (100%)
-        commits:       48     (100%)
-   
-
-  
 
 # 3. Deliverables
 
-- Project structure
+Our system has made significant progress towards delivering a secure and functional user authentication and authorization system. Specifically, we have implemented critical features such as user registration, email verification sending, and user login functionality, enabling users to create and access their accounts with ease and confidence.
 
-  <img src="https://raw.githubusercontent.com/zephyrszwc/zephyrs-image/master/202304101212892.png" alt="2023-04-10_121203" style="zoom:80%;" />
+In addition, we have integrated these features with the front-end of our system, providing users with a streamlined and intuitive interface for interacting with our system. We have also implemented route guarding mechanisms, ensuring that only authenticated users can access pages other than the login page, enhancing system security and reducing the risk of unauthorized access.
+
+Furthermore, we have established a robust connection between the front and back ends of our system, enabling seamless communication between the client and server components. We have rigorously tested these features and functionalities, ensuring that they meet our high standards for reliability, performance, and security.
+
+
+
+Project structure
+
+<img src="https://raw.githubusercontent.com/zephyrszwc/zephyrs-image/master/202304101212892.png" alt="2023-04-10_121203" style="zoom:80%;" />
