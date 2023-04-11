@@ -18,6 +18,35 @@
 
 ## 1.3 Natural Language Description
 
+> User case name: Create Virtual Environment
+>
+> Participant: User
+>
+> Goal: To enable users to specify an operating system image and their required GPU/CPU resource quantities, and choose an OS snapshot to create a virtual operating system with pre-existing package or environment setups.
+>
+> Entry Condition: User is logged into the system and has access to the virtual machine creation interface.
+>
+> Trigger Condition: User selects the option to create a new virtual machine.
+>
+> Main Scene:
+>
+> - User selects the operating system image they wish to use.
+> - User specifies the required GPU/CPU resource quantities for their virtual machine.
+> - User selects an OS snapshot to create their virtual operating system from.
+> - System creates a virtual machine with the specified operating system image and GPU/CPU resources.
+>
+> Other Scene:
+>
+> - User can customize the virtual machine configuration further, such as adding additional packages or adjusting resource allocation.
+> - User can save the virtual machine configuration as an OS snapshot for future use.
+>
+> Exception Scene:
+>
+> - Invalid operating system image or GPU/CPU resource quantity is specified, system prompts user to correct inputs.
+> - Invalid OS snapshot is selected, system prompts user to select a valid snapshot or create a new one.
+
+
+
 ### 1.3.1 User Role
 
 We have two roles in this project, normal user and administrator. Since our project is a GPU/CPU allocation scheduling management system that can be deployed on the server by the users themselves, we don't want anyone to be able to register an account at will. In our system, only the administrator has the power to create normal users. This means that to gain access to the system, a user must first contact the administrator and request an account. The administrator can then create an account for the user and provide them with the necessary login credentials.
