@@ -48,6 +48,9 @@ defmodule TrackingStation.Scheduler.ResourcePool do
                 node_id: node(),
                 name: gpu.device,
                 vram_size: 0,
+                bus: gpu.bus,
+                slot: gpu.slot,
+                funciton: gpu.function,
                 free?: true,
                 online?: true
               )

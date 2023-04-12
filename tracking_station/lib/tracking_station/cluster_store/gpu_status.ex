@@ -9,6 +9,9 @@ defmodule TrackingStation.ClusterStore.GPUStatus do
     node_id: nil,
     name: "",
     vram_size: 0,
+    bus: nil,
+    slot: nil,
+    function: nil,
     free?: false,
     online?: false
   )
@@ -20,6 +23,9 @@ defmodule TrackingStation.ClusterStore.GPUStatus do
             node_id: atom,
             name: String.t(),
             vram_size: integer,
+            bus: String.t(),
+            slot: String.t(),
+            function: String.t(),
             free?: boolean,
             online?: boolean
           )
