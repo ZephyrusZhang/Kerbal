@@ -59,6 +59,14 @@ fn poll_domain_stats(url: &str, domain_id: u32) -> Result<(Atom, operations::Dom
     result.map(ok_tuple).map_err(libvirt_err_to_term)
 }
 
+#[rustler::nif(schedule = "DirtyIo")]
+fn destroy_domain(url: &str, domain_id: u32) -> Result<Atom, Error> {
+    let conn = Connect::open(url).map_err(|_| build_conn_err())?;
+    let result = operations::destroy_domain(&conn, domain_id);
+    safe_close_connect(conn)?;
+    result.map(|_| atoms::ok()).map_err(libvirt_err_to_term)
+}
+
 // #[rustler::nif(schedule = "DirtyIo")]
 // fn qemu_guest_agent(url: &str, domain_id: u32, data: Binary) -> Result<(Atom, Vec<u8>), Error> {
 //     let conn = Connect::open(url).map_err(|_| build_conn_err())?;
@@ -79,5 +87,10 @@ fn poll_domain_stats(url: &str, domain_id: u32) -> Result<(Atom, operations::Dom
 
 rustler::init!(
     "Elixir.TrackingStation.Libvirt.Native",
-    [get_resources, create_vm_from_xml, poll_domain_stats]
+    [
+        get_resources,
+        create_vm_from_xml,
+        poll_domain_stats,
+        destroy_domain
+    ]
 );

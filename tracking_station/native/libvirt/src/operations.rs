@@ -106,3 +106,9 @@ pub fn poll_domain_stats(conn: &Connect, domain_id: u32) -> Result<DomainStats, 
         mem_usage: (first_measure.memory + second_measure.memory) / 2,
     })
 }
+
+pub fn destroy_domain(conn: &Connect, domain_id: u32) -> Result<(), Error> {
+    let domain = Domain::lookup_by_id(&conn, domain_id)?;
+    domain.destroy()?;
+    Ok(())
+}

@@ -7,6 +7,8 @@ defmodule TrackingStation.Libvirt.Native do
   def create_vm_from_xml(_url, _xml_config), do: :erlang.nif_error(:nif_not_loaded)
 
   def poll_domain_stats(_url, _domain_id), do: :erlang.nif_error(:nif_not_loaded)
+
+  def destroy_domain(_url, _domain_id), do: :erlang.nif_error(:nif_not_loaded)
 end
 
 defmodule TrackingStation.Libvirt do
@@ -18,23 +20,20 @@ defmodule TrackingStation.Libvirt do
 
   @libvirt_url "qemu:///system"
 
-  def get_resources() do
-    Native.get_resources(@libvirt_url)
-  end
+  def get_resources(), do: Native.get_resources(@libvirt_url)
 
-  def create_vm_from_xml(xml_config) do
-    Native.create_vm_from_xml(@libvirt_url, xml_config)
-  end
+  def create_vm_from_xml(xml_config), do: Native.create_vm_from_xml(@libvirt_url, xml_config)
 
-  def poll_domain_stats(domain_id) do
-    Native.poll_domain_stats(@libvirt_url, domain_id)
-  end
+  def poll_domain_stats(domain_id), do: Native.poll_domain_stats(@libvirt_url, domain_id)
+
+  def destroy_domain(domain_id), do: Native.destroy_domain(@libvirt_url, domain_id)
 
   def valid_gpu_resource(gpu_ids) do
     case System.cmd("lspci", ["-nnk"]) do
       {output, 0} ->
         re =
           ~r/(?<bus>\d{2}):(?<slot>\d{2})\.(?<function>\d) .+?: (?<device>.+?) \[(?<id>\w{4}:\w{4})\].*?\n(\t.*?\n)*?\tKernel driver in use: (?<driver>.*?)\n/
+
         pci_devices =
           re
           |> Regex.scan(output, capture: :all_names)
