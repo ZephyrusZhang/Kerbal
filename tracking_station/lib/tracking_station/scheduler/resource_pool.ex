@@ -50,7 +50,7 @@ defmodule TrackingStation.Scheduler.ResourcePool do
                 vram_size: 0,
                 bus: gpu.bus,
                 slot: gpu.slot,
-                funciton: gpu.function,
+                function: gpu.function,
                 free?: true,
                 online?: true
               )
