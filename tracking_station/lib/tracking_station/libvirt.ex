@@ -34,12 +34,14 @@ defmodule TrackingStation.Libvirt do
     case System.cmd("lspci", ["-nnk"]) do
       {output, 0} ->
         re =
-          ~r/\d{2}:\d{2}\.\d .+?: (?<device>.+?) \[(?<id>\w{4}:\w{4})\].*?\n(\t.*?\n)*?\tKernel driver in use: (?<driver>.*?)\n/
-
+          ~r/(?<bus>\d{2}):(?<slot>\d{2})\.(?<function>\d) .+?: (?<device>.+?) \[(?<id>\w{4}:\w{4})\].*?\n(\t.*?\n)*?\tKernel driver in use: (?<driver>.*?)\n/
         pci_devices =
-          Regex.scan(re, output, capture: :all_names)
-          |> Enum.map(fn [device | [driver | [id | []]]] ->
-            %{device: device, driver: driver, id: id}
+          re
+          |> Regex.scan(output, capture: :all_names)
+          |> Enum.map(fn capture ->
+            [:bus, :device, :driver, :function, :id, :slot]
+            |> Enum.zip(capture)
+            |> Enum.into(%{})
           end)
 
         gpu_ids
