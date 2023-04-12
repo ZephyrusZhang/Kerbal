@@ -3,13 +3,14 @@ defmodule TrackingStation.Libvirt do
   TrackingStation.Libvirt loads the NIF the communicate with
   Libvirt.
   """
-  alias TrackingStation.Scheduler.ResourceSpec
   use Rustler, otp_app: :tracking_station, crate: "libvirt"
 
   @spec get_resources(String.t()) :: LibvirtResource
-  def get_resources(url), do: :erlang.nif_error(:nif_not_loaded)
+  def get_resources(_url), do: :erlang.nif_error(:nif_not_loaded)
 
-  def create_vm_from_xml(url, xml_config), do: :erlang.nif_error(:nif_not_loaded)
+  def create_vm_from_xml(_url, _xml_config), do: :erlang.nif_error(:nif_not_loaded)
+
+  def poll_domain_stats(_url, _domain_id), do: :erlang.nif_error(:nif_not_loaded)
 
   def reclaim_vm(), do: :erlang.nif_error(:nif_not_loaded)
 
