@@ -1,5 +1,8 @@
 %{
   "jason": {:hex, :jason, "1.4.0", "e855647bc964a44e2f67df589ccf49105ae039d4179db7f6271dfd3843dc27e6", [:mix], [{:decimal, "~> 1.0 or ~> 2.0", [hex: :decimal, repo: "hexpm", optional: true]}], "hexpm", "79a3791085b2a0f743ca04cec0f7be26443738779d09302e01318f97bdb82121"},
+  "libcluster": {:hex, :libcluster, "3.3.2", "84c6ebfdc72a03805955abfb5ff573f71921a3e299279cc3445445d5af619ad1", [:mix], [{:jason, "~> 1.1", [hex: :jason, repo: "hexpm", optional: false]}], "hexpm", "8b691ce8185670fc8f3fc0b7ed59eff66c6889df890d13411f8f1a0e6871d8a5"},
+  "mnesiac": {:hex, :mnesiac, "0.3.9", "27795bb99190915737703a17d482ee923e1dc94a3d3ad6502557371d40a6a3aa", [:mix], [{:libcluster, "~> 3.2", [hex: :libcluster, repo: "hexpm", optional: true]}], "hexpm", "64b926a1657d797dda1b5d2a9dd9ca5e0ae60cec466424b407d0e41a3e57e2c1"},
   "rustler": {:hex, :rustler, "0.27.0", "53ffe86586fd1a2ea60ad07f1506962914eb669dba26c23010cf672662ec8d64", [:mix], [{:jason, "~> 1.0", [hex: :jason, repo: "hexpm", optional: false]}, {:toml, "~> 0.6", [hex: :toml, repo: "hexpm", optional: false]}], "hexpm", "d7f5ccaec6e7a96f700330898ff2e9d48818e40789fd2951ba41ecf457986e92"},
   "toml": {:hex, :toml, "0.7.0", "fbcd773caa937d0c7a02c301a1feea25612720ac3fa1ccb8bfd9d30d822911de", [:mix], [], "hexpm", "0690246a2478c1defd100b0c9b89b4ea280a22be9a7b313a8a058a2408a2fa70"},
+  "uuid": {:hex, :uuid, "1.1.8", "e22fc04499de0de3ed1116b770c7737779f226ceefa0badb3592e64d5cfb4eb9", [:mix], [], "hexpm", "c790593b4c3b601f5dc2378baae7efaf5b3d73c4c6456ba85759905be792f2ac"},
 }

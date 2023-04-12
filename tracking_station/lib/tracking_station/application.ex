@@ -7,7 +7,12 @@ defmodule TrackingStation.Application do
 
   @impl true
   def start(_type, _args) do
+    topology = Application.get_env(:libcluster, :topologies)
+    hosts = topology[:TrackingStation][:config][:hosts]
+
     children = [
+      {Cluster.Supervisor, [topology, [name: TrackingStation.ClusterSupervisor]]},
+      {Mnesiac.Supervisor, [hosts, [name: TrackingStation.MnesiacSupervisor]]},
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
