@@ -71,11 +71,23 @@
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.jeb = {
     isNormalUser = true;
-    extraGroups = [ "wheel" ]; # Enable ‘sudo’ for the user.
+    extraGroups = [ "wheel" "libvirt" ]; # Enable ‘sudo’ for the user.
     openssh.authorizedKeys.keys = [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJaVZIpXiOFO/wwIR4BJUY6hA2nVmroDukqm5Xd6iYg+ bill@BillLab"
     ];
- };
+  };
+  virtualisation = {
+    libvirtd = {
+      enable = true;
+      extraConfig = ''
+        auth_unix_ro = "none"
+        auth_unix_rw = "none"
+        unix_sock_group = "libvirt"
+        unix_sock_ro_perms = "0777"
+        unix_sock_rw_perms = "0770"
+      '';
+    };
+  };
 
   # List packages installed in system profile. To search, run:
   # $ nix search wget
@@ -105,9 +117,12 @@
     passwordAuthentication = false;
   };
   
-  security.sudo = {
-    enable = true;
-    wheelNeedsPassword = false;
+  security = {
+    sudo = {
+      enable = true;
+      wheelNeedsPassword = false;
+    };
+    polkit.enable = true;
   };
 
   # Open ports in the firewall.
@@ -135,6 +150,10 @@
     extraOptions = ''
       experimental-features = nix-command flakes
     '';
+  };
+
+  users.groups.libvirt = {
+    name = "libvirt";
   };
 
 
