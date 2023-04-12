@@ -78,6 +78,6 @@ fn poll_domain_stats(url: &str, domain_id: u32) -> Result<(Atom, operations::Dom
 // }
 
 rustler::init!(
-    "Elixir.TrackingStation.Libvirt",
+    "Elixir.TrackingStation.Libvirt.Native",
     [get_resources, create_vm_from_xml, poll_domain_stats]
 );

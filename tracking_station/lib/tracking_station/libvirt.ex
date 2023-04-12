@@ -1,8 +1,4 @@
-defmodule TrackingStation.Libvirt do
-  @moduledoc """
-  TrackingStation.Libvirt loads the NIF the communicate with
-  Libvirt.
-  """
+defmodule TrackingStation.Libvirt.Native do
   use Rustler, otp_app: :tracking_station, crate: "libvirt"
 
   @spec get_resources(String.t()) :: LibvirtResource
@@ -11,10 +7,28 @@ defmodule TrackingStation.Libvirt do
   def create_vm_from_xml(_url, _xml_config), do: :erlang.nif_error(:nif_not_loaded)
 
   def poll_domain_stats(_url, _domain_id), do: :erlang.nif_error(:nif_not_loaded)
+end
 
-  def reclaim_vm(), do: :erlang.nif_error(:nif_not_loaded)
+defmodule TrackingStation.Libvirt do
+  @moduledoc """
+  TrackingStation.Libvirt loads the NIF the communicate with
+  Libvirt.
+  """
+  alias TrackingStation.Libvirt.Native
 
-  def monitor_vm(), do: :erlang.nif_error(:nif_not_loaded)
+  @libvirt_url "qemu:///system"
+
+  def get_resources() do
+    Native.get_resources(@libvirt_url)
+  end
+
+  def create_vm_from_xml(xml_config) do
+    Native.create_vm_from_xml(@libvirt_url, xml_config)
+  end
+
+  def poll_domain_stats(domain_id) do
+    Native.poll_domain_stats(@libvirt_url, domain_id)
+  end
 
   def valid_gpu_resource(gpu_ids) do
     case System.cmd("lspci", ["-nnk"]) do
