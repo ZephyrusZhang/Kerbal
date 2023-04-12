@@ -20,14 +20,39 @@ defmodule TrackingStation.Scheduler.ResourcePool do
   alias TrackingStation.Scheduler.LibvirtConfig
   alias TrackingStation.Scheduler.ResourceSpec
   alias TrackingStation.Libvirt
+  import TrackingStation.ClusterStore.NodeInfo
+  import TrackingStation.ClusterStore.GPUStatus
 
   def init() do
     gpu_ids = Application.get_env(:tracking_station, :gpu_ids)
-    valid_gpu_ids = Libvirt.valid_gpu_resource(gpu_ids)
-    IO.inspect(gpu_ids)
-    IO.inspect(valid_gpu_ids)
+    gpus = Libvirt.valid_gpu_resource(gpu_ids)
     cpu_and_mem = TrackingStation.Libvirt.get_resources()
-    {cpu_and_mem, valid_gpu_ids}
+    IO.inspect {cpu_and_mem, gpus}
+
+    Mnesia.transaction(fn ->
+      Mnesia.write(
+        node_info(
+          node_id: node(),
+          cpu_count: cpu_and_mem.cpu_count,
+          ram_size: cpu_and_mem.ram_size,
+          free_cpu_count: cpu_and_mem.cpu_count,
+          free_ram_size: cpu_and_mem.ram_size
+        )
+      )
+
+      for gpu <- gpus,
+          do:
+            Mnesia.write(
+              gpu_status(
+                gpu_id: {node(), gpu.id},
+                node_id: node(),
+                name: gpu.device,
+                vram_size: 0,
+                free?: true,
+                online?: true
+              )
+            )
+    end)
   end
 
   def create_vm(node, %{cpu_count: cpu_count, ram_size: ram_size, gpus: gpus})
@@ -59,6 +84,7 @@ defmodule TrackingStation.Scheduler.ResourcePool do
       {:ok, domain_id} ->
         # register domain here
         {:ok, domain_id}
+
       {:error, reason} ->
         # clean up mnesia here
         IO.inspect(reason)
@@ -66,26 +92,15 @@ defmodule TrackingStation.Scheduler.ResourcePool do
   end
 
   def create_vm(node, resources) when node != node() do
-    task = Task.Supervisor.async(
-      {TrackingStation.Scheduler.TaskSupervisor, node},
-      TrackingStation.Scheduler.ResourcePool,
-      :create_vm,
-      [node, resources]
-    )
-    Task.await(task)
-  end
+    task =
+      Task.Supervisor.async(
+        {TrackingStation.Scheduler.TaskSupervisor, node},
+        TrackingStation.Scheduler.ResourcePool,
+        :create_vm,
+        [node, resources]
+      )
 
-  @spec init_local_resource(ResourceSpec) :: :ok | {:error, String.t()}
-  def init_local_resource(local_resource_spec) do
-    case Mnesia.transaction(fn ->
-           Mnesia.write(
-             {Scheduler.ResourcePool, local_resource_spec.cpu_count, local_resource_spec.ram_size,
-              local_resource_spec.gpu_count, local_resource_spec.gpu_list}
-           )
-         end) do
-      {:atomic, :ok} -> :ok
-      _ -> {:error, "mnesia write failed"}
-    end
+    Task.await(task)
   end
 
   def lookup_resource(resource_req) do

@@ -9,8 +9,9 @@ defmodule TrackingStation.Scheduler.Supervisor do
   def init(:ok) do
     children = [
       {Task.Supervisor, name: TrackingStation.Scheduler.TaskSupervisor},
-      TrackingStation.Scheduler.ResourcePool
     ]
+
+    TrackingStation.Scheduler.ResourcePool.init()
 
     Supervisor.init(children, strategy: :one_for_one)
   end
