@@ -8,13 +8,21 @@
     [ (modulesPath + "/installer/scan/not-detected.nix")
     ];
 
-  boot.initrd.availableKernelModules = [ "xhci_pci" "ahci" "nvme" "usbhid" "usb_storage" "sd_mod" "sr_mod" ];
-  boot.initrd = {
-    kernelModules = [ "zfs" ];
-    supportedFilesystems = [ "zfs" ];
+  boot = {
+    initrd = {
+      availableKernelModules = [ "xhci_pci" "ahci" "nvme" "usbhid" "usb_storage" "sd_mod" "sr_mod" ];
+      # As of kernel 6.2, the vfio_virqfd functionality has been folded into the base vfio module
+      kernelModules = [ "zfs" "vfio_pci" "vfio" "vfio_iommu_type1" "vfio_virqfd" ];
+      supportedFilesystems = [ "zfs" ];
+    };
+    kernelModules = [ "kvm-intel" ];
+    extraModulePackages = [ ];
+    kernelParams = [
+      "intel_iommu=on"
+      "iommu=pt"
+      "vfio-pci.ids=10de:1f08"
+    ];
   };
-  boot.kernelModules = [ "kvm-intel" ];
-  boot.extraModulePackages = [ ];
 
   fileSystems."/" =
     { device = "rpool/nixos/root";
