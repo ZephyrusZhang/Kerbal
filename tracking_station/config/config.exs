@@ -20,7 +20,11 @@ config :libcluster,
   ]
 
 config :mnesiac,
-  stores: [TrackingStation.ClusterStore.NodeInfo, TrackingStation.ClusterStore.GPUStatus],
+  stores: [
+    TrackingStation.ClusterStore.NodeInfo,
+    TrackingStation.ClusterStore.GPUStatus,
+    TrackingStation.ClusterStore.ActiveDomain
+  ],
   schema_type: :ram_copies,
   # milliseconds
   table_load_timeout: 600_000

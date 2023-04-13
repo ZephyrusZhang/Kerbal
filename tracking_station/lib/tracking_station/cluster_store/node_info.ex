@@ -1,10 +1,9 @@
 defmodule TrackingStation.ClusterStore.NodeInfo do
   use Mnesiac.Store
-  import Record, only: [defrecord: 3]
+  import Record
 
   defrecord(
     :node_info,
-    __MODULE__,
     node_id: nil,
     cpu_count: 0,
     ram_size: 0,
@@ -23,11 +22,11 @@ defmodule TrackingStation.ClusterStore.NodeInfo do
           )
 
   @impl true
-  def store_options do
+  def store_options() do
     [
       record_name: :node_info,
       attributes: node_info() |> node_info() |> Keyword.keys(),
-      index: [:node_id, :free_cpu_count, :free_ram_size],
+      index: [:free_cpu_count, :free_ram_size],
       ram_copies: [node()]
     ]
   end
