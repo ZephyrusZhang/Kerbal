@@ -1,0 +1,7 @@
+<disk type="file" device="cdrom">
+  <driver name="qemu" type="raw"/>
+  <source file="<%= iso_path %>"/>
+  <target dev="sda" bus="sata"/>
+  <readonly/>
+  <boot order="1"/>
+</disk>

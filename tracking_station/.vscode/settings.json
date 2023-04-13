@@ -1,5 +1,5 @@
 {
     "rust-analyzer.linkedProjects": [
-        "native/libvirt/Cargo.toml"
+        "./native/libvirt/Cargo.toml"
     ]
 }
