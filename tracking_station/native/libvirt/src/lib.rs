@@ -5,7 +5,7 @@ use virt::connect::Connect;
 mod atoms {
     rustler::atoms! {
         ok,
-
+        already_active,
         // error reasons
         conn_err, // fatal, the connection can't be made or failed to close
     }
@@ -67,6 +67,19 @@ fn destroy_domain(url: &str, domain_id: u32) -> Result<Atom, Error> {
     result.map(|_| atoms::ok()).map_err(libvirt_err_to_term)
 }
 
+#[rustler::nif(schedule = "DirtyIo")]
+fn start_network(url: &str, name: &str) -> Result<(Atom, u32), Error> {
+    let conn = Connect::open(url).map_err(|_| build_conn_err())?;
+    let result = operations::start_network(&conn, name);
+    safe_close_connect(conn)?;
+    result
+        .map(|id| match id {
+            Some(id) => ok_tuple(id),
+            None => (atoms::already_active(), 0),
+        })
+        .map_err(libvirt_err_to_term)
+}
+
 // #[rustler::nif(schedule = "DirtyIo")]
 // fn qemu_guest_agent(url: &str, domain_id: u32, data: Binary) -> Result<(Atom, Vec<u8>), Error> {
 //     let conn = Connect::open(url).map_err(|_| build_conn_err())?;
@@ -91,6 +104,7 @@ rustler::init!(
         get_resources,
         create_vm_from_xml,
         poll_domain_stats,
-        destroy_domain
+        destroy_domain,
+        start_network
     ]
 );

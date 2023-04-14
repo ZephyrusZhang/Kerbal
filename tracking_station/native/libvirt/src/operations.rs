@@ -2,7 +2,7 @@ use rustler::NifStruct;
 use std::str;
 use std::thread;
 use std::time::{Duration, Instant, SystemTime};
-use virt::{connect::Connect, domain::Domain, error::Error};
+use virt::{connect::Connect, domain::Domain, error::Error, network::Network};
 
 #[derive(NifStruct)]
 #[module = "TrackingStation.Scheduler.ResourceSpec"]
@@ -111,4 +111,13 @@ pub fn destroy_domain(conn: &Connect, domain_id: u32) -> Result<(), Error> {
     let domain = Domain::lookup_by_id(&conn, domain_id)?;
     domain.destroy()?;
     Ok(())
+}
+
+pub fn start_network(conn: &Connect, name: &str) -> Result<Option<u32>, Error> {
+    let network = Network::lookup_by_name(conn, name)?;
+    if network.is_active()? {
+        Ok(None)
+    } else {
+        network.create().map(|id| Some(id))
+    }
 }
