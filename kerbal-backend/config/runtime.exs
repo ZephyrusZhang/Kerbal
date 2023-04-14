@@ -113,3 +113,6 @@ if config_env() == :prod do
   #
   # See https://hexdocs.pm/swoosh/Swoosh.html#module-installation for details.
 end
+
+config :tracking_station,
+  gpu_ids: System.get_env("GPU_IDS", "") |> String.split(",")
