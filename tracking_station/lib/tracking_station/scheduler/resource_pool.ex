@@ -68,7 +68,8 @@ defmodule TrackingStation.Scheduler.ResourcePool do
 
       gpus_ok? = Enum.all?(current_gpus_info, fn matched_gpu -> length(matched_gpu) == 1 end)
 
-      current_node_info =
+      # there should be existly one match
+      [current_node_info | _] =
         Mnesia.match_object(
           node_info(
             node_id: node,
@@ -122,10 +123,101 @@ defmodule TrackingStation.Scheduler.ResourcePool do
           domain_id: domain_id,
           disk_path: disk_path,
           iso_path: iso_path,
-          gpus: gpus
+          gpus: gpus,
+          status: :creating
         )
       )
     end)
+  end
+
+  defp reclaim_domain(uuid) do
+    domains =
+      Mnesia.transaction(fn ->
+        Mnesia.match_object(
+          active_domain(
+            uuid: uuid,
+            node_id: :_,
+            domain_id: :_,
+            disk_path: :_,
+            iso_path: :_,
+            gpus: :_,
+            status: :_
+          )
+        )
+      end)
+
+    case domains do
+      [record | []] ->
+        # find the domain, first mark it as being deleted.
+        {:atomic, :ok} =
+          Mnesia.transaction(fn ->
+            Mnesia.write(
+              active_domain(
+                record,
+                status: :destroying
+              )
+            )
+          end)
+
+        node = active_domain(record, :node_id)
+        cpu_used = active_domain(record, :cpu_count)
+        ram_used = active_domain(record, :ram_size)
+        free_domain_by_record(node, record)
+
+        {:atomic, :ok} =
+          Mnesia.transaction(fn ->
+            Mnesia.delete(
+              :active_domain,
+              uuid
+            )
+
+            active_domain(record, :gpus)
+            |> Enum.map(fn gpu ->
+              Mnesia.write(gpu_status(gpu, free?: true))
+            end)
+
+            [current_node_info | _] =
+              Mnesia.match_object(
+                node_info(
+                  node_id: node,
+                  cpu_count: :_,
+                  ram_size: :_,
+                  free_cpu_count: :_,
+                  free_ram_size: :_
+                )
+              )
+
+            free_cpu_count = node_info(current_node_info, :free_cpu_count)
+            free_ram_size = node_info(current_node_info, :free_ram_size)
+
+            Mnesia.write(
+              node_info(current_node_info,
+                free_cpu_count: free_cpu_count + cpu_used,
+                free_ram_size: free_ram_size + ram_used
+              )
+            )
+          end)
+
+      _ ->
+        {:error, "no such domain"}
+    end
+  end
+
+  defp free_domain_by_record(node, domain_record) when node == node() do
+    :ok = Libvirt.destroy_domain(active_domain(domain_record, :domain_id))
+    # TODO free disk and iso
+  end
+
+  defp free_domain_by_record(node, domain_record) do
+    task =
+      Task.Supervisor.async(
+        {TrackingStation.Scheduler.TaskSupervisor, node},
+        TrackingStation.Scheduler.ResourcePool,
+        :free_domain_by_record,
+        [node, domain_record]
+      )
+
+    Task.await(task, 30000)
   end
 
   def create_vm(node, %{cpu_count: cpu_count, ram_size: ram_size, gpus: gpus} = spec)
@@ -188,7 +280,7 @@ defmodule TrackingStation.Scheduler.ResourcePool do
         [node, resources]
       )
 
-    Task.await(task)
+    Task.await(task, 30000)
   end
 
   def lookup_resource(resource_req) do

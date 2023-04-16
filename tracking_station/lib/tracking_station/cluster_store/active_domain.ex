@@ -9,7 +9,8 @@ defmodule TrackingStation.ClusterStore.ActiveDomain do
     domain_id: 0,
     disk_path: "",
     iso_path: "",
-    gpus: []
+    gpus: [],
+    status: nil
   )
 
   @type active_domain ::
@@ -20,7 +21,8 @@ defmodule TrackingStation.ClusterStore.ActiveDomain do
             domain_id: integer,
             disk_path: String.t(),
             iso_path: String.t(),
-            gpus: list
+            gpus: list,
+            status: atom
           )
 
   @impl true
