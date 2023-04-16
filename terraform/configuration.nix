@@ -87,6 +87,10 @@
         unix_sock_rw_perms = "0770"
       '';
     };
+    vswitch = {
+      enable = true;
+      resetOnStart = true;
+    };
   };
 
   # List packages installed in system profile. To search, run:
