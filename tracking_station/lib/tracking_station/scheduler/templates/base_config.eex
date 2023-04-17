@@ -121,6 +121,10 @@
       <source network="default"/>
       <model type="virtio"/>
     </interface>
+    <interface type='bridge'>
+      <source bridge='ovsbr0'/>
+      <virtualport type='openvswitch'/>
+    </interface>
     <serial type="pty">
       <target type="isa-serial" port="0">
         <model name="isa-serial"/>
@@ -142,11 +146,7 @@
     </input>
     <input type="mouse" bus="ps2"/>
     <input type="keyboard" bus="ps2"/>
-    <graphics type="spice" port="-1" autoport="yes" listen="0.0.0.0">
-      <listen type="address" address="0.0.0.0"/>
-      <image compression="off"/>
-      <gl enable="no"/>
-    </graphics>
+    <%= spice_config %>
     <sound model="ich9">
       <address type="pci" domain="0x0000" bus="0x00" slot="0x1b" function="0x0"/>
     </sound>

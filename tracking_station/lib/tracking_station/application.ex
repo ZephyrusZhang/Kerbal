@@ -15,10 +15,12 @@ defmodule TrackingStation.Application do
       {Mnesiac.Supervisor, [hosts, [name: TrackingStation.MnesiacSupervisor]]},
       TrackingStation.Scheduler.Supervisor,
       {TrackingStation.Network,
-       [spice_reserved: 5000..6000, tcp_port_range: 10000..20000, udp_port_range: 10000..20000]}
+       [
+         [spice_reserved: 5000..6000, tcp_port_range: 10000..20000, udp_port_range: 10000..20000],
+         []
+       ]}
     ]
 
-    TrackingStation.Network.init()
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
     opts = [strategy: :one_for_one, name: TrackingStation.Supervisor]

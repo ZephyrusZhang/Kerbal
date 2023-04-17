@@ -6,6 +6,10 @@ defmodule TrackingStation.Network do
   use GenServer
   alias TrackingStation.Libvirt
 
+  def start_link([config, opts]) do
+    GenServer.start_link(__MODULE__, config, opts)
+  end
+
   @impl true
   def init(
         spice_reserved: spice_reserved,
@@ -22,35 +26,39 @@ defmodule TrackingStation.Network do
     # Start open vswitch for overlay network
     System.cmd("sudo", ["ovs-vsctl", "add-br", "ovsbr0"])
 
-    %{
-      spice_reserved: Enum.to_list(spice_reserved),
-      tcp_ports: Enum.to_list(tcp_port_range),
-      udp_ports: Enum.to_list(udp_port_range)
-    }
+    {:ok,
+     %{
+       spice_reserved: Enum.to_list(spice_reserved),
+       tcp_ports: Enum.to_list(tcp_port_range),
+       udp_ports: Enum.to_list(udp_port_range)
+     }}
   end
 
-  def allocate_spice_port() do
-    GenServer.call(TrackingStation.Network, {:allocate_port, :spice_reserved})
+  def allocate_spice_port(node) do
+    GenServer.call({TrackingStation.Network, node}, {:allocate_port, :spice_reserved})
   end
 
-  def allocate_tcp_port() do
-    GenServer.call(TrackingStation.Network, {:allocate_port, :tcp_ports})
+  def allocate_tcp_port(node) do
+    GenServer.call({TrackingStation.Network, node}, {:allocate_port, :tcp_ports})
   end
 
-  def allocate_udp_port() do
-    GenServer.call(TrackingStation.Network, {:allocate_port, :tcp_ports})
+  def allocate_udp_port(node) do
+    GenServer.call({TrackingStation.Network, node}, {:allocate_port, :tcp_ports})
   end
 
-  def free_spice_port(port) do
-    GenServer.call(TrackingStation.Network, {:free_port, :spice_reserved, port})
+  def free_spice_port(node, port) do
+    GenServer.cast({TrackingStation.Network, node}, {:free_port, :spice_reserved, port})
+    :ok
   end
 
-  def free_tcp_port(port) do
-    GenServer.call(TrackingStation.Network, {:free_port, :tcp_ports, port})
+  def free_tcp_port(node, port) do
+    GenServer.cast({TrackingStation.Network, node}, {:free_port, :tcp_ports, port})
+    :ok
   end
 
-  def free_udp_port(port) do
-    GenServer.call(TrackingStation.Network, {:free_port, :udp_ports, port})
+  def free_udp_port(node, port) do
+    GenServer.cast({TrackingStation.Network, node}, {:free_port, :udp_ports, port})
+    :ok
   end
 
   # TODO
@@ -141,7 +149,7 @@ defmodule TrackingStation.Network do
   end
 
   @impl true
-  def handle_call({:free_port, pool_name, port}, _from, state) do
-    Map.get_and_update(state, pool_name, fn pool -> [port | pool] end)
+  def handle_cast({:free_port, pool_name, port}, state) do
+    {:noreply, Map.get_and_update(state, pool_name, fn pool -> [port | pool] end)}
   end
 end
