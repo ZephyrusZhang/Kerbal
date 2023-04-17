@@ -27,11 +27,13 @@ const Navbar = () => {
       width={navbarWidth}
       left='310px'
       position='fixed'
+      zIndex='100'
       justifyContent='flex-end'
       px='40px'
       py='20px'
       spacing={5}
-      css={{backdropFilter: 'blur(10px)'}}
+      borderRadius='10px'
+      css={{backdropFilter: 'blur(5px)'}}
     >
       {!isSidebarExpanded &&
         <IconButton

@@ -9,25 +9,21 @@ import {
   Divider,
   Text,
   Flex,
-  Icon, chakra, shouldForwardProp, useMediaQuery
+  Icon, useMediaQuery
 } from '@chakra-ui/react'
 import { MdDeveloperBoard } from 'react-icons/md'
 import { FaSignInAlt } from 'react-icons/fa'
 import { BsFillPersonPlusFill } from 'react-icons/bs'
 import { BiAperture, IoMdColorPalette } from 'react-icons/all'
 import { type IconType } from 'react-icons'
-import { isValidMotionProp, motion } from 'framer-motion'
 import { useKerbalUIController } from "../context";
+import MotionBox from './containers/MotionBox'
 
 interface NavbarButtonProp {
   leftIcon: ReactElement<IconType>
   text: string
   to: string
 }
-
-const MotionBox = chakra(motion.div, {
-  shouldForwardProp: (prop) => isValidMotionProp(prop) || shouldForwardProp(prop)
-})
 
 const Sidebar = () => {
   const buttonsProp: NavbarButtonProp[] = [

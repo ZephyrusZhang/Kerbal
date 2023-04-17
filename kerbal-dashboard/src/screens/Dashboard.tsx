@@ -1,11 +1,28 @@
 import React from 'react'
-import { Box } from '@chakra-ui/react'
+import ContentLayout from "../layouts/ContentLayout";
+import { Text } from "@chakra-ui/react";
 
 const DashBoard = () => {
   return (
-    <Box>
-      Dash board
-    </Box>
+    <ContentLayout>
+      <Text fontSize='6xl'>Dash Board</Text>
+      <Text fontSize='6xl'>Dash Board</Text>
+      <Text fontSize='6xl'>Dash Board</Text>
+      <Text fontSize='6xl'>Dash Board</Text>
+      <Text fontSize='6xl'>Dash Board</Text>
+      <Text fontSize='6xl'>Dash Board</Text>
+      <Text fontSize='6xl'>Dash Board</Text>
+      <Text fontSize='6xl'>Dash Board</Text>
+      <Text fontSize='6xl'>Dash Board</Text>
+      <Text fontSize='6xl'>Dash Board</Text>
+      <Text fontSize='6xl'>Dash Board</Text>
+      <Text fontSize='6xl'>Dash Board</Text>
+      <Text fontSize='6xl'>Dash Board</Text>
+      <Text fontSize='6xl'>Dash Board</Text>
+      <Text fontSize='6xl'>Dash Board</Text>
+      <Text fontSize='6xl'>Dash Board</Text>
+      <Text fontSize='6xl'>Dash Board</Text>
+    </ContentLayout>
   )
 }
 
