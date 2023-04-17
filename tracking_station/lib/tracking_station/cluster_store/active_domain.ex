@@ -7,8 +7,12 @@ defmodule TrackingStation.ClusterStore.ActiveDomain do
     uuid: nil,
     node_id: nil,
     domain_id: 0,
+    cpu_count: 0,
+    ram_size: 0,
     disk_path: "",
     iso_path: "",
+    spice_port: 0,
+    spice_password: "",
     gpus: [],
     status: nil
   )
@@ -19,8 +23,12 @@ defmodule TrackingStation.ClusterStore.ActiveDomain do
             uuid: String.t(),
             node_id: atom,
             domain_id: integer,
+            cpu_count: integer,
+            ram_size: integer,
             disk_path: String.t(),
             iso_path: String.t(),
+            spice_port: integer,
+            spice_password: String.t(),
             gpus: list,
             status: atom
           )
