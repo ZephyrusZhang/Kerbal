@@ -71,7 +71,7 @@ defmodule TrackingStation.Scheduler.ResourcePool do
               )
             )
             matched_gpu
-          end) |> IO.inspect()
+          end)
 
         # there should be existly one match
         [current_node_info | _] =
@@ -154,7 +154,7 @@ defmodule TrackingStation.Scheduler.ResourcePool do
   end
 
   def reclaim_domain(uuid) do
-    [domain | []] =
+    {:atomic, [domain | []]} =
       Mnesia.transaction(fn ->
         Mnesia.match_object(
           active_domain(
