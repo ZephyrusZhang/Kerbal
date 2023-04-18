@@ -39,8 +39,9 @@ defmodule TrackingStation.Scheduler.ResourcePool do
             bus: gpu.bus,
             slot: gpu.slot,
             function: gpu.function,
-            free?: true,
-            online?: true
+            domain_uuid: "",
+            free: true,
+            online: true
           )
         )
       end
@@ -57,19 +58,22 @@ defmodule TrackingStation.Scheduler.ResourcePool do
         current_gpus_info =
           Enum.map(gpus, fn gpu ->
             # there should be exactly one match
-            [matched_gpu | []] = Mnesia.match_object(
-              gpu_status(
-                gpu_id: gpu.gpu_id,
-                node_id: node,
-                name: gpu.name,
-                vram_size: :_,
-                bus: gpu.bus,
-                slot: gpu.slot,
-                function: gpu.function,
-                free?: true,
-                online?: true
+            [matched_gpu | []] =
+              Mnesia.match_object(
+                gpu_status(
+                  gpu_id: gpu.gpu_id,
+                  node_id: node,
+                  name: gpu.name,
+                  vram_size: :_,
+                  bus: gpu.bus,
+                  slot: gpu.slot,
+                  function: gpu.function,
+                  domain_uuid: :_,
+                  free: true,
+                  online: true
+                )
               )
-            )
+
             matched_gpu
           end)
 
@@ -88,10 +92,10 @@ defmodule TrackingStation.Scheduler.ResourcePool do
         free_cpu_count = node_info(current_node_info, :free_cpu_count)
         free_ram_size = node_info(current_node_info, :free_ram_size)
 
-        :true = free_cpu_count >= cpu_count and free_ram_size >= ram_size
+        true = free_cpu_count >= cpu_count and free_ram_size >= ram_size
 
         Enum.map(current_gpus_info, fn gpu ->
-          Mnesia.write(gpu_status(gpu, free?: false))
+          Mnesia.write(gpu_status(gpu, free: false))
         end)
 
         Mnesia.write(
@@ -146,10 +150,32 @@ defmodule TrackingStation.Scheduler.ResourcePool do
           iso_path: iso_path,
           spice_port: spice_port,
           spice_password: spice_password,
-          gpus: gpus,
           status: :creating
         )
       )
+
+      gpus
+      |> Enum.map(fn gpu ->
+        [matched_gpu | []] =
+          Mnesia.match_object(
+            gpu_status(
+              gpu_id: gpu.gpu_id,
+              node_id: :_,
+              name: :_,
+              vram_size: :_,
+              bus: :_,
+              slot: :_,
+              function: :_,
+              domain_uuid: :_,
+              free: :_,
+              online: :_
+            )
+          )
+
+        Mnesia.write(gpu_status(matched_gpu, domain_uuid: uuid))
+      end)
+
+      :ok
     end)
   end
 
@@ -167,7 +193,6 @@ defmodule TrackingStation.Scheduler.ResourcePool do
             iso_path: :_,
             spice_port: :_,
             spice_password: :_,
-            gpus: :_,
             status: :_
           )
         )
@@ -195,9 +220,22 @@ defmodule TrackingStation.Scheduler.ResourcePool do
       Mnesia.transaction(fn ->
         Mnesia.delete({:active_domain, uuid})
 
-        active_domain(domain, :gpus)
+        Mnesia.match_object(
+          gpu_status(
+            gpu_id: :_,
+            node_id: :_,
+            name: :_,
+            vram_size: :_,
+            bus: :_,
+            slot: :_,
+            function: :_,
+            domain_uuid: uuid,
+            free: :_,
+            online: :_
+          )
+        )
         |> Enum.map(fn gpu ->
-          Mnesia.write(gpu_status(gpu, free?: true))
+          Mnesia.write(gpu_status(gpu, free: true))
         end)
 
         [current_node_info | _] =
@@ -312,6 +350,52 @@ defmodule TrackingStation.Scheduler.ResourcePool do
     Task.await(task, 30000)
   end
 
+  def get_domain_info(uuid) do
+    {:atomic, info} = Mnesia.transaction(fn ->
+      [domain | []] =
+        Mnesia.match_object(
+          active_domain(
+            uuid: uuid,
+            node_id: :_,
+            domain_id: :_,
+            cpu_count: :_,
+            ram_size: :_,
+            disk_path: :_,
+            iso_path: :_,
+            spice_port: :_,
+            spice_password: :_,
+            status: :_
+          )
+        )
+
+      gpus =
+        Mnesia.match_object(
+          gpu_status(
+            gpu_id: :_,
+            node_id: :_,
+            name: :_,
+            vram_size: :_,
+            bus: :_,
+            slot: :_,
+            function: :_,
+            domain_uuid: uuid,
+            free: :_,
+            online: :_
+          )
+        )
+        |> Enum.map(fn gpu ->
+          gpu |> gpu_status() |> Enum.into(%{})
+        end)
+
+      domain
+      |> active_domain()
+      |> Enum.into(%{})
+      |> Map.put(:gpus, gpus)
+    end)
+
+    info
+  end
+
   def lookup_resource(%{
         cpu_count: cpu_count,
         ram_size: ram_size,
@@ -327,8 +411,9 @@ defmodule TrackingStation.Scheduler.ResourcePool do
         bus: :_,
         slot: :_,
         function: :_,
-        free?: :"$4",
-        online?: :"$5"
+        domain_uuid: :_,
+        free: :"$4",
+        online: :"$5"
       )
 
     guard = [{:>=, :"$3", vram_size}, {:==, :"$4", true}, {:==, :"$5", true}]
