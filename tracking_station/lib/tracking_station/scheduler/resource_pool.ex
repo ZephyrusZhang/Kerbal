@@ -56,11 +56,12 @@ defmodule TrackingStation.Scheduler.ResourcePool do
       Mnesia.transaction(fn ->
         current_gpus_info =
           Enum.map(gpus, fn gpu ->
-            Mnesia.match_object(
+            # there should be exactly one match
+            [matched_gpu | []] = Mnesia.match_object(
               gpu_status(
-                gpu_id: {node, gpu.id},
+                gpu_id: gpu.gpu_id,
                 node_id: node,
-                name: gpu.device,
+                name: gpu.name,
                 vram_size: :_,
                 bus: gpu.bus,
                 slot: gpu.slot,
@@ -69,9 +70,8 @@ defmodule TrackingStation.Scheduler.ResourcePool do
                 online?: true
               )
             )
-          end)
-
-        :ok = Enum.all?(current_gpus_info, fn matched_gpu -> length(matched_gpu) == 1 end)
+            matched_gpu
+          end) |> IO.inspect()
 
         # there should be existly one match
         [current_node_info | _] =
@@ -88,10 +88,10 @@ defmodule TrackingStation.Scheduler.ResourcePool do
         free_cpu_count = node_info(current_node_info, :free_cpu_count)
         free_ram_size = node_info(current_node_info, :free_ram_size)
 
-        :ok = free_cpu_count >= cpu_count and free_ram_size >= ram_size
+        :true = free_cpu_count >= cpu_count and free_ram_size >= ram_size
 
-        Enum.map(current_gpus_info, fn info ->
-          Mnesia.write(gpu_status(info, free?: false))
+        Enum.map(current_gpus_info, fn gpu ->
+          Mnesia.write(gpu_status(gpu, free?: false))
         end)
 
         Mnesia.write(
@@ -340,7 +340,7 @@ defmodule TrackingStation.Scheduler.ResourcePool do
         [{:==, :"$2", name} | guard]
       end
 
-    result = [:"$$"]
+    result = [:"$_"]
 
     {:atomic, query_result} =
       Mnesia.transaction(fn ->
@@ -352,8 +352,8 @@ defmodule TrackingStation.Scheduler.ResourcePool do
               result
             }
           ])
-          |> Enum.map(fn [node_id, name, vram_size, _free?, _online?] ->
-            %{node_id: node_id, name: name, vram_size: vram_size}
+          |> Enum.map(fn gpu ->
+            gpu |> gpu_status() |> Enum.into(%{})
           end)
 
         available_gpus
