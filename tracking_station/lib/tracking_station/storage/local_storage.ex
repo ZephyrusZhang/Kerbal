@@ -8,10 +8,10 @@ defmodule TrackingStation.Storage.LocalStorage do
   end
 
   def list_base_images() do
-    System.run("zfs", ["list", "rpool/images"])
+    System.cmd("sudo", ["zfs", "list", "rpool/images"])
   end
 
   def list_user_images(_user_id) do
-    System.run("zfs", ["list", "rpool/user_images"])
+    System.cmd("sudo", ["zfs", "list", "rpool/user_images"])
   end
 end
