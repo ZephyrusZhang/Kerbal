@@ -13,6 +13,12 @@ defmodule TrackingStation.Application do
     children = [
       {Cluster.Supervisor, [topology, [name: TrackingStation.ClusterSupervisor]]},
       {Mnesiac.Supervisor, [hosts, [name: TrackingStation.MnesiacSupervisor]]},
+      {TrackingStation.Scheduler.Supervisor, [name: TrackingStation.Scheduler.Supervisor]},
+      {TrackingStation.Network,
+       [
+         [spice_reserved: 5000..6000, tcp_port_range: 10000..20000, udp_port_range: 10000..20000],
+         [name: TrackingStation.Network]
+       ]}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

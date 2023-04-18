@@ -9,6 +9,8 @@ defmodule TrackingStation.Libvirt.Native do
   def poll_domain_stats(_url, _domain_id), do: :erlang.nif_error(:nif_not_loaded)
 
   def destroy_domain(_url, _domain_id), do: :erlang.nif_error(:nif_not_loaded)
+
+  def start_network(_url, _name), do: :erlang.nif_error(:nif_not_loaded)
 end
 
 defmodule TrackingStation.Libvirt do
@@ -27,6 +29,8 @@ defmodule TrackingStation.Libvirt do
   def poll_domain_stats(domain_id), do: Native.poll_domain_stats(@libvirt_url, domain_id)
 
   def destroy_domain(domain_id), do: Native.destroy_domain(@libvirt_url, domain_id)
+
+  def start_network(name), do: Native.start_network(@libvirt_url, name)
 
   def valid_gpu_resource(gpu_ids) do
     case System.cmd("lspci", ["-nnk"]) do

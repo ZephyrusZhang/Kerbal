@@ -20,7 +20,7 @@
     kernelParams = [
       "intel_iommu=on"
       "iommu=pt"
-      "vfio-pci.ids=10de:1f08"
+      "vfio-pci.ids=8086:1901,10de:1f08,10de:10f9,10de:1ada,10de:1adb"
     ];
   };
 

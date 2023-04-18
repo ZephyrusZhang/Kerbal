@@ -69,3 +69,5 @@ config :cors_plug,
   origin: ["http://127.0.0.1:3000", "http://localhost:3000"],
   max_age: 86400,
   methods: ["GET", "POST", "OPTIONS"]
+
+import_config "../../tracking_station/config/config.exs"

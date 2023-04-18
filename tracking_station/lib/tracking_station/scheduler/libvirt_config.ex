@@ -12,6 +12,7 @@ defmodule TrackingStation.Scheduler.LibvirtConfig do
       :ram_size,
       :disk_config,
       :iso_config,
+      :spice_config,
       :gpu_passthrough_config
     ]
   )
@@ -35,5 +36,12 @@ defmodule TrackingStation.Scheduler.LibvirtConfig do
     :gpu_passthrough,
     "lib/tracking_station/scheduler/templates/gpu_passthrough.eex",
     [:bus, :slot, :function]
+  )
+
+  EEx.function_from_file(
+    :def,
+    :spice_config,
+    "lib/tracking_station/scheduler/templates/spice_config.eex",
+    [:spice_port, :password]
   )
 end

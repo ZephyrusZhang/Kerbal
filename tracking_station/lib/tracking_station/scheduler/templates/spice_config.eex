@@ -1,0 +1,5 @@
+<graphics type="spice" port="<%= spice_port %>" autoport="no" listen="0.0.0.0" passwd="<%= password %>">
+    <listen type="address" address="0.0.0.0"/>
+    <image compression="off"/>
+    <gl enable="no"/>
+</graphics>

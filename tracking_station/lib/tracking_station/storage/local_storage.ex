@@ -6,4 +6,12 @@ defmodule TrackingStation.Storage.LocalStorage do
   def get_installation_image() do
     "/home/jeb/archlinux-x86_64.iso"
   end
+
+  def list_base_images() do
+    System.cmd("sudo", ["zfs", "list", "rpool/images"])
+  end
+
+  def list_user_images(_user_id) do
+    System.cmd("sudo", ["zfs", "list", "rpool/user_images"])
+  end
 end
