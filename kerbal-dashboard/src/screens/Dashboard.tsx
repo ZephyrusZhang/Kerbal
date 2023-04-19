@@ -16,6 +16,7 @@ import {
 } from "@chakra-ui/react";
 import request from "../util/request";
 import { AiOutlineDown, AiOutlineSearch, BsTrash, FiRefreshCw } from "react-icons/all";
+import { useNavigate } from "react-router-dom";
 
 interface TableProps {
   username?: string,
@@ -34,6 +35,8 @@ const DashBoard = () => {
     { "username": "zephyrus", "name": "cs", "state": "Starting", "ip":  "114.114.114.114","image": "arch-clean", "specification": "Intel-i5 RTX-2060" }
   ])
 
+  const navigate = useNavigate()
+
   // useEffect(() => {
   //   console.log(tableData)
   //   request.get<TableProps[]>('/api', {
@@ -47,7 +50,7 @@ const DashBoard = () => {
   return (
     <ContentLayout px='30px'>
       <Flex>
-        <Button colorScheme='messenger' mb='20px'>Create</Button>
+        <Button colorScheme='messenger' mb='20px' onClick={() => navigate('/dashboard/create')}>Create</Button>
         <Spacer/>
         <IconButton colorScheme='gray' aria-label='refresh' icon={<FiRefreshCw/>}/>
       </Flex>

@@ -9,6 +9,7 @@ import Dashboard from './screens/Dashboard'
 import SignUp from './screens/SignUp'
 import Test from './test/Test'
 import PrivateRoute from "./routes/PrivateRoute";
+import ContainerCreation from "./screens/ContainerCreation";
 
 export const App = () => {
   return (
@@ -19,7 +20,8 @@ export const App = () => {
         <Route path='/test' element={<Test/>}/>
         <Route path='/' element={<Layout/>}>
           <Route path='/' element={<PrivateRoute/>}>
-            <Route path='dashboard' element={<Dashboard/>}/>
+            <Route path='/dashboard' element={<Dashboard/>}/>
+            <Route path='/dashboard/create' element={<ContainerCreation/>}/>
             <Route path='/' element={<Navigate to='dashboard' replace/>}/>
           </Route>
         </Route>
