@@ -1,8 +1,9 @@
-import React, { ReactNode, useState } from 'react';
+import React, { ReactNode } from 'react';
 import { useKerbalUIController } from "../context";
 import MotionBox from "../components/containers/MotionBox";
+import { BoxProps } from "@chakra-ui/react";
 
-interface Props {
+interface Props extends BoxProps{
   children: ReactNode
 }
 
@@ -15,6 +16,7 @@ const ContentLayout = ({children, ...props}: Props) => {
 
   return (
     <MotionBox
+      {...props}
       width={controller.excludeSidebarWidth}
       top='80px'
       position='relative'
@@ -23,7 +25,6 @@ const ContentLayout = ({children, ...props}: Props) => {
       variants={variants}
       // @ts-ignore
       transition={{ duration: 0.5 }}
-      {...props}
     >
       {children}
     </MotionBox>
