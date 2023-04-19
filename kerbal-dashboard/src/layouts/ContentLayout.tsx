@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useState } from 'react';
 import { useKerbalUIController } from "../context";
 import MotionBox from "../components/containers/MotionBox";
 
@@ -15,6 +15,7 @@ const ContentLayout = ({children, ...props}: Props) => {
 
   return (
     <MotionBox
+      width={controller.excludeSidebarWidth}
       top='80px'
       position='relative'
       initial='sidebarVisible'

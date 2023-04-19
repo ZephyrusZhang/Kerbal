@@ -64,7 +64,8 @@ const SignUp = () => {
             }
         }),
       {withCredentials: true}
-    ).then(() => {
+    ).then((response) => {
+      localStorage.setItem('token', response.headers['Authorization'])
       navigate('/')
     })
   }

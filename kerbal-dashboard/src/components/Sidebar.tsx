@@ -4,17 +4,16 @@ import {
   VStack,
   useColorModeValue,
   Button,
-  useColorMode,
   Link,
   Divider,
   Text,
   Flex,
-  Icon, useMediaQuery
+  Icon
 } from '@chakra-ui/react'
 import { MdDeveloperBoard } from 'react-icons/md'
 import { FaSignInAlt } from 'react-icons/fa'
 import { BsFillPersonPlusFill } from 'react-icons/bs'
-import { BiAperture, IoMdColorPalette } from 'react-icons/all'
+import { BiAperture } from 'react-icons/all'
 import { type IconType } from 'react-icons'
 import { useKerbalUIController } from "../context";
 import MotionBox from './containers/MotionBox'
@@ -40,8 +39,6 @@ const Sidebar = () => {
   const bgColor = useColorModeValue('gray.800', 'gray.200')
   const normalColor = useColorModeValue('white', 'gray.600')
   const [selected, setSelected] = useState(0)
-  const { toggleColorMode } = useColorMode()
-  const [expanded] = useMediaQuery('(min-width: 768px)')
 
   return (
     <MotionBox
@@ -51,7 +48,7 @@ const Sidebar = () => {
       display='flex'
       alignItems='center'
       initial='visible'
-      animate={expanded || !controller.isSidebarCollapse ? 'visible' : 'hidden'}
+      animate={controller.canSidebarHidden !== controller.isSidebarCollapse ? 'visible' : 'hidden'}
       variants={variants}
       // @ts-ignore
       transition={{ duration: 0.5 }}
@@ -97,15 +94,6 @@ const Sidebar = () => {
               </Link>
             )
           })}
-          <Button
-            w='100%'
-            variant='ghost'
-            leftIcon={<IoMdColorPalette/>}
-            colorScheme='teal'
-            onClick={toggleColorMode}
-          >
-            Theme
-          </Button>
         </VStack>
       </Box>
     </MotionBox>

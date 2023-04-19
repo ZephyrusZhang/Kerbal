@@ -12,8 +12,8 @@ import {
 } from '@chakra-ui/react'
 import { FiLock, HiOutlineMail, ImGithub, ImGoogle } from 'react-icons/all'
 import { Form, Formik } from 'formik'
-import { useNavigate } from "react-router-dom";
-import request from "../util/request";
+import { useNavigate } from "react-router-dom"
+import request from "../util/request"
 
 interface FormProps {
   email: string
@@ -45,8 +45,8 @@ const SignIn = () => {
       '/api/users/log_in',
       JSON.stringify({user_params: values}),
       {withCredentials: true}
-    ).then(response => {
-      console.log(response)
+    ).then((response) => {
+      localStorage.setItem('token', response.headers['Authorization'])
       navigate('/')
     })
   }

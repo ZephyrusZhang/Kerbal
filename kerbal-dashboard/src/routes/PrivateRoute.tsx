@@ -4,7 +4,8 @@ import { useToast } from "@chakra-ui/react";
 
 
 const PrivateRoute = () => {
-  const isAuthenticated = localStorage.getItem('token')
+  // const isAuthenticated = localStorage.getItem('token')
+  const isAuthenticated = true
   const navigate = useNavigate()
   const toast = useToast()
 
