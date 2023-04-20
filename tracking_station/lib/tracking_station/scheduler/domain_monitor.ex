@@ -16,7 +16,7 @@ defmodule TrackingStation.Scheduler.DomainMonitor do
   end
 
   def force_destroy(domain_uuid) do
-    {pid, _} = Registry.lookup(TrackingStation.Scheduler.DomainMonitorRegistry, uuid)
+    {pid, _} = Registry.lookup(TrackingStation.Scheduler.DomainMonitorRegistry, domain_uuid)
     GenServer.call(pid, :force_destroy, 30000)
   end
 
@@ -133,8 +133,8 @@ defmodule TrackingStation.Scheduler.DomainMonitor do
   end
 
   @impl true
-  def handle_call(:force_destroy, _from, state) do
-    TrackingStation.Scheduler.hard_reclaim_domain(uuid)
+  def handle_call(:force_destroy, _from, %{domain_uuid: domain_uuid} = state) do
+    TrackingStation.Scheduler.hard_reclaim_domain(domain_uuid)
 
     {:stop, :shutdown, state}
   end
