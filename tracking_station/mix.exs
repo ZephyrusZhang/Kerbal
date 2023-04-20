@@ -27,7 +27,8 @@ defmodule TrackingStation.MixProject do
       {:rustler, "~> 0.27.0"},
       {:uuid, "~> 1.1"},
       {:mnesiac, "~> 0.3"},
-      {:libcluster, "~> 3.3"}
+      {:libcluster, "~> 3.3"},
+      {:jason, "~> 1.4"}
     ]
   end
 end
