@@ -1,4 +1,9 @@
 defmodule TrackingStation.Scheduler.DomainMonitor do
+  @moduledoc """
+  TrackingStation.Scheduler.DomainMonitor manages
+  the life time of the domain, it keeps monitoring the domain
+  and handles requests related to this domain (e.g. shutdown the domain)
+  """
   use GenServer
   alias TrackingStation.Libvirt
   import TrackingStation.ClusterStore.ActiveDomain
@@ -8,6 +13,11 @@ defmodule TrackingStation.Scheduler.DomainMonitor do
     GenServer.start_link(__MODULE__, domain_uuid,
       name: {:via, Registry, {TrackingStation.Scheduler.DomainMonitorRegistry, domain_uuid}}
     )
+  end
+
+  def force_destroy(domain_uuid) do
+    {pid, _} = Registry.lookup(TrackingStation.Scheduler.DomainMonitorRegistry, uuid)
+    GenServer.call(pid, :force_destroy, 30000)
   end
 
   @impl true
@@ -120,5 +130,12 @@ defmodule TrackingStation.Scheduler.DomainMonitor do
         IO.inspect(reason)
         {:stop, :normal, state}
     end
+  end
+
+  @impl true
+  def handle_call(:force_destroy, _from, state) do
+    TrackingStation.Scheduler.hard_reclaim_domain(uuid)
+
+    {:stop, :shutdown, state}
   end
 end
