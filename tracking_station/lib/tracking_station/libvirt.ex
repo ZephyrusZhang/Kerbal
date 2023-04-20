@@ -11,6 +11,10 @@ defmodule TrackingStation.Libvirt.Native do
   def destroy_domain(_url, _domain_id), do: :erlang.nif_error(:nif_not_loaded)
 
   def start_network(_url, _name), do: :erlang.nif_error(:nif_not_loaded)
+
+  def qemu_guest_agent(_url, _domain_id, _data), do: :erlang.nif_error(:nif_not_loaded)
+
+  def reset(_url), do: :erlang.nif_error(:nif_not_loaded)
 end
 
 defmodule TrackingStation.Libvirt do
@@ -31,6 +35,11 @@ defmodule TrackingStation.Libvirt do
   def destroy_domain(domain_id), do: Native.destroy_domain(@libvirt_url, domain_id)
 
   def start_network(name), do: Native.start_network(@libvirt_url, name)
+
+  def qemu_guest_agent(domain_id, data),
+    do: Native.qemu_guest_agent(@libvirt_url, domain_id, data)
+
+  def reset(), do: Native.reset(@libvirt_url)
 
   def valid_gpu_resource(gpu_ids) do
     case System.cmd("lspci", ["-nnk"]) do
@@ -57,5 +66,28 @@ defmodule TrackingStation.Libvirt do
       _ ->
         []
     end
+  end
+
+  def guest_run_cmd(domain_id, command, args, capture_output \\ true) do
+    request = %{
+      execute: "guest-exec",
+      arguments: %{path: command, arg: args, "capture-output": capture_output}
+    }
+
+    {:ok, response} = qemu_guest_agent(domain_id, Jason.encode!(request))
+
+    response
+    |> Jason.decode!()
+    |> IO.inspect()
+
+    pid = 0
+
+    request = %{
+      execute: "guest-exec-status",
+      arguments: %{pid: pid}
+    }
+
+    {:ok, response} = qemu_guest_agent(domain_id, Jason.encode!(request))
+    response |> Jason.decode!()
   end
 end

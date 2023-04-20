@@ -1,11 +1,12 @@
-use rustler::{Atom, Error};
+use rustler::{Atom, Binary, Error};
 use virt;
-use virt::connect::Connect;
+use virt::{connect::Connect, error::ErrorNumber, stream::Stream};
 
 mod atoms {
     rustler::atoms! {
         ok,
         already_active,
+        no_domain,
         // error reasons
         conn_err, // fatal, the connection can't be made or failed to close
     }
@@ -13,8 +14,12 @@ mod atoms {
 
 mod operations;
 
+/// parse certain type of errors to atoms, and leave the rest to string
 fn libvirt_err_to_term(libvirt_error: virt::error::Error) -> Error {
-    return Error::Term(Box::new(libvirt_error.to_string()));
+    match libvirt_error.code() {
+        ErrorNumber::NoDomain => Error::Term(Box::new(atoms::no_domain())),
+        _ => Error::Term(Box::new(libvirt_error.to_string())),
+    }
 }
 
 fn ok_tuple<T>(value: T) -> (Atom, T) {
@@ -80,23 +85,44 @@ fn start_network(url: &str, name: &str) -> Result<(Atom, u32), Error> {
         .map_err(libvirt_err_to_term)
 }
 
-// #[rustler::nif(schedule = "DirtyIo")]
-// fn qemu_guest_agent(url: &str, domain_id: u32, data: Binary) -> Result<(Atom, Vec<u8>), Error> {
-//     let conn = Connect::open(url).map_err(|_| build_conn_err())?;
-//     let stream = match Stream::new(&conn, 0).map_err(libvirt_err_to_term) {
-//         Ok(stream) => stream,
-//         Err(e) => {
-//             safe_close_connect(conn)?;
-//             return Err(e);
-//         }
-//     };
-//     let result = operations::qemu_guest_agent(&conn, domain_id, &stream, data.as_slice());
-//     stream
-//         .free()
-//         .map_err(libvirt_err_to_term)
-//         .and(safe_close_connect(conn))?;
-//     result.map(ok_tuple).map_err(libvirt_err_to_term)
-// }
+#[rustler::nif(schedule = "DirtyIo")]
+fn qemu_guest_agent(url: &str, domain_id: u32, data: Binary) -> Result<(Atom, Vec<u8>), Error> {
+    let conn = Connect::open(url).map_err(|_| build_conn_err())?;
+    let stream = match Stream::new(&conn, 0).map_err(libvirt_err_to_term) {
+        Ok(stream) => stream,
+        Err(e) => {
+            safe_close_connect(conn)?;
+            return Err(e);
+        }
+    };
+    let result = operations::qemu_guest_agent(&conn, domain_id, &stream, data.as_slice());
+    match result {
+        Ok(response) => {
+            stream
+                .finish()
+                .map_err(libvirt_err_to_term)
+                .and(safe_close_connect(conn))?;
+            Ok(ok_tuple(response))
+        }
+        Err(error) => {
+            stream
+                .abort()
+                .map_err(libvirt_err_to_term)
+                .and(safe_close_connect(conn))?;
+            Err(libvirt_err_to_term(error))
+        }
+    }
+}
+
+/// Destroy all running domains
+/// use to reset the libvirt and release all resources
+#[rustler::nif(schedule = "DirtyIo")]
+fn reset(url: &str) -> Result<Atom, Error> {
+    let conn = Connect::open(url).map_err(|_| build_conn_err())?;
+    operations::reset(&conn)
+        .map(|_| atoms::ok())
+        .map_err(libvirt_err_to_term)
+}
 
 rustler::init!(
     "Elixir.TrackingStation.Libvirt.Native",
@@ -105,6 +131,8 @@ rustler::init!(
         create_vm_from_xml,
         poll_domain_stats,
         destroy_domain,
-        start_network
+        start_network,
+        qemu_guest_agent,
+        reset
     ]
 );

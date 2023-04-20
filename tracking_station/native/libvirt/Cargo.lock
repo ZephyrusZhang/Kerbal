@@ -377,8 +377,7 @@ checksum = "f1bddf1187be692e79c5ffeab891132dfb0f236ed36a43c7ed39f1165ee20191"
 [[package]]
 name = "virt"
 version = "0.2.12"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7df0697e60d61398cee42ff0ad350843f05ef84bc34df012653a7e6a3ef067bd"
+source = "git+https://gitlab.com/libvirt/libvirt-rust.git?branch=master#65a463e7875922efb06db7e2a43bd0c7fa25a772"
 dependencies = [
  "libc",
  "virt-sys",
@@ -387,8 +386,7 @@ dependencies = [
 [[package]]
 name = "virt-sys"
 version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b88207efda613081369fcb3701283201f9b5745c8f9c09e737921ca0103f5873"
+source = "git+https://gitlab.com/libvirt/libvirt-rust.git?branch=master#65a463e7875922efb06db7e2a43bd0c7fa25a772"
 dependencies = [
  "bindgen",
  "libc",

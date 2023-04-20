@@ -2,7 +2,7 @@ use rustler::NifStruct;
 use std::str;
 use std::thread;
 use std::time::{Duration, Instant, SystemTime};
-use virt::{connect::Connect, domain::Domain, error::Error, network::Network};
+use virt::{connect::Connect, domain::Domain, error::Error, network::Network, stream::Stream};
 
 #[derive(NifStruct)]
 #[module = "TrackingStation.Scheduler.ResourceSpec"]
@@ -24,32 +24,36 @@ pub struct DomainStats {
 }
 
 // There is an problem in Domain::open_channel, don't use this function until it's fixed
-// pub fn qemu_guest_agent(conn: &Connect, domain_id: u32, stream: &Stream, data: &[u8]) -> Result<Vec<u8>, Error> {
-//     let domain = Domain::lookup_by_id(&conn, domain_id)?;
-//     let _channel = domain.open_channel("org.qemu.guest_agent.0", stream, 0)?;
+pub fn qemu_guest_agent(
+    conn: &Connect,
+    domain_id: u32,
+    stream: &Stream,
+    data: &[u8],
+) -> Result<Vec<u8>, Error> {
+    let domain = Domain::lookup_by_id(&conn, domain_id)?;
+    let _channel = domain.open_channel("org.qemu.guest_agent.0", stream, 0)?;
 
-//     let mut offset = 0;
-//     while offset < data.len() {
-//         let bytes_sent = stream.send(&data[offset..])?;
-//         offset += bytes_sent;
-//         // bytes_sent can be 0
-//         // https://libvirt.org/html/libvirt-libvirt-stream.html#virStreamSend
-//     }
+    let mut offset = 0;
+    while offset < data.len() {
+        let bytes_sent = stream.send(&data[offset..])?;
+        offset += bytes_sent;
+        // bytes_sent can be 0
+        // https://libvirt.org/html/libvirt-libvirt-stream.html#virStreamSend
+    }
 
-//     let mut reponse: Vec<u8> = Vec::with_capacity(1024);
-//     let mut recv_buf: [u8; 1024] = [0; 1024];
+    let mut reponse: Vec<u8> = Vec::with_capacity(1024);
+    let mut recv_buf: [u8; 1024] = [0; 1024];
 
-//     while let Ok(bytes_recv) = stream.recv(&mut recv_buf) {
-//         // bytes_recv == 0 is EOF
-//         if bytes_recv == 0 {
-//             stream.finish();
-//             break;
-//         }
-//         reponse.extend_from_slice(&recv_buf[..bytes_recv]);
-//     }
+    while let Ok(bytes_recv) = stream.recv(&mut recv_buf) {
+        // bytes_recv == 0 is EOF
+        if bytes_recv == 0 {
+            break;
+        }
+        reponse.extend_from_slice(&recv_buf[..bytes_recv]);
+    }
 
-//     Ok(reponse)
-// }
+    Ok(reponse)
+}
 
 pub fn get_resources(conn: &Connect) -> Result<ResourceSpec, Error> {
     let node_info = conn.get_node_info()?;
@@ -120,4 +124,14 @@ pub fn start_network(conn: &Connect, name: &str) -> Result<Option<u32>, Error> {
     } else {
         network.create().map(|id| Some(id))
     }
+}
+
+pub fn reset(conn: &Connect) -> Result<(), Error> {
+    let list_domain_ids = conn.list_domains()?;
+
+    for id in list_domain_ids {
+        destroy_domain(conn, id)?
+    }
+
+    Ok(())
 }
