@@ -2,5 +2,6 @@
 	<driver name="qemu" type="raw"/>
 	<source dev="<%= disk_path %>"/>
 	<target dev="vda" bus="virtio"/>
-	<boot order="2"/>
+	<boot order="1"/>
+	<blockio logical_block_size='4096' physical_block_size='4096'/>
 </disk>
