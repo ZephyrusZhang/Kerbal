@@ -74,6 +74,7 @@
     extraGroups = [ "wheel" "libvirt" ]; # Enable ‘sudo’ for the user.
     openssh.authorizedKeys.keys = [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJaVZIpXiOFO/wwIR4BJUY6hA2nVmroDukqm5Xd6iYg+ bill@BillLab"
+      "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCrgvD+ZaiHOGJ71PmLZSGMPr/O1mgJLst56UnqdPja9TdTP9gN/WG+v2xytp5an9zd3YGsmk38nW31sY2wrQgXEP6UykJtrdAv2cic/XdrKoXOkXgDJxVDb6F0vobNOZ8R52pRhaNJTwFzT86Z7gxcLRB+sagst9cHP5Ry18m4sBJXJ/zUeu4ecZgfG/gyTQ5/bPrkwEbkt3qCTkKYNodvB/7p/mQUlHeDlW2FWrk3nQ1Y2+VvptuTN1xyW550c3n9VOmdxpvq7kW8SjEjnZNhT0jK5cbqdt3BVrSjIX2m2JP8vGWc2qZSKuvIU2RO60TtkilZNEeZmFs1nKJ/+7BumObhGlP+dB6Fplg2gG+VyywX0JBdQ1/3x/D0Ydh16Fnl+TlVcewzdsVGVIJVJGfDmuAlmIDAi1TnSxzZB4gzwemaqozGZ1U3E88R7cb70kkk7RyKdKG7tlNxorw5Zxm1uEGqDDmZN54kHqHTz0F70J+nuSmy6Sn+ilMj/3FPvHBnf56SGuE0OyNzEJf9oswauGvQD9ZBQ7GSHETRxgJDDNPocrnZjmGoCmtpmroF56TywWGkiRBEDP9LRdzlplz83vSbtMRb6GnDWzXocORfraldsnOu0uu5EJ7sieuJs0xxnosmYRhP5Q/OaxxzpPjTLCVwXbTLrc47+S5QHNe7kw== 2996362441@qq.com"
     ];
   };
   virtualisation = {
