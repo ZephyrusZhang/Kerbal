@@ -13,7 +13,6 @@ defmodule TrackingStation.ClusterStore.ActiveDomain do
     iso_path: "",
     spice_port: 0,
     spice_password: "",
-    gpus: [],
     status: nil
   )
 
@@ -29,7 +28,6 @@ defmodule TrackingStation.ClusterStore.ActiveDomain do
             iso_path: String.t(),
             spice_port: integer,
             spice_password: String.t(),
-            gpus: list,
             status: atom
           )
 
