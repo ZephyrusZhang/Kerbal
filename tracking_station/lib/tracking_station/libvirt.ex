@@ -68,26 +68,69 @@ defmodule TrackingStation.Libvirt do
     end
   end
 
-  def guest_run_cmd(domain_id, command, args, capture_output \\ true) do
+  def guest_exec(domain_id, command, args, options \\ []) do
+    default_options = [capture_output: true, timeout: 1]
+    options = Keyword.merge(default_options, options)
+
     request = %{
       execute: "guest-exec",
-      arguments: %{path: command, arg: args, "capture-output": capture_output}
+      arguments: %{
+        path: command,
+        arg: args,
+        "capture-output": Keyword.get(options, :capture_output)
+      }
     }
 
-    {:ok, response} = qemu_guest_agent(domain_id, Jason.encode!(request))
+    {response, 0} =
+      System.cmd("sudo", [
+        "virsh",
+        "qemu-agent-command",
+        "#{domain_id}",
+        Jason.encode!(request),
+        "--timeout",
+        "#{Keyword.get(options, :timeout)}"
+      ])
 
     response
     |> Jason.decode!()
-    |> IO.inspect()
+    |> Map.fetch!("return")
+    |> Map.fetch("pid")
+  end
 
-    pid = 0
+  def guest_exec_status(domain_id, pid, options \\ []) do
+    default_options = [timeout: 1]
+    options = Keyword.merge(default_options, options)
 
     request = %{
       execute: "guest-exec-status",
       arguments: %{pid: pid}
     }
 
-    {:ok, response} = qemu_guest_agent(domain_id, Jason.encode!(request))
-    response |> Jason.decode!()
+    {response, 0} =
+      System.cmd("sudo", [
+        "virsh",
+        "qemu-agent-command",
+        "#{domain_id}",
+        Jason.encode!(request),
+        "--timeout",
+        "#{Keyword.get(options, :timeout)}"
+      ])
+
+    response = response
+    |> Jason.decode!()
+    |> Map.fetch!("return")
+
+    output =
+      if Map.has_key?(response, "out-data") do
+        response
+        |> Map.fetch!("out-data")
+        |> Base.decode64!()
+      end
+
+    %{
+      exitcode: Map.get(response, "exitcode"),
+      exited: Map.fetch!(response, "exitcode"),
+      output: output
+    }
   end
 end
