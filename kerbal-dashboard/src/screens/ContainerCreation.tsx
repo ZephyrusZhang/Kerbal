@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import ContentLayout from "../layouts/ContentLayout";
 import { Form, Formik } from "formik";
 import {
+  Button, ButtonGroup,
   Flex,
   FormControl,
   FormLabel,
-  Grid, HStack, Radio, RadioGroup, Tab,
+  Grid, Tab,
   TabList,
   TabPanel,
   TabPanels,
@@ -14,14 +15,16 @@ import {
 } from "@chakra-ui/react";
 import { FiShoppingCart } from "react-icons/all";
 import OSImageButton from "../components/OSImageButton";
+import { useNavigate } from "react-router-dom";
+import SelectMenu from "../components/SelectMenu";
+import GpuSelectTable from "../components/GpuSelectTable";
 
 type OSType = 'Ubuntu' | 'CentOS' | 'NixOS' | 'Debian' | 'Arch' | 'SUSE' | 'Fedora'
 
 const ContainerCreation = () => {
   const osList: OSType[] = ['Ubuntu', 'CentOS', 'NixOS', 'Debian', 'Arch', 'SUSE', 'Fedora']
   const [whichOS, setWhichOS] = useState<string>()
-
-  const cpuCoreNumOptions = [1, 2, 4, 8, 16]
+  const navigate = useNavigate()
 
   return (
     <ContentLayout px='30px'>
@@ -74,19 +77,40 @@ const ContainerCreation = () => {
 
             <Flex>
               <Text>Configuration</Text>
-              <VStack>
+              <VStack w='80%'>
                 <FormControl display='flex'>
-                  <FormLabel>Number of cores (vCPUs)</FormLabel>
-                  <RadioGroup defaultValue='1'>
-                    <HStack>
-                      {cpuCoreNumOptions.map((value) => (
-                        <Radio key={value} value={`${value}`}>{value}</Radio>
-                      ))}
-                    </HStack>
-                  </RadioGroup>
+                  <FormLabel>Number of cores</FormLabel>
+                  <SelectMenu defaultValue={1} options={[
+                    { value: '1', text: '1 vCPU' },
+                    { value: '2', text: '2 vCPU' },
+                    { value: '4', text: '4 vCPU' },
+                    { value: '8', text: '8 vCPU' },
+                    { value: '16', text: '16 vCPU' }
+                  ]}/>
+                </FormControl>
+                <FormControl display='flex'>
+                  <FormLabel>Memory</FormLabel>
+                  <SelectMenu defaultValue={1} options={[
+                    { value: '1', text: '1 GB' },
+                    { value: '2', text: '2 GB' },
+                    { value: '4', text: '4 GB' },
+                    { value: '8', text: '8 GB' },
+                  ]}/>
+                </FormControl>
+                <FormControl display='flex'>
+                  <FormLabel>GPU</FormLabel>
+                  <GpuSelectTable data={[
+                    { name: 'RTX 3090 Ti', vram: 24 },
+                    { name: 'RTX 2060', vram: 6 }
+                  ]}/>
                 </FormControl>
               </VStack>
             </Flex>
+
+            <ButtonGroup spacing={5}>
+              <Button colorScheme='green'>Create</Button>
+              <Button onClick={() => navigate('/dashboard')}>Cancel</Button>
+            </ButtonGroup>
           </Form>
         )}
       </Formik>
