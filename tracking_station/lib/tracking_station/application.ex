@@ -11,6 +11,7 @@ defmodule TrackingStation.Application do
     hosts = topology[:TrackingStation][:config][:hosts]
 
     children = [
+      {TrackingStation.ClusterManager, name: TrackingStation.ClusterManager},
       {Cluster.Supervisor, [topology, [name: TrackingStation.ClusterSupervisor]]},
       {Mnesiac.Supervisor, [hosts, [name: TrackingStation.MnesiacSupervisor]]},
       {TrackingStation.Scheduler.Supervisor, [name: TrackingStation.Scheduler.Supervisor]},
