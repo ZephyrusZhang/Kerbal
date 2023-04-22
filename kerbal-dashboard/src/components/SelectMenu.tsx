@@ -5,14 +5,17 @@ interface Props extends SelectProps {
   options: Array<{
     value: string,
     text: string
-  }>
+  }>,
+  withNoneOption?: boolean
 }
 
-const SelectMenu = ({options, ...props}: Props) => {
+const SelectMenu = ({options, withNoneOption, ...props}: Props) => {
   return (
     <Select
       {...props}
     >
+      {withNoneOption &&
+      <option value={undefined}>None</option>}
       {options.map((value, index) => (
         <option value={value.value} key={index}>{value.text}</option>
       ))}
