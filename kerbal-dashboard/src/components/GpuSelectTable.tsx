@@ -16,6 +16,7 @@ import {
 import { AddIcon, ArrowDownIcon, ArrowUpIcon } from "@chakra-ui/icons";
 import { BsFilter } from "react-icons/all";
 import { Field, FieldInputProps, Form, Formik, FormikProps } from "formik";
+import SelectMenu from "./SelectMenu";
 
 export type GpuInfo = {
   name: string,
@@ -36,11 +37,16 @@ const GPUSelectTable = ({data, ...props}: Props) => {
   const [displayData, setDisplayData] = useState(data)
   const {isOpen, onOpen, onClose} = useDisclosure()
   const filterBtnRef = useRef<HTMLButtonElement>(null)
+  const filterInitialValue: FilterOptionProps = {
+    name: undefined,
+    vram: 0
+  }
 
   const handleFilterSubmit = async (values: FilterOptionProps) => {
-    console.log(values)
     onClose()
     setDisplayData(data.filter(item => item.vram > (values.vram as number)))
+    if (values.name !== undefined)
+      setDisplayData(data.filter(item => item.name === values.name))
   }
 
   const handleClickSort = () => {
@@ -119,7 +125,7 @@ const GPUSelectTable = ({data, ...props}: Props) => {
           <DrawerHeader>Add filter</DrawerHeader>
 
           <DrawerBody>
-            <Formik initialValues={{name: '', vram: 1}} onSubmit={handleFilterSubmit}>
+            <Formik initialValues={filterInitialValue} onSubmit={handleFilterSubmit}>
               {() => (
                 <Form id='filter-form'>
                   <Field name='vram'>
@@ -138,6 +144,18 @@ const GPUSelectTable = ({data, ...props}: Props) => {
                             <NumberDecrementStepper/>
                           </NumberInputStepper>
                         </NumberInput>
+                      </FormControl>
+                    )}
+                  </Field>
+                  <Field name='name'>
+                    {({field}: { field: FieldInputProps<string> }) => (
+                      <FormControl>
+                        <FormLabel>GPU Name</FormLabel>
+                        <SelectMenu
+                          {...field}
+                          withNoneOption
+                          options={data.map(({name}) => ({value: name, text: name}))}
+                        />
                       </FormControl>
                     )}
                   </Field>
