@@ -52,7 +52,7 @@ const DashBoard = () => {
       <Flex>
         <Button colorScheme='messenger' mb='20px' onClick={() => navigate('/dashboard/create')}>Create</Button>
         <Spacer/>
-        <IconButton colorScheme='gray' aria-label='refresh' icon={<FiRefreshCw/>}/>
+        <IconButton colorScheme='gray' variant='ghost' aria-label='refresh' icon={<FiRefreshCw/>}/>
       </Flex>
       <InputGroup>
         <Input/>
@@ -85,7 +85,7 @@ const DashBoard = () => {
                     <Menu>
                       <MenuButton size='xs' as={IconButton} icon={<AiOutlineDown/>}/>
                       <MenuList>
-                        <MenuItem><Button size='xs' leftIcon={<BsTrash/>}>Delete</Button></MenuItem>
+                        <MenuItem icon={<BsTrash/>}>Delete</MenuItem>
                       </MenuList>
                     </Menu>
                   </Stack>
