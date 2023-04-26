@@ -5,7 +5,7 @@ defmodule KerbalWeb.UserAuth do
   import Phoenix.Controller
 
   alias Kerbal.Accounts
-
+  alias ExauthWeb.JWTToken
   # Make the remember me cookie valid for 60 days.
   # If you want bump or reduce this value, also change
   # the token expiry itself in UserToken.
@@ -26,15 +26,10 @@ defmodule KerbalWeb.UserAuth do
   if you are not using LiveView.
   """
   def log_in_user(conn, user, params \\ %{}) do
-    token = Accounts.generate_user_session_token(user)
-    # user_return_to = get_session(conn, :user_return_to)
-
-    conn
-    |> renew_session()
-    |> put_token_in_session(token)
-    |> maybe_write_remember_me_cookie(token, params)
-    |> json(%{status: :ok})
-    # |> redirect(to: user_return_to || signed_in_path(conn))
+    signer = Joken.Signer.create("HS256", "secret") # secret need to be change to a strong secret key.
+    extra_claims = %{user_id: user.id}
+    {:ok, token, claims} = JWTToken.generate_and_sign(extra_claims, signer)
+    conn |> json(%{status: "ok", token: token})
   end
 
   defp maybe_write_remember_me_cookie(conn, token, %{"remember_me" => "true"}) do

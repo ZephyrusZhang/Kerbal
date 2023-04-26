@@ -417,7 +417,7 @@ x-request-id: F1MVIJNRQjHJwpIAAAiM
 * __Response body:__
 ```json
 {
-  "status": "ok"
+  "status": "ok",
 }
 ```
 
@@ -454,7 +454,8 @@ x-request-id: F1MVIJAmfsjNAqkAAAbM
 * __Response body:__
 ```json
 {
-  "status": "ok"
+  "status": "ok",
+  "token": "jwt-token"
 }
 ```
 
