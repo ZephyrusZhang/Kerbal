@@ -4,16 +4,16 @@ defmodule TrackingStation.ClusterStore.GPUStatus do
 
   defrecord(
     :gpu_status,
-    gpu_id: nil,
-    node_id: nil,
-    name: "",
-    vram_size: 0,
-    bus: nil,
-    slot: nil,
-    function: nil,
-    domain_uuid: "", # the uuid of the domain the GPU assigned to
-    free: false,
-    online: false
+    gpu_id: :_,
+    node_id: :_,
+    name: :_,
+    vram_size: :_,
+    bus: :_,
+    slot: :_,
+    function: :_,
+    domain_uuid: :_, # the uuid of the domain the GPU assigned to
+    free: :_,
+    online: :_
   )
 
   @type gpu_status ::

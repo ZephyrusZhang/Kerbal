@@ -4,16 +4,16 @@ defmodule TrackingStation.ClusterStore.ActiveDomain do
 
   defrecord(
     :active_domain,
-    uuid: nil,
-    node_id: nil,
-    domain_id: 0,
-    cpu_count: 0,
-    ram_size: 0,
-    disk_path: "",
-    iso_path: "",
-    spice_port: 0,
-    spice_password: "",
-    status: nil
+    uuid: :_,
+    node_id: :_,
+    domain_id: :_,
+    cpu_count: :_,
+    ram_size: :_,
+    disk_path: :_,
+    iso_path: :_,
+    spice_port: :_,
+    spice_password: :_,
+    status: :_
   )
 
   @type active_domain ::
