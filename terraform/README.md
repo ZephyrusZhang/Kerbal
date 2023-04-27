@@ -36,6 +36,12 @@ mount /dev/nvme0n1p2 /mnt/boot
 ```
 
 2.
+```
+sudo zfs allow -u jeb send,receive,snapshot,clone,promote,rollback rpool/images
+sudo zfs allow -u jeb create,send,receive,snapshot,clone,rollback rpool/templates
+```
+
+3.
 ```bash
 nix run github:serokell/deploy-rs -- --targets ./terraform#planet1
 ```

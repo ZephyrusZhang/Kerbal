@@ -70,6 +70,7 @@
 
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.jeb = {
+    shell = pkgs.zsh;
     isNormalUser = true;
     extraGroups = [ "wheel" "libvirt" ]; # Enable ‘sudo’ for the user.
     openssh.authorizedKeys.keys = [
@@ -98,6 +99,7 @@
   # $ nix search wget
   environment.systemPackages = with pkgs; [
     vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
+    tmux
     curl
     git
     helix
@@ -112,6 +114,22 @@
   #   enable = true;
   #   enableSSHSupport = true;
   # };
+  programs = {
+    zsh = {
+      enable = true;
+      autosuggestions.enable = true;
+      enableCompletion = true;
+      syntaxHighlighting.enable = true;
+      histSize = 10000;
+      ohMyZsh = {
+        enable = true;
+        theme = "ys";
+        plugins = [
+          "git"
+        ];
+      };
+    };
+  };
 
   # List services that you want to enable:
 
