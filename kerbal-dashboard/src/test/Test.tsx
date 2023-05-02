@@ -1,11 +1,11 @@
 import React from 'react'
-import Navbar from "../components/Navbar";
+import UserEdit from "../screens/UserEdit";
 
 const Test = () => {
 
   return (
     <>
-      <Navbar/>
+      <UserEdit/>
     </>
   );
 }
