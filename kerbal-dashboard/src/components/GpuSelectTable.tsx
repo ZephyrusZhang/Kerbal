@@ -20,11 +20,13 @@ import SelectMenu from "./SelectMenu";
 
 export type GpuInfo = {
   name: string,
-  vram: number
+  vram: number,
+  count?: number
 }
 
 interface Props extends TableProps {
-  data: GpuInfo[]
+  data: GpuInfo[],
+  onAddGpu: (gpu: GpuInfo) => void
 }
 
 interface FilterOptionProps {
@@ -32,7 +34,7 @@ interface FilterOptionProps {
   vram?: number
 }
 
-const GPUSelectTable = ({data, ...props}: Props) => {
+const GPUSelectTable = ({data, onAddGpu, ...props}: Props) => {
   const [sortOrder, setSortOrder] = useState<'sequence' | 'reverse'>('reverse')
   const [displayData, setDisplayData] = useState(data)
   const {isOpen, onOpen, onClose} = useDisclosure()
@@ -58,6 +60,7 @@ const GPUSelectTable = ({data, ...props}: Props) => {
       setSortOrder('sequence')
     }
   }
+
 
   return (
     <>
@@ -106,6 +109,7 @@ const GPUSelectTable = ({data, ...props}: Props) => {
                   size='xs'
                   aria-label={'Add GPU'}
                   icon={<AddIcon/>}
+                  onClick={() => onAddGpu(item)}
                 />
               </Td>
             </Tr>

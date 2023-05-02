@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import ContentLayout from "../layouts/ContentLayout";
 import { Form, Formik } from "formik";
 import {
   Button, ButtonGroup,
@@ -17,28 +16,56 @@ import { FiShoppingCart } from "react-icons/all";
 import OSImageButton from "../components/OSImageButton";
 import { useNavigate } from "react-router-dom";
 import SelectMenu from "../components/SelectMenu";
-import GpuSelectTable from "../components/GpuSelectTable";
+import GpuSelectTable, { GpuInfo } from "../components/GpuSelectTable";
+import SelectedGpuTable from "../components/SelectedGpuTable";
+import MainLayout from "../layouts/MainLayout";
 
 type OSType = 'Ubuntu' | 'CentOS' | 'NixOS' | 'Debian' | 'Arch' | 'SUSE' | 'Fedora'
 
 const ContainerCreation = () => {
   const osList: OSType[] = ['Ubuntu', 'CentOS', 'NixOS', 'Debian', 'Arch', 'SUSE', 'Fedora']
   const [whichOS, setWhichOS] = useState<string>()
+  const [selectedGpu, setSelectedGpu] = useState<GpuInfo[]>([])
   const navigate = useNavigate()
+  const cpuOptions = [
+    { value: '1', text: '1 vCPU' },
+    { value: '2', text: '2 vCPU' },
+    { value: '4', text: '4 vCPU' },
+    { value: '8', text: '8 vCPU' },
+    { value: '16', text: '16 vCPU' }
+  ]
+  const memoryOptions = [
+    { value: '1', text: '1 GB' },
+    { value: '2', text: '2 GB' },
+    { value: '4', text: '4 GB' },
+    { value: '8', text: '8 GB' },
+  ]
+
+  const handleAddGpu = (gpu: GpuInfo) => {
+    const index = selectedGpu.findIndex(item => item.name === gpu.name)
+    if (index < 0) {
+      setSelectedGpu([...selectedGpu, {...gpu, count: 1}])
+    } else {
+      const temp = [...selectedGpu]
+      temp[index].count = temp[index].count as number + 1
+      setSelectedGpu(temp)
+    }
+  }
+
+  const handleDeleteGpu = (gpu: GpuInfo) => {
+    const index = selectedGpu.findIndex(item => item.name === gpu.name)
+    const temp = [...selectedGpu]
+    temp[index].count = temp[index].count as number - 1
+    setSelectedGpu(temp.filter(item => item.count as number > 0))
+  }
 
   return (
-    <ContentLayout px='30px'>
+    <MainLayout>
       <Formik initialValues={{}} onSubmit={() => {console.log('submit')}}>
-        {({
-          errors,
-          touched,
-          handleSubmit,
-          handleChange,
-          isSubmitting
-        }) => (
+        {() => (
           <Form>
-            <Flex>
-              <Text >Image</Text>
+            <Flex w='90%'>
+              <Text w='25%' as='b' align='center'>Image</Text>
               <FormControl>
                 <Tabs w='80%'>
                   <TabList>
@@ -51,7 +78,6 @@ const ContainerCreation = () => {
                     <TabPanel>
                       <Grid
                         templateColumns={{ base: "repeat(3, 1fr)", md: "repeat(4, 1fr)", lg: "repeat(6, 1fr)" }}
-                        templateRows="repeat(4, 1fr)"
                         gap={4}
                       >
                         {osList.map((os, index) => (
@@ -75,46 +101,39 @@ const ContainerCreation = () => {
               </FormControl>
             </Flex>
 
-            <Flex>
-              <Text>Configuration</Text>
+            <Flex w='90%'>
+              <Text w='20%' as='b' align='center'>Configuration</Text>
               <VStack w='80%'>
                 <FormControl display='flex'>
-                  <FormLabel>Number of cores</FormLabel>
-                  <SelectMenu defaultValue={1} options={[
-                    { value: '1', text: '1 vCPU' },
-                    { value: '2', text: '2 vCPU' },
-                    { value: '4', text: '4 vCPU' },
-                    { value: '8', text: '8 vCPU' },
-                    { value: '16', text: '16 vCPU' }
-                  ]}/>
+                  <FormLabel w='25%'>Number of cores</FormLabel>
+                  <SelectMenu defaultValue={1} options={cpuOptions}/>
                 </FormControl>
                 <FormControl display='flex'>
-                  <FormLabel>Memory</FormLabel>
-                  <SelectMenu defaultValue={1} options={[
-                    { value: '1', text: '1 GB' },
-                    { value: '2', text: '2 GB' },
-                    { value: '4', text: '4 GB' },
-                    { value: '8', text: '8 GB' },
-                  ]}/>
+                  <FormLabel w='25%'>Memory</FormLabel>
+                  <SelectMenu defaultValue={1} options={memoryOptions}/>
                 </FormControl>
                 <FormControl display='flex'>
-                  <FormLabel>GPU</FormLabel>
-                  <GpuSelectTable data={[
-                    { name: 'RTX 3090 Ti', vram: 24 },
-                    { name: 'RTX 2060', vram: 6 }
-                  ]}/>
+                  <FormLabel w='25%'>GPU</FormLabel>
+                  <VStack w='80%'>
+                    <SelectedGpuTable data={selectedGpu} onDeleteGpu={handleDeleteGpu}/>
+                    <GpuSelectTable data={[
+                      { name: 'RTX 3090 Ti', vram: 24 },
+                      { name: 'RTX 4090 Ti', vram: 32 },
+                      { name: 'RTX 2060', vram: 6 }
+                    ]} onAddGpu={handleAddGpu}/>
+                  </VStack>
                 </FormControl>
               </VStack>
             </Flex>
 
-            <ButtonGroup spacing={5}>
-              <Button colorScheme='green'>Create</Button>
+            <ButtonGroup mt='20px' spacing={5}>
+              <Button type='submit' colorScheme='green'>Create</Button>
               <Button onClick={() => navigate('/dashboard')}>Cancel</Button>
             </ButtonGroup>
           </Form>
         )}
       </Formik>
-    </ContentLayout>
+    </MainLayout>
   )
 }
 

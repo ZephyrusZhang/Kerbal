@@ -1,51 +1,48 @@
 import React from 'react'
-import { HStack, IconButton, useColorMode, useMediaQuery } from '@chakra-ui/react'
-import { CgSun, FiMoon, IoIosSettings, MdMenu } from 'react-icons/all'
-import { useKerbalUIController } from "../context";
+import { Box, Container, Flex, Heading, HStack, IconButton } from '@chakra-ui/react'
+import { IoIosSettings } from 'react-icons/all'
+import ToggleColorModeButton from "./ToggleColorModeButton";
 
 const Navbar = () => {
-  const {controller, dispatch} = useKerbalUIController()
-
-  const handleToggleSidebar = () => {
-    dispatch({...controller, isSidebarCollapse: !controller.isSidebarCollapse})
-  }
-
-  const {colorMode, toggleColorMode} = useColorMode()
-  const [isLargerThan768px] = useMediaQuery('(min-width: 768px)')
-
   return (
-    <HStack
-      width={controller.excludeSidebarWidth}
-      left='310px'
-      position='fixed'
-      zIndex='100'
-      justifyContent='flex-end'
-      px='40px'
-      py='20px'
-      spacing={5}
-      borderRadius='10px'
-      css={{backdropFilter: 'blur(5px)'}}
+    <Box
+      position="fixed"
+      as="nav"
+      w="100%"
+      css={{ backdropFilter: 'blur(10px)' }}
+      zIndex={2}
     >
-      {!isLargerThan768px &&
-        <IconButton
-          icon={<MdMenu style={{fontSize: '20px'}}/>}
-          bg='transparent'
-          aria-label='Menu'
-          onClick={handleToggleSidebar}
-        />
-      }
-      <IconButton
-        icon={colorMode === 'light' ? <CgSun/> : <FiMoon/>}
-        bg='transparent'
-        aria-label='Color Mode'
-        onClick={toggleColorMode}
-      />
-      <IconButton
-        icon={<IoIosSettings style={{fontSize: '20px'}}/>}
-        bg='transparent'
-        aria-label='Setting'
-      />
-    </HStack>
+      <Container
+        display="flex"
+        p={2}
+        maxW="container.md"
+        alignItems="center"
+        justifyContent="space-between"
+      >
+        <Flex align="center" mr={5}>
+          <Heading as="h1" size="lg" letterSpacing={'tighter'}>
+            Kerbal
+          </Heading>
+        </Flex>
+
+        <HStack alignItems='right' spacing={5}>
+          {/*{!isLargerThan768px &&*/}
+          {/*  <IconButton*/}
+          {/*    icon={<MdMenu style={{fontSize: '20px'}}/>}*/}
+          {/*    bg='transparent'*/}
+          {/*    aria-label='Menu'*/}
+          {/*    onClick={handleToggleSidebar}*/}
+          {/*  />*/}
+          {/*}*/}
+          <ToggleColorModeButton/>
+          <IconButton
+            icon={<IoIosSettings style={{fontSize: '20px'}}/>}
+            bg='transparent'
+            aria-label='Setting'
+          />
+        </HStack>
+      </Container>
+    </Box>
   )
 }
 

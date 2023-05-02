@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react'
-import ContentLayout from "../layouts/ContentLayout";
 import {
   Button,
-  Divider, Flex, IconButton, Input, InputGroup, InputRightElement,
+  Flex, IconButton, Input, InputGroup, InputRightElement,
   Menu,
   MenuButton, MenuItem,
   MenuList, Spacer, Stack,
@@ -17,6 +16,7 @@ import {
 import request from "../util/request";
 import { AiOutlineDown, AiOutlineSearch, BsTrash, FiRefreshCw } from "react-icons/all";
 import { useNavigate } from "react-router-dom";
+import MainLayout from "../layouts/MainLayout";
 
 interface TableProps {
   username?: string,
@@ -48,7 +48,7 @@ const DashBoard = () => {
 
 
   return (
-    <ContentLayout px='30px'>
+    <MainLayout>
       <Flex>
         <Button colorScheme='messenger' mb='20px' onClick={() => navigate('/dashboard/create')}>Create</Button>
         <Spacer/>
@@ -95,7 +95,7 @@ const DashBoard = () => {
           </Tbody>
         </Table>
       </TableContainer>
-    </ContentLayout>
+    </MainLayout>
   )
 }
 

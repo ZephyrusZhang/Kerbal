@@ -45,6 +45,7 @@ const Sidebar = () => {
       h='100vh'
       position='fixed'
       px='30px'
+      zIndex='100'
       display='flex'
       alignItems='center'
       initial='visible'

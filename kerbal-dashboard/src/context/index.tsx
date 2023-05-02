@@ -46,8 +46,6 @@ const KerbalUIControllerProvider = ({children}: {children: ReactNode}) => {
   const [controller, setController] = useState<KerbalUIState>(initialState);
   const value = {controller, dispatch: setController}
 
-  //todo: canSidebarHidden 的初始化仍然有bug
-
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth < 768) {
