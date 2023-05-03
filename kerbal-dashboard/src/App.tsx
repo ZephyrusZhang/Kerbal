@@ -10,6 +10,7 @@ import SignUp from './screens/SignUp'
 import Test from './test/Test'
 import PrivateRoute from "./routes/PrivateRoute";
 import ContainerCreation from "./screens/ContainerCreation";
+import UserEdit from './screens/UserEdit'
 
 export const App = () => {
   return (
@@ -18,6 +19,7 @@ export const App = () => {
         <Route path='/sign-in' element={<SignIn/>}/>
         <Route path='/sign-up' element={<SignUp/>}/>
         <Route path='/test' element={<Test/>}/>
+        <Route path='/user_edit' element={<UserEdit/>}/>
         <Route path='/' element={<Layout/>}>
           <Route path='/' element={<PrivateRoute/>}>
             <Route path='/dashboard' element={<Dashboard/>}/>

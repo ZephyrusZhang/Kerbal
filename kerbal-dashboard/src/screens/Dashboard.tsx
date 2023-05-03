@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import {
   Button,
-  Flex, IconButton, Input, InputGroup, InputRightElement,
+  Flex, HStack, IconButton, Input, InputGroup, InputRightElement,
   Menu,
   MenuButton, MenuItem,
   MenuList, Spacer, Stack,
@@ -49,6 +49,9 @@ const DashBoard = () => {
 
   return (
     <MainLayout>
+      <HStack>
+        <Button colorScheme='blackAlpha' mb='20px' onClick={() => navigate('/user_edit')}>EditPassword</Button>
+      </HStack>
       <Flex>
         <Button colorScheme='messenger' mb='20px' onClick={() => navigate('/dashboard/create')}>Create</Button>
         <Spacer/>
