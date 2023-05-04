@@ -1,5 +1,16 @@
 import React from 'react'
-import { Box, Container, Flex, Heading, HStack, IconButton } from '@chakra-ui/react'
+import {
+  Box,
+  Container,
+  Flex,
+  Heading,
+  HStack,
+  IconButton,
+  Menu,
+  MenuButton,
+  MenuItem,
+  MenuList
+} from '@chakra-ui/react'
 import { IoIosSettings } from 'react-icons/all'
 import ToggleColorModeButton from "./ToggleColorModeButton";
 
@@ -35,11 +46,18 @@ const Navbar = () => {
           {/*  />*/}
           {/*}*/}
           <ToggleColorModeButton/>
-          <IconButton
-            icon={<IoIosSettings style={{fontSize: '20px'}}/>}
-            bg='transparent'
-            aria-label='Setting'
-          />
+          {/*<IconButton*/}
+          {/*  icon={<IoIosSettings style={{fontSize: '20px'}}/>}*/}
+          {/*  bg='transparent'*/}
+          {/*  aria-label='Setting'*/}
+          {/*/>*/}
+          <Menu>
+            <MenuButton as={IconButton} icon={<IoIosSettings/>} bg='transparent'/>
+            <MenuList>
+              <MenuItem>Setting</MenuItem>
+              <MenuItem>Sign out</MenuItem>
+            </MenuList>
+          </Menu>
         </HStack>
       </Container>
     </Box>

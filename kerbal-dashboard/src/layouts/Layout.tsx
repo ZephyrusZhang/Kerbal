@@ -1,12 +1,11 @@
 import React from 'react'
 import { Outlet } from 'react-router-dom'
-import { Box, Flex } from '@chakra-ui/react'
+import { Box, Flex, useColorModeValue } from '@chakra-ui/react'
 import Navbar from '../components/Navbar'
 
 const Layout = () => {
   return (
-    <Flex>
-      {/*<Sidebar/>*/}
+    <Flex w='100vw' h='100vh' bg={useColorModeValue('#f0f1f4', '#1b202b')}>
       <Navbar/>
       <Outlet/>
     </Flex>

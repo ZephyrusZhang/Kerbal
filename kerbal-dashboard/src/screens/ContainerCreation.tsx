@@ -10,7 +10,7 @@ import {
   TabPanel,
   TabPanels,
   Tabs,
-  Text, VStack
+  Text, useColorModeValue, VStack
 } from "@chakra-ui/react";
 import { FiShoppingCart } from "react-icons/all";
 import OSImageButton from "../components/OSImageButton";
@@ -59,12 +59,14 @@ const ContainerCreation = () => {
     setSelectedGpu(temp.filter(item => item.count as number > 0))
   }
 
+  const boxColor = useColorModeValue('#ffffff', '#414040')
+
   return (
     <MainLayout>
       <Formik initialValues={{}} onSubmit={() => {console.log('submit')}}>
         {() => (
           <Form>
-            <Flex w='90%'>
+            <Flex w='90%' bg={boxColor} p='10px' borderRadius='5px'>
               <Text w='25%' as='b' align='center'>Image</Text>
               <FormControl>
                 <Tabs w='80%'>
@@ -101,7 +103,7 @@ const ContainerCreation = () => {
               </FormControl>
             </Flex>
 
-            <Flex w='90%'>
+            <Flex w='90%' bg={boxColor} mt='20px' p='10px' borderRadius='5px'>
               <Text w='20%' as='b' align='center'>Configuration</Text>
               <VStack w='80%'>
                 <FormControl display='flex'>
