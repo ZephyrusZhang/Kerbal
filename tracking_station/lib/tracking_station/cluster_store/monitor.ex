@@ -49,6 +49,13 @@ defmodule TrackingStation.ClusterStore.Monitor do
   @impl true
   def handle_info({:nodedown, node}, state) do
     Logger.warning("ClusterStore.Monitor: #{node} disconnect, cleaning up")
+    clean_dead_node(node)
+    {:noreply, state}
+  end
+
+  @impl true
+  def handle_info({:nodeup, node}, state) do
+    Logger.info("ClusterStore.Monitor: #{node} joined")
     {:noreply, state}
   end
 end

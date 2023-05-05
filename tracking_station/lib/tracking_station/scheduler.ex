@@ -7,12 +7,9 @@ defmodule TrackingStation.Scheduler do
   TrackingStation.Scheduler manages available resources
   and allocate these resources to create new VMs.
   """
-  alias TrackingStation.Network
-  alias TrackingStation.Storage.LocalStorage
   alias :mnesia, as: Mnesia
-  alias TrackingStation.Scheduler.LibvirtConfig
-  alias TrackingStation.Libvirt
   alias TrackingStation.Scheduler.DomainMonitor
+  alias TrackingStation.Libvirt
   import TrackingStation.ClusterStore.NodeInfo
   import TrackingStation.ClusterStore.GPUStatus
   import TrackingStation.ClusterStore.ActiveDomain
@@ -53,371 +50,42 @@ defmodule TrackingStation.Scheduler do
     end)
   end
 
-  defp check_and_allocate(node, %{cpu_count: cpu_count, ram_size: ram_size, gpus: gpus}) do
-    # atomic operation that check all the resources are available and allocate them
-    # allocate spice port
-    {:ok, port} = Network.allocate_spice_port(node)
-    # allocate cpu, ram & gpu
-    {:atomic, {current_gpus_info, current_node_info}} =
-      Mnesia.transaction(fn ->
-        current_gpus_info =
-          Enum.map(gpus, fn gpu ->
-            # there should be exactly one match
-            [matched_gpu | []] =
-              Mnesia.match_object(
-                gpu_status(
-                  gpu_id: gpu.gpu_id,
-                  node_id: node,
-                  name: gpu.name,
-                  vram_size: :_,
-                  bus: gpu.bus,
-                  slot: gpu.slot,
-                  function: gpu.function,
-                  domain_uuid: :_,
-                  free: true,
-                  online: true
-                )
-              )
+  def create_domain(node, spec) when node == node() do
+    uuid = UUID.uuid4()
 
-            matched_gpu
-          end)
-
-        # there should be existly one match
-        [current_node_info | _] =
-          Mnesia.match_object(
-            node_info(
-              node_id: node,
-              cpu_count: :_,
-              ram_size: :_,
-              free_cpu_count: :_,
-              free_ram_size: :_
-            )
-          )
-
-        free_cpu_count = node_info(current_node_info, :free_cpu_count)
-        free_ram_size = node_info(current_node_info, :free_ram_size)
-
-        true = free_cpu_count >= cpu_count and free_ram_size >= ram_size
-
-        Enum.map(current_gpus_info, fn gpu ->
-          Mnesia.write(gpu_status(gpu, free: false))
-        end)
-
-        Mnesia.write(
-          node_info(current_node_info,
-            free_cpu_count: free_cpu_count - cpu_count,
-            free_ram_size: free_ram_size - ram_size
-          )
-        )
-
-        {current_gpus_info, current_node_info}
-      end)
-
-    {port, current_gpus_info, current_node_info}
-  end
-
-  defp rollback_allocation(node, spice_port, gpus_info, node_info) do
-    :ok = Network.free_spice_port(node, spice_port)
-
-    {:atomic, :ok} =
-      Mnesia.transaction(fn ->
-        Enum.map(gpus_info, fn info ->
-          Mnesia.write(info)
-        end)
-
-        Mnesia.write(node_info)
-      end)
-
-    :ok
-  end
-
-  defp register_domain(
-         uuid,
-         node,
-         domain_id,
-         cpu_count,
-         ram_size,
-         disk_path,
-         iso_path,
-         spice_port,
-         spice_password,
-         gpus
-       )
-       when node == node() do
-    {:atomic, :ok} =
-      Mnesia.transaction(fn ->
-        Mnesia.write(
-          active_domain(
-            uuid: uuid,
-            node_id: node,
-            domain_id: domain_id,
-            cpu_count: cpu_count,
-            ram_size: ram_size,
-            disk_path: disk_path,
-            iso_path: iso_path,
-            spice_port: spice_port,
-            spice_password: spice_password,
-            status: :creating
-          )
-        )
-
-        Enum.map(gpus, fn gpu ->
-          [matched_gpu | []] =
-            Mnesia.match_object(
-              gpu_status(
-                gpu_id: gpu.gpu_id,
-                node_id: :_,
-                name: :_,
-                vram_size: :_,
-                bus: :_,
-                slot: :_,
-                function: :_,
-                domain_uuid: :_,
-                free: :_,
-                online: :_
-              )
-            )
-
-          Mnesia.write(gpu_status(matched_gpu, domain_uuid: uuid))
-        end)
-
-        :ok
-      end)
-
-    {:ok, _pid} =
-      DynamicSupervisor.start_child(
-        TrackingStation.Scheduler.DomainMonitorSupervisor,
-        {DomainMonitor, uuid}
-      )
-  end
-
-  def hard_reclaim_domain(uuid) do
-    {:atomic, [domain | []]} =
-      Mnesia.transaction(fn ->
-        Mnesia.match_object(
-          active_domain(
-            uuid: uuid,
-            node_id: :_,
-            domain_id: :_,
-            cpu_count: :_,
-            ram_size: :_,
-            disk_path: :_,
-            iso_path: :_,
-            spice_port: :_,
-            spice_password: :_,
-            status: :_
-          )
-        )
-      end)
-
-    # find the domain, first mark it as being deleted.
-    {:atomic, :ok} =
-      Mnesia.transaction(fn ->
-        Mnesia.write(
-          active_domain(
-            domain,
-            status: :destroying
-          )
-        )
-      end)
-
-    node = active_domain(domain, :node_id)
-    cpu_used = active_domain(domain, :cpu_count)
-    ram_used = active_domain(domain, :ram_size)
-
-    # TODO: handle error
-    :ok = free_domain_by_record(node, domain)
-
-    {:atomic, :ok} =
-      Mnesia.transaction(fn ->
-        Mnesia.delete({:active_domain, uuid})
-
-        Mnesia.match_object(
-          gpu_status(
-            gpu_id: :_,
-            node_id: :_,
-            name: :_,
-            vram_size: :_,
-            bus: :_,
-            slot: :_,
-            function: :_,
-            domain_uuid: uuid,
-            free: :_,
-            online: :_
-          )
-        )
-        |> Enum.map(fn gpu ->
-          Mnesia.write(gpu_status(gpu, free: true))
-        end)
-
-        [current_node_info | _] =
-          Mnesia.match_object(
-            node_info(
-              node_id: node,
-              cpu_count: :_,
-              ram_size: :_,
-              free_cpu_count: :_,
-              free_ram_size: :_
-            )
-          )
-
-        free_cpu_count = node_info(current_node_info, :free_cpu_count)
-        free_ram_size = node_info(current_node_info, :free_ram_size)
-
-        Mnesia.write(
-          node_info(current_node_info,
-            free_cpu_count: free_cpu_count + cpu_used,
-            free_ram_size: free_ram_size + ram_used
-          )
-        )
-      end)
-  end
-
-  defp free_domain_by_record(node, domain_record) when node == node() do
-    case Libvirt.destroy_domain(active_domain(domain_record, :domain_id)) do
-      :ok ->
-        :ok
-
-      {:error, :no_domain} ->
-        # the domain is already destroyed
-        :ok
-
-      {:error, reason} ->
-        raise "Fatal: failed to destroy domain, reason: #{reason}"
-    end
-
-    # TODO free disk and iso
-    :ok
-  end
-
-  defp free_domain_by_record(node, domain_record) do
-    task =
-      Task.Supervisor.async(
-        {TrackingStation.Scheduler.TaskSupervisor, node},
-        TrackingStation.Scheduler,
-        :free_domain_by_record,
-        [node, domain_record]
-      )
-
-    Task.await(task, 30000)
-  end
-
-  def create_vm(node, %{cpu_count: cpu_count, ram_size: ram_size, gpus: gpus} = spec)
-      when node == node() do
-    {spice_port, old_gpus_info, old_node_info} = check_and_allocate(node, spec)
-
-    disk_path = LocalStorage.allocate_disk()
-    iso_path = LocalStorage.get_installation_image()
-    disk_config = LibvirtConfig.disk_config(disk_path)
-    iso_config = LibvirtConfig.iso_config(iso_path)
-    # Be careful It's not a strong password
-    random_password = Base.encode64(:rand.bytes(6))
-    spice_config = LibvirtConfig.spice_config(spice_port, random_password)
-
-    gpu_passthrough =
-      gpus
-      |> Enum.map(fn %{bus: bus, slot: slot, function: function} ->
-        LibvirtConfig.gpu_passthrough(bus, slot, function)
-      end)
-      |> Enum.join("\n")
-
-    uuid = UUID.uuid1()
-
-    xml_config =
-      LibvirtConfig.base_config(
-        uuid,
-        uuid,
-        cpu_count,
-        ram_size,
-        disk_config,
-        iso_config,
-        spice_config,
-        gpu_passthrough
-      )
-
-    case Libvirt.create_vm_from_xml(xml_config) do
-      {:ok, domain_id} ->
-        # register domain here
-        register_domain(
-          uuid,
-          node,
-          domain_id,
-          cpu_count,
-          ram_size,
-          disk_path,
-          iso_path,
-          spice_port,
-          random_password,
-          gpus
-        )
-
-        {:ok, uuid}
-
-      {:error, reason} ->
-        # handle side-effects
-        # clean up mnesia here
-        :ok = rollback_allocation(node, spice_port, old_gpus_info, old_node_info)
-        raise "Fatal: Failed to create vm through libvirt, reason: #{reason}"
+    case DynamicSupervisor.start_child(
+           TrackingStation.Scheduler.DomainMonitorSupervisor,
+           {DomainMonitor, {spec, uuid}}
+         ) do
+      {:ok, _pid} -> {:ok, uuid}
+      {:error, reason} -> {:error, reason}
     end
   end
 
-  def create_vm(node, resources) when node != node() do
+  def create_domain(node, spec) when node != node() do
     task =
       Task.Supervisor.async(
         {TrackingStation.Scheduler.TaskSupervisor, node},
         TrackingStation.Scheduler,
         :create_vm,
-        [node, resources]
+        [node, spec]
       )
 
-    Task.await(task, 30000)
+    Task.await(task, 5000)
   end
 
   def get_domain_info(uuid) do
-    {:atomic, info} =
+    DomainMonitor.get_info(uuid)
+  end
+
+  def list_user_domains(user_id) do
+    {:ok, list_of_domains} =
       Mnesia.transaction(fn ->
-        [domain | []] =
-          Mnesia.match_object(
-            active_domain(
-              uuid: uuid,
-              node_id: :_,
-              domain_id: :_,
-              cpu_count: :_,
-              ram_size: :_,
-              disk_path: :_,
-              iso_path: :_,
-              spice_port: :_,
-              spice_password: :_,
-              status: :_
-            )
-          )
-
-        gpus =
-          Mnesia.match_object(
-            gpu_status(
-              gpu_id: :_,
-              node_id: :_,
-              name: :_,
-              vram_size: :_,
-              bus: :_,
-              slot: :_,
-              function: :_,
-              domain_uuid: uuid,
-              free: :_,
-              online: :_
-            )
-          )
-          |> Enum.map(fn gpu ->
-            gpu |> gpu_status() |> Enum.into(%{})
-          end)
-
-        domain
-        |> active_domain()
-        |> Enum.into(%{})
-        |> Map.put(:gpus, gpus)
+        Mnesia.match_object(active_domain(user_id: user_id))
+        |> Enum.map(&active_domain(&1, :uuid))
       end)
 
-    info
+    list_of_domains
   end
 
   def lookup_resource(%{
@@ -469,16 +137,7 @@ defmodule TrackingStation.Scheduler do
         |> Enum.group_by(&Map.get(&1, :node_id))
         |> Enum.filter(fn {_node, gpus} -> length(gpus) >= gpu_count end)
         |> Enum.map(fn {node, gpus} ->
-          [matched_node_info | []] =
-            Mnesia.match_object(
-              node_info(
-                node_id: node,
-                cpu_count: :_,
-                ram_size: :_,
-                free_cpu_count: :_,
-                free_ram_size: :_
-              )
-            )
+          [matched_node_info | []] = Mnesia.match_object(node_info(node_id: node))
 
           {node, gpus, matched_node_info}
         end)
