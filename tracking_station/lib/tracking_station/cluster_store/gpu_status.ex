@@ -4,15 +4,16 @@ defmodule TrackingStation.ClusterStore.GPUStatus do
 
   defrecord(
     :gpu_status,
-    gpu_id: nil,
-    node_id: nil,
-    name: "",
-    vram_size: 0,
-    bus: nil,
-    slot: nil,
-    function: nil,
-    free?: false,
-    online?: false
+    gpu_id: :_,
+    node_id: :_,
+    name: :_,
+    vram_size: :_,
+    bus: :_,
+    slot: :_,
+    function: :_,
+    domain_uuid: :_, # the uuid of the domain the GPU assigned to
+    free: :_,
+    online: :_
   )
 
   @type gpu_status ::
@@ -25,8 +26,9 @@ defmodule TrackingStation.ClusterStore.GPUStatus do
             bus: String.t(),
             slot: String.t(),
             function: String.t(),
-            free?: boolean,
-            online?: boolean
+            domain_uuid: String.t(),
+            free: boolean,
+            online: boolean
           )
 
   @impl true
@@ -34,7 +36,7 @@ defmodule TrackingStation.ClusterStore.GPUStatus do
     [
       record_name: :gpu_status,
       attributes: gpu_status() |> gpu_status() |> Keyword.keys(),
-      index: [:node_id, :name, :vram_size, :free?, :online?],
+      index: [:node_id, :name, :vram_size, :free, :online],
       ram_copies: [node()]
     ]
   end

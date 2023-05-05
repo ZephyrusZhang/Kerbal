@@ -11,6 +11,10 @@ defmodule TrackingStation.Libvirt.Native do
   def destroy_domain(_url, _domain_id), do: :erlang.nif_error(:nif_not_loaded)
 
   def start_network(_url, _name), do: :erlang.nif_error(:nif_not_loaded)
+
+  def qemu_guest_agent(_url, _domain_id, _data), do: :erlang.nif_error(:nif_not_loaded)
+
+  def reset(_url), do: :erlang.nif_error(:nif_not_loaded)
 end
 
 defmodule TrackingStation.Libvirt do
@@ -31,6 +35,11 @@ defmodule TrackingStation.Libvirt do
   def destroy_domain(domain_id), do: Native.destroy_domain(@libvirt_url, domain_id)
 
   def start_network(name), do: Native.start_network(@libvirt_url, name)
+
+  def qemu_guest_agent(domain_id, data),
+    do: Native.qemu_guest_agent(@libvirt_url, domain_id, data)
+
+  def reset(), do: Native.reset(@libvirt_url)
 
   def valid_gpu_resource(gpu_ids) do
     case System.cmd("lspci", ["-nnk"]) do
@@ -57,5 +66,71 @@ defmodule TrackingStation.Libvirt do
       _ ->
         []
     end
+  end
+
+  def guest_exec(domain_id, command, args, options \\ []) do
+    default_options = [capture_output: true, timeout: 1]
+    options = Keyword.merge(default_options, options)
+
+    request = %{
+      execute: "guest-exec",
+      arguments: %{
+        path: command,
+        arg: args,
+        "capture-output": Keyword.get(options, :capture_output)
+      }
+    }
+
+    {response, 0} =
+      System.cmd("sudo", [
+        "virsh",
+        "qemu-agent-command",
+        "#{domain_id}",
+        Jason.encode!(request),
+        "--timeout",
+        "#{Keyword.get(options, :timeout)}"
+      ])
+
+    response
+    |> Jason.decode!()
+    |> Map.fetch!("return")
+    |> Map.fetch("pid")
+  end
+
+  def guest_exec_status(domain_id, pid, options \\ []) do
+    default_options = [timeout: 1]
+    options = Keyword.merge(default_options, options)
+
+    request = %{
+      execute: "guest-exec-status",
+      arguments: %{pid: pid}
+    }
+
+    {response, 0} =
+      System.cmd("sudo", [
+        "virsh",
+        "qemu-agent-command",
+        "#{domain_id}",
+        Jason.encode!(request),
+        "--timeout",
+        "#{Keyword.get(options, :timeout)}"
+      ])
+
+    response = response
+    |> Jason.decode!()
+    |> Map.fetch!("return")
+
+    output =
+      if Map.has_key?(response, "out-data") do
+        response
+        |> Map.fetch!("out-data")
+        |> Base.decode64!()
+      end
+
+    %{
+      exitcode: Map.get(response, "exitcode"),
+      exited: Map.fetch!(response, "exitcode"),
+      output: output
+    }
   end
 end

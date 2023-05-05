@@ -34,30 +34,30 @@ defmodule TrackingStation.Network do
      }}
   end
 
-  def allocate_spice_port(node) do
-    GenServer.call({TrackingStation.Network, node}, {:allocate_port, :spice_reserved})
+  def allocate_spice_port() do
+    GenServer.call(TrackingStation.Network, {:allocate_port, :spice_reserved})
   end
 
-  def allocate_tcp_port(node) do
-    GenServer.call({TrackingStation.Network, node}, {:allocate_port, :tcp_ports})
+  def allocate_tcp_port() do
+    GenServer.call(TrackingStation.Network, {:allocate_port, :tcp_ports})
   end
 
-  def allocate_udp_port(node) do
-    GenServer.call({TrackingStation.Network, node}, {:allocate_port, :tcp_ports})
+  def allocate_udp_port() do
+    GenServer.call(TrackingStation.Network, {:allocate_port, :tcp_ports})
   end
 
-  def free_spice_port(node, port) do
-    GenServer.cast({TrackingStation.Network, node}, {:free_port, :spice_reserved, port})
+  def free_spice_port(port) do
+    GenServer.cast(TrackingStation.Network, {:free_port, :spice_reserved, port})
     :ok
   end
 
-  def free_tcp_port(node, port) do
-    GenServer.cast({TrackingStation.Network, node}, {:free_port, :tcp_ports, port})
+  def free_tcp_port(port) do
+    GenServer.cast(TrackingStation.Network, {:free_port, :tcp_ports, port})
     :ok
   end
 
-  def free_udp_port(node, port) do
-    GenServer.cast({TrackingStation.Network, node}, {:free_port, :udp_ports, port})
+  def free_udp_port(port) do
+    GenServer.cast(TrackingStation.Network, {:free_port, :udp_ports, port})
     :ok
   end
 

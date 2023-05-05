@@ -3,5 +3,5 @@
   <source file="<%= iso_path %>"/>
   <target dev="sda" bus="sata"/>
   <readonly/>
-  <boot order="1"/>
+  <boot order="2"/>
 </disk>

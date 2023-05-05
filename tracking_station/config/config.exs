@@ -23,7 +23,8 @@ config :mnesiac,
   stores: [
     TrackingStation.ClusterStore.NodeInfo,
     TrackingStation.ClusterStore.GPUStatus,
-    TrackingStation.ClusterStore.ActiveDomain
+    TrackingStation.ClusterStore.ActiveDomain,
+    TrackingStation.ClusterStore.StorageInfo
   ],
   schema_type: :ram_copies,
   # milliseconds

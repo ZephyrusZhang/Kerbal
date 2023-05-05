@@ -4,21 +4,23 @@ defmodule TrackingStation.ClusterStore.NodeInfo do
 
   defrecord(
     :node_info,
-    node_id: nil,
-    cpu_count: 0,
-    ram_size: 0,
-    free_cpu_count: 0,
-    free_ram_size: 0
+    node_id: :_,
+    storage_role: :_,
+    cpu_count: :_,
+    ram_size: :_,
+    free_cpu_count: :_,
+    free_ram_size: :_
   )
 
   @type node_info ::
           record(
             :node_info,
-            node_id: atom,
-            cpu_count: integer,
-            ram_size: integer,
-            free_cpu_count: integer,
-            free_ram_size: integer
+            node_id: atom(),
+            storage_role: :adhoc | :persistent,
+            cpu_count: integer(),
+            ram_size: integer(),
+            free_cpu_count: integer(),
+            free_ram_size: integer()
           )
 
   @impl true

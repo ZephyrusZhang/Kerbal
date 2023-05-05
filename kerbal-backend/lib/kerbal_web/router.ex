@@ -26,6 +26,16 @@ defmodule KerbalWeb.Router do
     end
   end
 
+  scope "/api", KerbalWeb do
+    pipe_through [:api, :require_authenticated_user]
+
+    get "/cluster", ClusterController, :query
+
+    get "/cluster/domain/:domain_uuid", DomainController, :query
+    post "/cluster/domain", DomainController, :create
+    delete "/cluster/domain/:domain_uuid", DomainController, :delete
+  end
+
   ## Authentication routes
 
   scope "/api", KerbalWeb do

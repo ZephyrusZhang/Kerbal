@@ -9,9 +9,12 @@ defmodule TrackingStation.Scheduler.Supervisor do
   def init(:ok) do
     children = [
       {Task.Supervisor, name: TrackingStation.Scheduler.TaskSupervisor},
+      {DynamicSupervisor,
+       name: TrackingStation.Scheduler.DomainMonitorSupervisor, strategy: :one_for_one},
+      {Registry, [keys: :unique, name: TrackingStation.Scheduler.DomainMonitorRegistry]}
     ]
 
-    TrackingStation.Scheduler.ResourcePool.init()
+    TrackingStation.Scheduler.init()
 
     Supervisor.init(children, strategy: :one_for_one)
   end
