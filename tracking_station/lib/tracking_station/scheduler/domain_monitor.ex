@@ -27,13 +27,19 @@ defmodule TrackingStation.Scheduler.DomainMonitor do
   end
 
   def destroy(domain_uuid) do
-    [{pid, _}] = Registry.lookup(TrackingStation.Scheduler.DomainMonitorRegistry, domain_uuid)
-    GenServer.call(pid, :destroy, 30000)
+    case Registry.lookup(TrackingStation.Scheduler.DomainMonitorRegistry, domain_uuid) do
+      [{pid, _}] ->
+        GenServer.call(pid, :destroy, 30000)
+        :ok
+      [] -> {:error, :not_exist}
+    end
   end
 
   def get_info(domain_uuid) do
-    [{pid, _}] = Registry.lookup(TrackingStation.Scheduler.DomainMonitorRegistry, domain_uuid)
-    GenServer.call(pid, :info)
+    case Registry.lookup(TrackingStation.Scheduler.DomainMonitorRegistry, domain_uuid) do
+      [{pid, _}] -> {:ok, GenServer.call(pid, :info)}
+      [] -> {:error, :not_exist}
+    end
   end
 
   # -------------------------

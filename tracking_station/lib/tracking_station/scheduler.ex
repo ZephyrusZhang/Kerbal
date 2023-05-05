@@ -34,7 +34,7 @@ defmodule TrackingStation.Scheduler do
       for gpu <- gpus do
         Mnesia.write(
           gpu_status(
-            gpu_id: {node(), gpu.id},
+            gpu_id: Atom.to_string(node()) <> gpu.id,
             node_id: node(),
             name: gpu.device,
             vram_size: 0,

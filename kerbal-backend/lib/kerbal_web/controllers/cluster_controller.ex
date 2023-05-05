@@ -1,18 +1,12 @@
 defmodule KerbalWeb.ClusterController do
   use KerbalWeb, :controller
 
-  def create(conn, %{"cpu_count" => cpu_count, "ram_size" => ram_size, "gpus" => gpus}) do
-    gpus =
-      gpus
-      |> Enum.map(fn %{"bus" => bus, "slot" => slot, "function" => function} ->
-        %{bus: bus, slot: slot, function: function}
-      end)
+  defp cast_to_int(x) when is_integer(x) do
+    x
+  end
 
-    TrackingStation.Scheduler.create_vm(node(), %{
-      cpu_count: cpu_count,
-      ram_size: ram_size,
-      gpus: gpus
-    })
+  defp cast_to_int(x) when is_binary(x) do
+    String.to_integer(x)
   end
 
   def query(conn, %{
@@ -21,14 +15,31 @@ defmodule KerbalWeb.ClusterController do
         "gpu_count" => gpu_count,
         "gpu" => %{"name" => name, "vram_size" => vram_size}
       }) do
-    TrackingStation.Scheduler.lookup_resource(%{
-      cpu_count: cpu_count,
-      ram_size: ram_size,
-      gpu_count: gpu_count,
-      gpu: %{
-        name: name,
-        vram_size: vram_size
-      }
+    # TODO use changeset
+    name =
+      if name == "" or name == nil do
+        :_
+      else
+        name
+      end
+
+    result =
+      TrackingStation.Scheduler.lookup_resource(
+        %{
+          cpu_count: cpu_count |> cast_to_int(),
+          ram_size: ram_size |> cast_to_int(),
+          gpu_count: gpu_count |> cast_to_int(),
+          gpu: %{
+            name: name,
+            vram_size: vram_size |> String.to_integer()
+          }
+        }
+        |> IO.inspect()
+      )
+
+    json(conn, %{
+      status: :ok,
+      result: result
     })
   end
 end
