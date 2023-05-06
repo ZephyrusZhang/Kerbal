@@ -10,26 +10,33 @@ defmodule KerbalWeb.DomainController do
   end
 
   def query(conn, %{"domain_uuid" => domain_uuid}) do
-    case TrackingStation.Scheduler.get_domain_info(domain_uuid) do
+    user_id = conn.assigns[:current_user]
+
+    case TrackingStation.Scheduler.get_domain_info(domain_uuid, user_id) do
       {:ok, info} ->
         json(conn, %{status: :ok, result: info})
 
       {:error, :not_exist} ->
         json(conn, %{status: :err, reason: :not_exist})
 
+      {:error, :permission_denied} ->
+        json(conn, %{status: :err, reason: :permission_denied})
+
       _ ->
         json(conn, %{status: :err, reason: "unknown error"})
     end
   end
 
-  def create(conn, %{"cpu_count" => cpu_count, "ram_size" => ram_size, "gpus" => gpus} = spec) do
+  def create(conn, %{"cpu_count" => cpu_count, "ram_size" => ram_size, "gpus" => gpus}) do
+    user_id = conn.assigns[:current_user]
+
     gpus =
       gpus
       |> Enum.map(fn %{"gpu_id" => gpu_id, "bus" => bus, "slot" => slot, "function" => function} ->
         %{gpu_id: gpu_id, bus: bus, slot: slot, function: function}
       end)
 
-    case TrackingStation.Scheduler.create_domain(node(), %{
+    case TrackingStation.Scheduler.create_domain(node(), user_id, %{
            cpu_count: cpu_count |> cast_to_int(),
            ram_size: ram_size |> cast_to_int(),
            gpus: gpus
@@ -43,12 +50,17 @@ defmodule KerbalWeb.DomainController do
   end
 
   def delete(conn, %{"domain_uuid" => domain_uuid}) do
-    case TrackingStation.Scheduler.DomainMonitor.destroy(domain_uuid) do
+    user_id = conn.assigns[:current_user]
+
+    case TrackingStation.Scheduler.DomainMonitor.destroy(domain_uuid, user_id) do
       :ok ->
         json(conn, %{status: :ok})
 
       {:error, :not_exist} ->
         json(conn, %{status: :err, reason: :not_exist})
+
+      {:error, :permission_denied} ->
+        json(conn, %{status: :err, reason: :permission_denied})
 
       _ ->
         json(conn, %{status: :err, reason: "unknown error"})

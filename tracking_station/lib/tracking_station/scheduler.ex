@@ -50,32 +50,32 @@ defmodule TrackingStation.Scheduler do
     end)
   end
 
-  def create_domain(node, spec) when node == node() do
+  def create_domain(node, user_id, spec) when node == node() do
     uuid = UUID.uuid4()
 
     case DynamicSupervisor.start_child(
            TrackingStation.Scheduler.DomainMonitorSupervisor,
-           {DomainMonitor, {spec, uuid}}
+           {DomainMonitor, {spec, user_id, uuid}}
          ) do
       {:ok, _pid} -> {:ok, uuid}
       {:error, reason} -> {:error, reason}
     end
   end
 
-  def create_domain(node, spec) when node != node() do
+  def create_domain(node, user_id, spec) when node != node() do
     task =
       Task.Supervisor.async(
         {TrackingStation.Scheduler.TaskSupervisor, node},
         TrackingStation.Scheduler,
         :create_vm,
-        [node, spec]
+        [node, user_id, spec]
       )
 
     Task.await(task, 5000)
   end
 
-  def get_domain_info(uuid) do
-    DomainMonitor.get_info(uuid)
+  def get_domain_info(uuid, user_id) do
+    DomainMonitor.get_info(uuid, user_id)
   end
 
   def list_user_domains(user_id) do
