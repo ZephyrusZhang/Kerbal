@@ -48,7 +48,6 @@ defmodule Kerbal.MixProject do
       {:gettext, "~> 0.20"},
       {:jason, "~> 1.2"},
       {:bandit, ">= 0.7.3"},
-      {:cors_plug, "~> 1.1"},
       {:tracking_station, path: "../tracking_station"}
     ]
   end

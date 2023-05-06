@@ -64,10 +64,4 @@ config :phoenix, :json_library, Jason
 # of this file so it overrides the configuration defined above.
 import_config "#{config_env()}.exs"
 
-# Configures CORSPlug， allow CORS by whitelist
-config :cors_plug,
-  origin: ["http://127.0.0.1:3000", "http://localhost:3000"],
-  max_age: 86400,
-  methods: ["GET", "POST", "OPTIONS"]
-
 import_config "../../tracking_station/config/config.exs"
