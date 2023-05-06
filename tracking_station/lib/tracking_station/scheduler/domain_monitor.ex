@@ -16,9 +16,9 @@ defmodule TrackingStation.Scheduler.DomainMonitor do
   alias TrackingStation.Scheduler.LibvirtConfig
 
   ### ----- client api -----
-  def start_link({spec, domain_uuid}) do
-    GenServer.start_link(__MODULE__, {spec, domain_uuid},
-      name: {:via, Registry, {TrackingStation.Scheduler.DomainMonitorRegistry, domain_uuid}}
+  def start_link({spec, user_id, domain_uuid}) do
+    GenServer.start_link(__MODULE__, {spec, user_id, domain_uuid},
+      name: {:via, Registry, {TrackingStation.Scheduler.DomainMonitorRegistry, domain_uuid, user_id}}
     )
   end
 
@@ -26,18 +26,20 @@ defmodule TrackingStation.Scheduler.DomainMonitor do
     # gracefully shutdown this vm
   end
 
-  def destroy(domain_uuid) do
+  def destroy(domain_uuid, user_id) do
     case Registry.lookup(TrackingStation.Scheduler.DomainMonitorRegistry, domain_uuid) do
-      [{pid, _}] ->
+      [{pid, ^user_id}] ->
         GenServer.call(pid, :destroy, 30000)
         :ok
+      [{_pid, _}] -> {:error, :permission_denied}
       [] -> {:error, :not_exist}
     end
   end
 
-  def get_info(domain_uuid) do
+  def get_info(domain_uuid, user_id) do
     case Registry.lookup(TrackingStation.Scheduler.DomainMonitorRegistry, domain_uuid) do
-      [{pid, _}] -> {:ok, GenServer.call(pid, :info)}
+      [{pid, ^user_id}] -> {:ok, GenServer.call(pid, :info)}
+      [{_pid, _}] -> {:error, :permission_denied}
       [] -> {:error, :not_exist}
     end
   end
@@ -45,8 +47,8 @@ defmodule TrackingStation.Scheduler.DomainMonitor do
   # -------------------------
 
   @impl true
-  def init({spec, domain_uuid}) do
-    port = check_and_allocate(spec, domain_uuid)
+  def init({spec, user_id, domain_uuid}) do
+    port = check_and_allocate(spec, user_id, domain_uuid)
 
     # TODO this step should be done async
     disk_path = LocalStorage.create_running(:base, "archlinux_cuda_gui")
@@ -63,7 +65,7 @@ defmodule TrackingStation.Scheduler.DomainMonitor do
      }}
   end
 
-  defp check_and_allocate(%{cpu_count: cpu_count, ram_size: ram_size, gpus: gpus}, domain_uuid) do
+  defp check_and_allocate(%{cpu_count: cpu_count, ram_size: ram_size, gpus: gpus}, user_id, domain_uuid) do
     node = node()
     # atomic operation that check all the resources are available and allocate them
     # allocate spice port
@@ -109,7 +111,7 @@ defmodule TrackingStation.Scheduler.DomainMonitor do
           active_domain(
             uuid: domain_uuid,
             node_id: node(),
-            user_id: ""
+            user_id: user_id
           )
         )
 
