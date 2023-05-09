@@ -4,8 +4,7 @@ import { useToast } from "@chakra-ui/react";
 
 
 const PrivateRoute = () => {
-  // const isAuthenticated = localStorage.getItem('token')
-  const isAuthenticated = true
+  const isAuthenticated = localStorage.getItem('token') !== null
   const navigate = useNavigate()
   const toast = useToast()
 
@@ -16,7 +15,7 @@ const PrivateRoute = () => {
         status: 'error',
         description: 'Please login first'
       })
-      navigate('/sign-in')
+      navigate('/login')
     }
   }, [isAuthenticated, navigate, toast])
 
