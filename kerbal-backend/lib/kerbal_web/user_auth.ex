@@ -5,7 +5,6 @@ defmodule KerbalWeb.UserAuth do
   import Phoenix.Controller
 
   alias Kerbal.Accounts
-  alias ExauthWeb.JWTToken
   # Make the remember me cookie valid for 60 days.
   # If you want bump or reduce this value, also change
   # the token expiry itself in UserToken.
@@ -25,19 +24,10 @@ defmodule KerbalWeb.UserAuth do
   disconnected on log out. The line can be safely removed
   if you are not using LiveView.
   """
-  def log_in_user(conn, user, params \\ %{}) do
-    signer = Joken.Signer.create("HS256", "secret") # secret need to be change to a strong secret key.
+  def log_in_user(conn, user, _params \\ %{}) do
     extra_claims = %{user_id: user.id}
-    {:ok, token, claims} = JWTToken.generate_and_sign(extra_claims, signer)
+    token = KerbalWeb.JWTToken.generate_and_sign!(extra_claims)
     conn |> json(%{status: "ok", token: token})
-  end
-
-  defp maybe_write_remember_me_cookie(conn, token, %{"remember_me" => "true"}) do
-    put_resp_cookie(conn, @remember_me_cookie, token, @remember_me_options)
-  end
-
-  defp maybe_write_remember_me_cookie(conn, _token, _params) do
-    conn
   end
 
   # This function renews the session ID and erases the whole
@@ -56,28 +46,7 @@ defmodule KerbalWeb.UserAuth do
   #     end
   #
   defp renew_session(conn) do
-    conn
-    |> configure_session(renew: true)
-    |> clear_session()
-  end
-
-  @doc """
-  Logs the user out.
-
-  It clears all session data for safety. See renew_session.
-  """
-  def log_out_user(conn) do
-    user_token = get_session(conn, :user_token)
-    user_token && Accounts.delete_user_session_token(user_token)
-
-    if live_socket_id = get_session(conn, :live_socket_id) do
-      KerbalWeb.Endpoint.broadcast(live_socket_id, "disconnect", %{})
-    end
-
-    conn
-    |> renew_session()
-    |> delete_resp_cookie(@remember_me_cookie)
-    |> json(%{status: :ok})
+    conn |> log_in_user(conn.assigns[:current_user])
   end
 
   @doc """
@@ -85,22 +54,10 @@ defmodule KerbalWeb.UserAuth do
   and remember me token.
   """
   def fetch_current_user(conn, _opts) do
-    {user_token, conn} = ensure_user_token(conn)
-    user = user_token && Accounts.get_user_by_session_token(user_token)
-    assign(conn, :current_user, user)
-  end
-
-  defp ensure_user_token(conn) do
-    if token = get_session(conn, :user_token) do
-      {token, conn}
+    if conn.assigns[:claims] do
+      conn |> assign(:current_user, conn.assigns[:claims]["user_id"])
     else
-      conn = fetch_cookies(conn, signed: [@remember_me_cookie])
-
-      if token = conn.cookies[@remember_me_cookie] do
-        {token, put_token_in_session(conn, token)}
-      else
-        {nil, conn}
-      end
+      conn
     end
   end
 
@@ -133,12 +90,6 @@ defmodule KerbalWeb.UserAuth do
       |> redirect(to: "/users/log_in")
       |> halt()
     end
-  end
-
-  defp put_token_in_session(conn, token) do
-    conn
-    |> put_session(:user_token, token)
-    |> put_session(:live_socket_id, "users_sessions:#{Base.url_encode64(token)}")
   end
 
   defp maybe_store_return_to(%{method: "GET"} = conn) do

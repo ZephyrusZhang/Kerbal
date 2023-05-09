@@ -2,9 +2,11 @@ defmodule KerbalWeb.Router do
   use KerbalWeb, :router
 
   import KerbalWeb.UserAuth
+  import KerbalWeb.JWTToken
 
   pipeline :api do
     plug :accepts, ["json"]
+    plug :fetch_jwt
     plug :fetch_session
     plug :fetch_current_user
   end
@@ -58,7 +60,6 @@ defmodule KerbalWeb.Router do
   scope "/api", KerbalWeb do
     pipe_through [:api]
 
-    delete "/users/log_out", UserSessionController, :delete
     post "/users/confirm", UserConfirmationController, :create
     post "/users/confirm/:token", UserConfirmationController, :update
   end
