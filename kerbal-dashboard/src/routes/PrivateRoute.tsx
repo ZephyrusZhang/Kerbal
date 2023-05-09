@@ -7,12 +7,15 @@ const PrivateRoute = () => {
   const isAuthenticated = localStorage.getItem('token') !== null
   const navigate = useNavigate()
   const toast = useToast()
+  const toastId = 'login-first-error'
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!isAuthenticated && !toast.isActive(toastId)) {
       toast({
+        id: toastId,
         position: 'top',
         status: 'error',
+        duration: 2000,
         description: 'Please login first'
       })
       navigate('/login')

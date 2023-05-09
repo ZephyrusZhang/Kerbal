@@ -18,6 +18,12 @@ import { useNavigate } from "react-router-dom";
 const Navbar = () => {
   const navigate = useNavigate()
 
+  const logout = () => {
+    localStorage.removeItem('token')
+    localStorage.removeItem('is-admin')
+    navigate('/login')
+  }
+
   return (
     <Box
       position="fixed"
@@ -40,20 +46,12 @@ const Navbar = () => {
         </Flex>
 
         <HStack alignItems='right' spacing={5}>
-          {/*{!isLargerThan768px &&*/}
-          {/*  <IconButton*/}
-          {/*    icon={<MdMenu style={{fontSize: '20px'}}/>}*/}
-          {/*    bg='transparent'*/}
-          {/*    aria-label='Menu'*/}
-          {/*    onClick={handleToggleSidebar}*/}
-          {/*  />*/}
-          {/*}*/}
           <ToggleColorModeButton/>
           <Menu>
             <MenuButton as={IconButton} icon={<IoIosSettings/>} bg='transparent'/>
             <MenuList>
               <MenuItem onClick={() => navigate('/account')}>Setting</MenuItem>
-              <MenuItem>Sign out</MenuItem>
+              <MenuItem onClick={logout}>Log out</MenuItem>
             </MenuList>
           </Menu>
         </HStack>

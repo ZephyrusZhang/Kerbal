@@ -5,7 +5,7 @@ import {
 import { Navigate, Route, Routes } from 'react-router-dom'
 import AccountLogin from './screens/AccountLogin'
 import Layout from './layouts/Layout'
-import Dashboard from './screens/Dashboard'
+import Dashboard from './screens/ContainerOverview'
 import AccountCreation from './screens/AccountCreation'
 import Test from './test/Test'
 import PrivateRoute from "./routes/PrivateRoute";
@@ -22,11 +22,11 @@ export const App = () => {
         <Route path='/user_edit' element={<UserEdit/>}/>
         <Route path='/' element={<Layout/>}>
           <Route path='/' element={<PrivateRoute/>}>
-            <Route path='/dashboard' element={<Dashboard/>}/>
-            <Route path='/dashboard/create' element={<ContainerCreation/>}/>
+            <Route path='/container' element={<Dashboard/>}/>
+            <Route path='/container/create' element={<ContainerCreation/>}/>
             <Route path='/account/creation' element={<AccountCreation/>}/>
             <Route path='account' element={<AccountSetting/>}/>
-            <Route path='/' element={<Navigate to='dashboard' replace/>}/>
+            <Route path='/' element={<Navigate to='container' replace/>}/>
           </Route>
         </Route>
       </Routes>

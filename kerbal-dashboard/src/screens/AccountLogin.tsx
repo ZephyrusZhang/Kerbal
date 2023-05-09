@@ -5,8 +5,7 @@ import {
   FormControl, FormErrorMessage, FormLabel, IconButton,
   Input,
   InputGroup,
-  InputLeftElement, InputRightElement,
-  Stack, Switch,
+  InputLeftElement, InputRightElement, Stack, Switch,
   Text, useToast,
   VStack
 } from '@chakra-ui/react'
@@ -51,6 +50,7 @@ const AccountLogin = () => {
       toast({
         position: 'top',
         status: 'success',
+        duration: 2000,
         description: 'Login successfully'
       })
       navigate('/')
@@ -112,14 +112,27 @@ const AccountLogin = () => {
                   <FormControl isInvalid={!!(errors.email && touched.email)}>
                     <InputGroup>
                       <InputLeftElement><HiOutlineMail/></InputLeftElement>
-                      <Input name='email' type='email' w='22vw' onChange={handleChange} borderWidth={2} placeholder='Email'/>
+                      <Input
+                        name='email'
+                        type='email'
+                        w='22vw'
+                        onChange={handleChange}
+                        borderWidth={2}
+                        placeholder='Email'
+                      />
                     </InputGroup>
                     <FormErrorMessage>{errors.email}</FormErrorMessage>
                   </FormControl>
                   <FormControl isInvalid={!!(errors.password && touched.password)}>
                     <InputGroup>
                       <InputLeftElement><FiLock/></InputLeftElement>
-                      <Input name='password' type={showPassword ? 'text' : 'password'} onChange={handleChange} w='22vw' borderWidth={2} placeholder='Password'/>
+                      <Input
+                        name='password'
+                        type={showPassword ? 'text' : 'password'}
+                        onChange={handleChange} w='22vw'
+                        borderWidth={2}
+                        placeholder='Password'
+                      />
                       <InputRightElement>
                         <Button onClick={handleClickShowPassword}>{showPassword ? 'Hide' : 'Show'}</Button>
                       </InputRightElement>
@@ -131,7 +144,7 @@ const AccountLogin = () => {
                     <FormLabel color='gray' ml='20px' mb='1'>Remember me</FormLabel>
                   </Flex>
 
-                  <Button type='submit' w='100%' colorScheme='blue' isLoading={isSubmitting}>SIGN IN</Button>
+                  <Button type='submit' w='100%' colorScheme='blue' isLoading={isSubmitting}>LOGIN</Button>
                 </VStack>
               </Form>
             )}

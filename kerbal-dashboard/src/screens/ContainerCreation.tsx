@@ -118,11 +118,14 @@ const ContainerCreation = () => {
                   <FormLabel w='25%'>GPU</FormLabel>
                   <VStack w='80%'>
                     <SelectedGpuTable data={selectedGpu} onDeleteGpu={handleDeleteGpu}/>
-                    <GpuSelectTable data={[
+                    <GpuSelectTable
+                      data={[
                       { name: 'RTX 3090 Ti', vram: 24 },
                       { name: 'RTX 4090 Ti', vram: 32 },
                       { name: 'RTX 2060', vram: 6 }
-                    ]} onAddGpu={handleAddGpu}/>
+                    ]}
+                      onAddGpu={handleAddGpu}
+                    />
                   </VStack>
                 </FormControl>
               </VStack>
@@ -130,7 +133,7 @@ const ContainerCreation = () => {
 
             <ButtonGroup mt='20px' spacing={5}>
               <Button type='submit' colorScheme='green'>Create</Button>
-              <Button onClick={() => navigate('/dashboard')}>Cancel</Button>
+              <Button onClick={() => navigate('/container')}>Cancel</Button>
             </ButtonGroup>
           </Form>
         )}
