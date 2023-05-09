@@ -5,7 +5,7 @@ import Navbar from '../components/Navbar'
 
 const Layout = () => {
   return (
-    <Flex w='100vw' h='100vh' bg={useColorModeValue('#f0f1f4', '#1b202b')}>
+    <Flex w='100vw' h='100vh' bg={useColorModeValue('#f0f1f4', '#202225')}>
       <Navbar/>
       <Outlet/>
     </Flex>

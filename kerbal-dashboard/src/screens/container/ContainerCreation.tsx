@@ -13,12 +13,12 @@ import {
   Text, useColorModeValue, VStack
 } from "@chakra-ui/react";
 import { FiShoppingCart } from "react-icons/all";
-import OSImageButton from "../components/OSImageButton";
+import OSImageButton from "../../components/OSImageButton";
 import { useNavigate } from "react-router-dom";
-import SelectMenu from "../components/SelectMenu";
-import GpuSelectTable, { GpuInfo } from "../components/GpuSelectTable";
-import SelectedGpuTable from "../components/SelectedGpuTable";
-import MainLayout from "../layouts/MainLayout";
+import SelectMenu from "../../components/SelectMenu";
+import GpuSelectTable, { GpuInfo } from "../../components/GpuSelectTable";
+import SelectedGpuTable from "../../components/SelectedGpuTable";
+import MainLayout from "../../layouts/MainLayout";
 
 type OSType = 'Ubuntu' | 'CentOS' | 'NixOS' | 'Debian' | 'Arch' | 'SUSE' | 'Fedora'
 
@@ -93,10 +93,10 @@ const ContainerCreation = () => {
                       </Grid>
                     </TabPanel>
                     <TabPanel>
-                      <p>two!</p>
+                      <p>custom image</p>
                     </TabPanel>
                     <TabPanel>
-                      <p>three!</p>
+                      <p>image market</p>
                     </TabPanel>
                   </TabPanels>
                 </Tabs>

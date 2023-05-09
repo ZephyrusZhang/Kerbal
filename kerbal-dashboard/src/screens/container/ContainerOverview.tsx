@@ -14,10 +14,11 @@ import {
   Thead,
   Tr, useColorModeValue
 } from "@chakra-ui/react";
-import request from "../util/request";
+import request from "../../util/request";
 import { AiOutlineDown, AiOutlineSearch, BsTrash, FiRefreshCw } from "react-icons/all";
 import { useNavigate } from "react-router-dom";
-import MainLayout from "../layouts/MainLayout";
+import MainLayout from "../../layouts/MainLayout";
+import KerbalBox from "../../components/containers/KerbalBox";
 
 interface TableProps {
   username?: string,
@@ -50,19 +51,12 @@ const ContainerOverview = () => {
 
   return (
     <MainLayout>
-      {/*<HStack>*/}
-      {/*  <Button colorScheme='blackAlpha' mb='20px' onClick={() => navigate('/user_edit')}>EditPassword</Button>*/}
-      {/*</HStack>*/}
       <Flex>
         <Button colorScheme='messenger' mb='20px' onClick={() => navigate('/container/create')}>Create</Button>
         <Spacer/>
         <IconButton colorScheme='gray' variant='ghost' aria-label='refresh' icon={<FiRefreshCw/>}/>
       </Flex>
-      <Box
-        p='50px'
-        borderRadius='10px'
-        bgColor={useColorModeValue('white', '#061626')}
-      >
+      <KerbalBox p='50px'>
         <InputGroup pb='30px'>
           <Input/>
           <InputRightElement><AiOutlineSearch/></InputRightElement>
@@ -104,7 +98,7 @@ const ContainerOverview = () => {
             </Tbody>
           </Table>
         </TableContainer>
-      </Box>
+      </KerbalBox>
     </MainLayout>
   )
 }
