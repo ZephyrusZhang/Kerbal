@@ -13,8 +13,11 @@ import {
 } from '@chakra-ui/react'
 import { IoIosSettings } from 'react-icons/all'
 import ToggleColorModeButton from "./ToggleColorModeButton";
+import { useNavigate } from "react-router-dom";
 
 const Navbar = () => {
+  const navigate = useNavigate()
+
   return (
     <Box
       position="fixed"
@@ -46,15 +49,10 @@ const Navbar = () => {
           {/*  />*/}
           {/*}*/}
           <ToggleColorModeButton/>
-          {/*<IconButton*/}
-          {/*  icon={<IoIosSettings style={{fontSize: '20px'}}/>}*/}
-          {/*  bg='transparent'*/}
-          {/*  aria-label='Setting'*/}
-          {/*/>*/}
           <Menu>
             <MenuButton as={IconButton} icon={<IoIosSettings/>} bg='transparent'/>
             <MenuList>
-              <MenuItem>Setting</MenuItem>
+              <MenuItem onClick={() => navigate('/account')}>Setting</MenuItem>
               <MenuItem>Sign out</MenuItem>
             </MenuList>
           </Menu>
