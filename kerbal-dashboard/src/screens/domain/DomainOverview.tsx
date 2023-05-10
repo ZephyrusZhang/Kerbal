@@ -29,7 +29,7 @@ interface TableProps {
   specification: string
 }
 
-const ContainerOverview = () => {
+const DomainOverview = () => {
   const [tableData, setTableData] = useState<TableProps[]>([
     { "username": "zephyrus", "name": "test_instance", "state": "Running", "ip":  "11.45.14.00", "image": "PyTorch-2.0", "specification": "Intel-i7 RTX-2060" },
     { "username": "zephyrus", "name": "demo", "state": "Stopped", "ip":  "19.19.81.00","image": "ubuntu-clean", "specification": "Intel-i5 RTX-2060" },
@@ -52,7 +52,7 @@ const ContainerOverview = () => {
   return (
     <MainLayout>
       <Flex>
-        <Button colorScheme='messenger' mb='20px' onClick={() => navigate('/container/create')}>Create</Button>
+        <Button colorScheme='messenger' mb='20px' onClick={() => navigate('/domain/create')}>Create</Button>
         <Spacer/>
         <IconButton colorScheme='gray' variant='ghost' aria-label='refresh' icon={<FiRefreshCw/>}/>
       </Flex>
@@ -103,4 +103,4 @@ const ContainerOverview = () => {
   )
 }
 
-export default ContainerOverview
+export default DomainOverview

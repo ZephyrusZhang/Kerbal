@@ -2,11 +2,11 @@ import React from 'react';
 import MainLayout from "../../layouts/MainLayout";
 import { useParams } from "react-router-dom";
 import {
-  Button,
+  Box,
+  Button, Card, CardBody, CardHeader,
   CircularProgress,
-  CircularProgressLabel,
-  HStack, Spacer,
-  Tab,
+  CircularProgressLabel, Heading,
+  HStack, Stack, StackDivider, Tab,
   TabList,
   TabPanel,
   TabPanels,
@@ -21,10 +21,11 @@ import {
   VscDebugRestart
 } from "react-icons/all";
 import KerbalBox from "../../components/containers/KerbalBox";
+import DomainStatusHead from "../../components/DomainStatusHead";
+import { useKerbalUIController } from "../../context";
 
-const ContainerSetting = () => {
+const DomainSetting = () => {
   const {domain_uuid} = useParams()
-
   return (
     <MainLayout>
       <Tabs variant='enclosed'>
@@ -36,17 +37,43 @@ const ContainerSetting = () => {
         <TabPanels>
           <TabPanel>
             <HStack spacing={5}>
-              <KerbalBox minW='15vw' h='275px'>
-                <VStack>
-                  <HStack w='80%'>
-                    <Text fontSize='3xl' as='b'>{domain_uuid}</Text>
-                    <Spacer/>
-                    <Text>status</Text>
-                  </HStack>
+              <KerbalBox as={VStack} minW='25vw' p='10px'>
+                <DomainStatusHead w='80%' mb='30px' name={domain_uuid as string} status='Running'/>
+                <Card w='80%' bgColor='transparent'>
+                  <CardBody>
+                    <Stack divider={<StackDivider />} spacing='4'>
+                      <Box>
+                        <Heading size='xs' textTransform='uppercase'>
+                          Name
+                        </Heading>
+                        <Text pt='2' fontSize='sm'>
+                          {domain_uuid}
+                        </Text>
+                      </Box>
+                      <Box>
+                        <Heading size='xs' textTransform='uppercase'>
+                          IP
+                        </Heading>
+                        <Text pt='2' fontSize='sm'>
+                          11.4.51.4
+                        </Text>
+                      </Box>
+                      <Box>
+                        <Heading size='xs' textTransform='uppercase'>
+                          Image
+                        </Heading>
+                        <Text pt='2' fontSize='sm'>
+                          Ubuntu-clean
+                        </Text>
+                      </Box>
+                    </Stack>
+                  </CardBody>
+                </Card>
+                <HStack spacing={5}>
                   <Button w='50%' leftIcon={<BsPlay/>} colorScheme='whatsapp'>Start</Button>
                   <Button w='50%' leftIcon={<VscDebugRestart/>} colorScheme='orange'>Restart</Button>
                   <Button w='50%' leftIcon={<AiOutlinePauseCircle/>} colorScheme='red'>Stop</Button>
-                </VStack>
+                </HStack>
               </KerbalBox>
               <KerbalBox display='flex' flexDirection='column' p='10px' alignItems='center'>
                 <HStack w='20vw' pb='20px'>
@@ -77,4 +104,4 @@ const ContainerSetting = () => {
   )
 }
 
-export default ContainerSetting;
+export default DomainSetting;

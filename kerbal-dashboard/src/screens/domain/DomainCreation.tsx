@@ -22,7 +22,7 @@ import MainLayout from "../../layouts/MainLayout";
 
 type OSType = 'Ubuntu' | 'CentOS' | 'NixOS' | 'Debian' | 'Arch' | 'SUSE' | 'Fedora'
 
-const ContainerCreation = () => {
+const DomainCreation = () => {
   const osList: OSType[] = ['Ubuntu', 'CentOS', 'NixOS', 'Debian', 'Arch', 'SUSE', 'Fedora']
   const [whichOS, setWhichOS] = useState<string>()
   const [selectedGpu, setSelectedGpu] = useState<GpuInfo[]>([])
@@ -133,7 +133,7 @@ const ContainerCreation = () => {
 
             <ButtonGroup mt='20px' spacing={5}>
               <Button type='submit' colorScheme='green'>Create</Button>
-              <Button onClick={() => navigate('/container')}>Cancel</Button>
+              <Button onClick={() => navigate('/domain')}>Cancel</Button>
             </ButtonGroup>
           </Form>
         )}
@@ -142,4 +142,4 @@ const ContainerCreation = () => {
   )
 }
 
-export default ContainerCreation;
+export default DomainCreation;
