@@ -49,7 +49,7 @@ const Sidebar = () => {
       display='flex'
       alignItems='center'
       initial='visible'
-      animate={controller.canSidebarHidden !== controller.isSidebarCollapse ? 'visible' : 'hidden'}
+      animate={controller.isSidebarCollapse ? 'visible' : 'hidden'}
       variants={variants}
       // @ts-ignore
       transition={{ duration: 0.5 }}

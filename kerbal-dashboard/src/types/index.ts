@@ -1,0 +1,1 @@
+export type DomainStatus = 'Running' | 'Stopping' | 'Stopped' | 'Starting'
