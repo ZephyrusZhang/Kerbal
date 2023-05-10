@@ -38,7 +38,7 @@ const DomainSetting = () => {
           <TabPanel>
             <HStack spacing={5}>
               <KerbalBox as={VStack} minW='25vw' p='10px'>
-                <DomainStatusHead w='80%' mb='30px' name={domain_uuid as string} status='Running'/>
+                <DomainStatusHead w='80%' name={domain_uuid as string} status='Running'/>
                 <Card w='80%' bgColor='transparent'>
                   <CardBody>
                     <Stack divider={<StackDivider />} spacing='4'>
