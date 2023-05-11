@@ -29,7 +29,7 @@ const Sidebar = () => {
     { leftIcon: <VscAccount/>, text: 'Account', to: '/account' }
   ]
   const variants = {
-    hidden: { opacity: 1, x: '-100vw', width: '0' },
+    hidden: { opacity: 1, x: '-100vw' },
     visible: { opacity: 1, x: '0' }
   }
 

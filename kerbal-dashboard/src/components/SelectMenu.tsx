@@ -3,7 +3,7 @@ import { Select, SelectProps } from "@chakra-ui/react";
 
 interface Props extends SelectProps {
   options: Array<{
-    value: string,
+    value: string | number,
     text: string
   }>,
   withNoneOption?: boolean

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import KerbalBox from "../../../components/containers/KerbalBox";
 import {
   Box,
@@ -15,25 +15,49 @@ import {
 } from "@chakra-ui/react";
 import DomainStatusHead from "../../../components/DomainStatusHead";
 import { AiOutlinePauseCircle, BsPlay, RiCpuLine, VscDebugRestart } from "react-icons/all";
+import request from "../../../util/request";
+import { DomainProps } from "../../../types";
 
 interface Props {
   uuid: string
 }
 
-const DomainDashboard = (props: Props) => {
+const DomainDashboard = ({uuid}: Props) => {
+  const [domainProperties, setDomainProperties] = useState<DomainProps>({
+    domain_id: 0,
+    domain_uuid: '',
+    port: 0,
+    running_disk_id: '',
+    spec: {
+      cpu_count: 0,
+      gpus: [],
+      ram_size: 0
+    },
+    status: 'terminated',
+    password: ''
+  })
+
+  useEffect(() => {
+    request.get(
+      `/api/cluster/domain/${uuid}`
+    ).then((response) => {
+      setDomainProperties(response.data.result)
+    })
+  }, [uuid])
+
   return (
     <HStack spacing={5}>
       <KerbalBox as={VStack} minW='25vw' p='10px'>
-        <DomainStatusHead w='80%' name={props.uuid} status='Running'/>
+        <DomainStatusHead w='80%' name={uuid} status={domainProperties.status}/>
         <Card w='90%' bgColor='transparent'>
           <CardBody>
             <Stack divider={<StackDivider />} spacing='4'>
               <Box>
                 <Heading size='xs' textTransform='uppercase'>
-                  Name
+                  UUID
                 </Heading>
                 <Text pt='2' fontSize='sm'>
-                  {props.uuid}
+                  {uuid}
                 </Text>
               </Box>
               <Box>
@@ -41,7 +65,15 @@ const DomainDashboard = (props: Props) => {
                   IP
                 </Heading>
                 <Text pt='2' fontSize='sm'>
-                  11.4.51.4
+                  10.16.97.70:{domainProperties?.port}
+                </Text>
+              </Box>
+              <Box>
+                <Heading size='xs' textTransform='uppercase'>
+                  Remote Viewer Pwd
+                </Heading>
+                <Text pt='2' fontSize='sm'>
+                  {domainProperties.password}
                 </Text>
               </Box>
               <Box>

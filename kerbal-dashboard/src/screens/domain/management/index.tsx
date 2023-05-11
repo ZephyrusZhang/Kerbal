@@ -13,7 +13,7 @@ import {
   GoDashboard
 } from "react-icons/all";
 import DomainDashboard from "./DomainDashboard";
-import DomainProperties from "../DomainProperties";
+import DomainProperties from "./DomainProperties";
 
 const DomainManagement = () => {
   const {domain_uuid} = useParams()

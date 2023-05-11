@@ -23,5 +23,6 @@ export interface DomainProps {
     gpus: Array<GpuProps>,
     ram_size: number
   },
-  status: DomainStatus
+  status: DomainStatus,
+  password: string
 }
