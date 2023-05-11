@@ -9,6 +9,13 @@ defmodule KerbalWeb.DomainController do
     String.to_integer(x)
   end
 
+  def list(conn, _params) do
+    user_id = conn.assigns[:current_user]
+
+    domains = TrackingStation.Scheduler.list_user_domains(user_id)
+    json(conn, domains)
+  end
+
   def query(conn, %{"domain_uuid" => domain_uuid}) do
     user_id = conn.assigns[:current_user]
 

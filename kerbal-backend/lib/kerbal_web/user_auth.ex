@@ -24,8 +24,8 @@ defmodule KerbalWeb.UserAuth do
   disconnected on log out. The line can be safely removed
   if you are not using LiveView.
   """
-  def log_in_user(conn, user, _params \\ %{}) do
-    extra_claims = %{user_id: user.id}
+  def log_in_user(conn, user_id) do
+    extra_claims = %{user_id: user_id, role: "admin"}
     token = KerbalWeb.JWTToken.generate_and_sign!(extra_claims)
     conn |> json(%{status: "ok", token: token})
   end
@@ -67,7 +67,7 @@ defmodule KerbalWeb.UserAuth do
   def redirect_if_user_is_authenticated(conn, _opts) do
     if conn.assigns[:current_user] do
       conn
-      |> redirect(to: "/")
+      |> json(%{status: :err, reason: :already_login})
       |> halt()
     else
       conn
@@ -86,15 +86,8 @@ defmodule KerbalWeb.UserAuth do
     else
       # You must log in to access this page
       conn
-      |> maybe_store_return_to()
-      |> redirect(to: "/users/log_in")
+      |> json(%{status: :err, reason: :not_login})
       |> halt()
     end
   end
-
-  defp maybe_store_return_to(%{method: "GET"} = conn) do
-    put_session(conn, :user_return_to, current_path(conn))
-  end
-
-  defp maybe_store_return_to(conn), do: conn
 end

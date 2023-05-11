@@ -34,6 +34,7 @@ defmodule KerbalWeb.Router do
     get "/cluster", ClusterController, :query
 
     get "/cluster/domain/:domain_uuid", DomainController, :query
+    get "/cluster/domain/list", DomainController, :list
     post "/cluster/domain", DomainController, :create
     delete "/cluster/domain/:domain_uuid", DomainController, :delete
   end
@@ -53,6 +54,7 @@ defmodule KerbalWeb.Router do
   scope "/api", KerbalWeb do
     pipe_through [:api, :require_authenticated_user]
 
+    post "/users/renew", UserSessionController, :renew
     put "/users/settings", UserSettingsController, :update
     get "/users/settings/confirm_email/:token", UserSettingsController, :confirm_email
   end
