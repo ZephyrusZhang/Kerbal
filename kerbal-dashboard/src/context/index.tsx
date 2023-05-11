@@ -1,7 +1,7 @@
 import React, { createContext, Dispatch, ReactNode, SetStateAction, useContext, useState } from "react";
 
 interface KerbalUIState {
-  isSidebarCollapse: boolean
+  toggleSidebar: boolean
 }
 
 interface KerbalUIContextProps {
@@ -31,11 +31,16 @@ const useKerbalUIController = () => {
 
 const KerbalUIControllerProvider = ({children}: {children: ReactNode}) => {
   const initialState: KerbalUIState = {
-    isSidebarCollapse: false
+    toggleSidebar: false
   }
 
   const [controller, setController] = useState<KerbalUIState>(initialState);
   const value = {controller, dispatch: setController}
+
+  // useEffect(() => {
+  //   console.log(controller)
+  // }, [controller])
+
 
   return (
     <KerbalUIContext.Provider value={value}>

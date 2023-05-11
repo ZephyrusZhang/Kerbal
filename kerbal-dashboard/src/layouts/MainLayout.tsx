@@ -6,7 +6,7 @@ const MainLayout = ({children, ...props}: BoxProps) => {
     <Box
       w='100vw'
       px='17vw'
-      pt='5vh'
+      pt='8vh'
       mt='60px'
       {...props}
     >
