@@ -9,14 +9,16 @@ import {
   Menu,
   MenuButton,
   MenuItem,
-  MenuList
+  MenuList, useColorModeValue
 } from '@chakra-ui/react'
-import { IoIosSettings } from 'react-icons/all'
+import { AiOutlineMenu, IoIosSettings } from 'react-icons/all'
 import ToggleColorModeButton from "./ToggleColorModeButton";
 import { useNavigate } from "react-router-dom";
+import { useKerbalUIController } from "../context";
 
 const Navbar = () => {
   const navigate = useNavigate()
+  const {controller, dispatch} = useKerbalUIController()
 
   const logout = () => {
     localStorage.removeItem('token')
@@ -29,13 +31,16 @@ const Navbar = () => {
       position="fixed"
       as="nav"
       w="100%"
-      css={{ backdropFilter: 'blur(10px)' }}
+      // css={{ backdropFilter: 'blur(10px)' }}
+      mt='2vh'
       zIndex={2}
     >
       <Container
         display="flex"
-        p={2}
-        maxW="container.md"
+        p='20px'
+        bgColor={useColorModeValue('white', '#2f3136')}
+        borderRadius='10px'
+        maxW='70%'
         alignItems="center"
         justifyContent="space-between"
       >
@@ -47,6 +52,12 @@ const Navbar = () => {
 
         <HStack alignItems='right' spacing={5}>
           <ToggleColorModeButton/>
+          <IconButton
+            aria-label='toggleSiderbar'
+            icon={<AiOutlineMenu/>}
+            bg='transparent'
+            onClick={() => dispatch({...controller, toggleSidebar: !controller.toggleSidebar})}
+          />
           <Menu>
             <MenuButton as={IconButton} icon={<IoIosSettings/>} bg='transparent'/>
             <MenuList>
