@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Box, HStack, Spacer, StackProps, Text } from "@chakra-ui/react";
+import { HStack, Spacer, StackProps, Text } from "@chakra-ui/react";
 import { DomainStatus } from "../types";
+import CircleIcon from "./icons/CircleIcon";
 
 interface Props extends StackProps {
   name: string,
@@ -30,7 +31,7 @@ const DomainStatusHead = ({name, status, ...props}: Props) => {
 
   return (
     <HStack {...props}>
-      <Box w='15px' h='15px' backgroundColor={color} border='1px' borderColor='white' borderRadius='50%'/>
+      <CircleIcon color={color} border='1px' borderColor='white' borderRadius='full'/>
       <Text fontSize='3xl' as='b'>{name}</Text>
       <Spacer/>
       <Text
