@@ -12,7 +12,7 @@ import DomainCreation from "./screens/domain/DomainCreation";
 import UserEdit from './screens/UserEdit'
 import AccountSetting from "./screens/account-setting";
 import DomainOverview from "./screens/domain/DomainOverview";
-import DomainSetting from "./screens/domain/DomainSetting";
+import DomainManagement from "./screens/domain/management";
 
 export const App = () => {
   return (
@@ -23,12 +23,12 @@ export const App = () => {
         <Route path='/user_edit' element={<UserEdit/>}/>
         <Route path='/' element={<Layout/>}>
           <Route path='/' element={<PrivateRoute/>}>
-            <Route path='/container' element={<DomainOverview/>}/>
-            <Route path='/container/setting/:domain_uuid' element={<DomainSetting/>}/>
-            <Route path='/container/create' element={<DomainCreation/>}/>
+            <Route path='/domain' element={<DomainOverview/>}/>
+            <Route path='/domain/management/:domain_uuid' element={<DomainManagement/>}/>
+            <Route path='/domain/create' element={<DomainCreation/>}/>
             <Route path='/account/creation' element={<AccountCreation/>}/>
             <Route path='account' element={<AccountSetting/>}/>
-            <Route path='/' element={<Navigate to='container' replace/>}/>
+            <Route path='/' element={<Navigate to='domain' replace/>}/>
           </Route>
         </Route>
       </Routes>
