@@ -46,14 +46,23 @@ const AccountLogin = () => {
       JSON.stringify({user_params: values}),
       {withCredentials: true}
     ).then((response) => {
-      localStorage.setItem('token', response.data['token'])
-      toast({
-        position: 'top',
-        status: 'success',
-        duration: 2000,
-        description: 'Login successfully'
-      })
-      navigate('/')
+      if (String(response.data.status) == "ok") {
+        localStorage.setItem('token', response.data['token'])
+        toast({
+          position: 'top',
+          status: 'success',
+          duration: 2000,
+          description: 'Login successfully'
+        })
+        navigate('/')
+      } else {
+        toast({
+          position: 'top',
+          status: 'error',
+          duration: 2000,
+          description: String(response.data.reason)
+        })
+      }
     })
   }
 
