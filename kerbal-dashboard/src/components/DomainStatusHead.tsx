@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { HStack, Spacer, StackProps, Text } from "@chakra-ui/react";
-import { DomainStatus } from "../types";
 import CircleIcon from "./icons/CircleIcon";
 
 interface Props extends StackProps {
   name: string,
-  status: DomainStatus
+  status: string
 }
 
 const DomainStatusHead = ({name, status, ...props}: Props) => {
@@ -13,16 +12,16 @@ const DomainStatusHead = ({name, status, ...props}: Props) => {
 
   useEffect(() => {
     switch (status) {
-      case "Starting":
+      case "booting":
         setColor('#efa73e')
         break
-      case "Running":
+      case "running":
         setColor('#53a264')
         break
-      case "Stopping":
+      case "terminating":
         setColor('#efa73e')
         break
-      case "Stopped":
+      case "terminated":
         setColor('#c4573b')
         break
     }

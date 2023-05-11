@@ -62,7 +62,7 @@ const Navbar = () => {
             <MenuButton as={IconButton} icon={<IoIosSettings/>} bg='transparent'/>
             <MenuList>
               <MenuItem onClick={() => navigate('/account')}>Setting</MenuItem>
-              <MenuItem onClick={logout}>Log out</MenuItem>
+              {/*<MenuItem onClick={logout}>Log out</MenuItem>*/}
             </MenuList>
           </Menu>
         </HStack>
