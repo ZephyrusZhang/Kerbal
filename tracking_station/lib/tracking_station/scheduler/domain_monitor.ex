@@ -18,7 +18,8 @@ defmodule TrackingStation.Scheduler.DomainMonitor do
   ### ----- client api -----
   def start_link({spec, user_id, domain_uuid}) do
     GenServer.start_link(__MODULE__, {spec, user_id, domain_uuid},
-      name: {:via, Registry, {TrackingStation.Scheduler.DomainMonitorRegistry, domain_uuid, user_id}}
+      name:
+        {:via, Registry, {TrackingStation.Scheduler.DomainMonitorRegistry, domain_uuid, user_id}}
     )
   end
 
@@ -31,8 +32,12 @@ defmodule TrackingStation.Scheduler.DomainMonitor do
       [{pid, ^user_id}] ->
         GenServer.call(pid, :destroy, 30000)
         :ok
-      [{_pid, _}] -> {:error, :permission_denied}
-      [] -> {:error, :not_exist}
+
+      [{_pid, _}] ->
+        {:error, :permission_denied}
+
+      [] ->
+        {:error, :not_exist}
     end
   end
 
@@ -60,12 +65,17 @@ defmodule TrackingStation.Scheduler.DomainMonitor do
        domain_id: nil,
        running_disk_id: nil,
        status: :creating,
+       password: "",
        spec: spec,
        port: port
      }}
   end
 
-  defp check_and_allocate(%{cpu_count: cpu_count, ram_size: ram_size, gpus: gpus}, user_id, domain_uuid) do
+  defp check_and_allocate(
+         %{cpu_count: cpu_count, ram_size: ram_size, gpus: gpus},
+         user_id,
+         domain_uuid
+       ) do
     node = node()
     # atomic operation that check all the resources are available and allocate them
     # allocate spice port
@@ -284,7 +294,14 @@ defmodule TrackingStation.Scheduler.DomainMonitor do
 
     case Libvirt.create_vm_from_xml(xml_config) do
       {:ok, domain_id} ->
-        {:noreply, %{state | running_disk_id: disk_id, domain_id: domain_id, status: :booting}}
+        {:noreply,
+         %{
+           state
+           | running_disk_id: disk_id,
+             domain_id: domain_id,
+             status: :booting,
+             password: random_password
+         }}
 
       {:error, reason} ->
         # handle side-effects
