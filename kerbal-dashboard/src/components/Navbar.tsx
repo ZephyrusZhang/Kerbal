@@ -9,24 +9,38 @@ import {
   Menu,
   MenuButton,
   MenuItem,
-  MenuList
+  MenuList, useColorModeValue
 } from '@chakra-ui/react'
-import { IoIosSettings } from 'react-icons/all'
+import { AiOutlineMenu, IoIosSettings } from 'react-icons/all'
 import ToggleColorModeButton from "./ToggleColorModeButton";
+import { useNavigate } from "react-router-dom";
+import { useKerbalUIController } from "../context";
 
 const Navbar = () => {
+  const navigate = useNavigate()
+  const {controller, dispatch} = useKerbalUIController()
+
+  const logout = () => {
+    localStorage.removeItem('token')
+    localStorage.removeItem('is-admin')
+    navigate('/login')
+  }
+
   return (
     <Box
       position="fixed"
       as="nav"
       w="100%"
-      css={{ backdropFilter: 'blur(10px)' }}
+      // css={{ backdropFilter: 'blur(10px)' }}
+      mt='2vh'
       zIndex={2}
     >
       <Container
         display="flex"
-        p={2}
-        maxW="container.md"
+        p='20px'
+        bgColor={useColorModeValue('white', '#2f3136')}
+        borderRadius='10px'
+        maxW='70%'
         alignItems="center"
         justifyContent="space-between"
       >
@@ -37,25 +51,18 @@ const Navbar = () => {
         </Flex>
 
         <HStack alignItems='right' spacing={5}>
-          {/*{!isLargerThan768px &&*/}
-          {/*  <IconButton*/}
-          {/*    icon={<MdMenu style={{fontSize: '20px'}}/>}*/}
-          {/*    bg='transparent'*/}
-          {/*    aria-label='Menu'*/}
-          {/*    onClick={handleToggleSidebar}*/}
-          {/*  />*/}
-          {/*}*/}
           <ToggleColorModeButton/>
-          {/*<IconButton*/}
-          {/*  icon={<IoIosSettings style={{fontSize: '20px'}}/>}*/}
-          {/*  bg='transparent'*/}
-          {/*  aria-label='Setting'*/}
-          {/*/>*/}
+          <IconButton
+            aria-label='toggleSiderbar'
+            icon={<AiOutlineMenu/>}
+            bg='transparent'
+            onClick={() => dispatch({...controller, toggleSidebar: !controller.toggleSidebar})}
+          />
           <Menu>
             <MenuButton as={IconButton} icon={<IoIosSettings/>} bg='transparent'/>
             <MenuList>
-              <MenuItem>Setting</MenuItem>
-              <MenuItem>Sign out</MenuItem>
+              <MenuItem onClick={() => navigate('/account')}>Setting</MenuItem>
+              {/*<MenuItem onClick={logout}>Log out</MenuItem>*/}
             </MenuList>
           </Menu>
         </HStack>

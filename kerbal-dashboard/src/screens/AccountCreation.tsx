@@ -1,11 +1,9 @@
 import React from 'react'
 import {
-  Box, Button, Flex,
-  FormControl,
-  FormErrorMessage, IconButton,
-  Input,
+  Box, Button, FormControl,
+  FormErrorMessage, Input,
   InputGroup,
-  InputLeftElement, List, ListIcon, ListItem, Stack, Text,
+  InputLeftElement, useColorModeValue,
   VStack
 } from '@chakra-ui/react'
 import { Form, Formik } from 'formik'
@@ -13,15 +11,11 @@ import {
   AiOutlineUser,
   FiLock,
   HiOutlineMail,
-  IoIosShareAlt,
-  ImGithub,
-  ImGoogle,
-  MdCheckCircle,
-  MdSettings
+  IoIosShareAlt
 } from 'react-icons/all'
-import bgImage from "../assets/images/fuji-mountain-with-milky-way-night.jpg"
 import request from '../util/request'
 import { useNavigate } from "react-router-dom";
+import MainLayout from "../layouts/MainLayout";
 
 interface FormProps {
   username: string
@@ -30,7 +24,7 @@ interface FormProps {
   passwordConfirm: string
 }
 
-const SignUp = () => {
+const AccountCreation = () => {
   // const bgImage = require('../assets/images/night-ocean-landscape-full-moon-stars-shine.jpg')
 
   const formInitialValue: FormProps = {
@@ -70,53 +64,32 @@ const SignUp = () => {
     })
   }
 
+  const boxColor = useColorModeValue('#ffffff', '#414040')
+
   return (
-    <Box
-      w='100vw'
-      h='100vh'
-      backgroundImage={bgImage}
-      backgroundSize='100% 100%'
+    <MainLayout
       display='flex'
       justifyContent='center'
       alignItems='center'
     >
       <Box
+        w='fit-content'
+        bg={boxColor}
         px={8}
         py={8}
-        bg='white'
         borderRadius={15}
         display='flex'
         justifyContent='center'
         alignItems='center'
       >
         <VStack>
-          <Box
-            w='100%'
-            h='15vh'
-            borderRadius={12}
-            bgGradient='linear(to-tr, #3a74e1, #609fea)'
-            display='flex'
-            justifyContent='center'
-            alignItems='center'
-            mt='-70px'
-            mb='20px'
-          >
-            <Stack alignItems='center'>
-              <Text fontSize='2xl' fontWeight='bold' color='white' mb='10px'>Sign Up</Text>
-              <Flex justifyContent='space-between' alignItems='center'>
-                <IconButton aria-label='github' colorScheme='transparent' icon={<ImGithub/>}/>
-                <IconButton aria-label='google' colorScheme='transparent' icon={<ImGoogle/>}/>
-              </Flex>
-            </Stack>
-          </Box>
-
           <Formik initialValues={formInitialValue} onSubmit={handleSubmit} validate={validate}>
             {({
                 errors,
                 touched,
                 handleSubmit,
                 handleChange
-            }) => (
+              }) => (
               <Form onSubmit={handleSubmit}>
                 <VStack spacing={7}>
                   <FormControl isInvalid={!!(errors.username && touched.username)}>
@@ -163,30 +136,7 @@ const SignUp = () => {
                     </InputGroup>
                     <FormErrorMessage>{errors.password}</FormErrorMessage>
                   </FormControl>
-                  <Flex w='100%' alignItems='left'>
-                    <List>
-                      <ListItem>
-                        <ListIcon as={MdCheckCircle} color='green.500' />
-                        At least one lowercase letter.
-                      </ListItem>
-                      <ListItem>
-                        <ListIcon as={MdCheckCircle} color='green.500' />
-                        At least one uppercase letter.
-                      </ListItem>
-                      <ListItem>
-                        <ListIcon as={MdCheckCircle} color='green.500' />
-                        At least one digit.
-                      </ListItem>
-                      <ListItem>
-                        <ListIcon as={MdSettings} color='green.500' />
-                        At least one special character.
-                      </ListItem>
-                      <ListItem>
-                        <ListIcon as={MdSettings} color='green.500' />
-                        Length between 8-16.
-                      </ListItem>
-                    </List>
-                  </Flex>
+
                   <FormControl isInvalid={!!(errors.passwordConfirm && touched.passwordConfirm)}>
                     <InputGroup>
                       <InputLeftElement><IoIosShareAlt/></InputLeftElement>
@@ -209,8 +159,8 @@ const SignUp = () => {
           </Formik>
         </VStack>
       </Box>
-    </Box>
+    </MainLayout>
   )
 }
 
-export default SignUp
+export default AccountCreation

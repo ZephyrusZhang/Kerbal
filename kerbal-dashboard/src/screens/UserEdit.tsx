@@ -122,7 +122,7 @@ const UserEdit = () => {
                                 <Input
                                     id='username'
                                     name='username'
-                                    type='username'
+                                    types='username'
                                     w='22vw'
                                     onChange={handleChange}
                                     borderWidth={2}
@@ -137,7 +137,7 @@ const UserEdit = () => {
                                 <Input
                                     id='email'
                                     name='email'
-                                    type='email'
+                                    types='email'
                                     w='22vw'
                                     onChange={handleChange}
                                     borderWidth={2}

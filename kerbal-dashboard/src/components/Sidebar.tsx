@@ -1,4 +1,4 @@
-import React, { type ReactElement, useState } from 'react'
+import React, { type ReactElement, useEffect } from 'react'
 import {
   Box,
   VStack,
@@ -8,15 +8,14 @@ import {
   Divider,
   Text,
   Flex,
-  Icon
+  Icon, Spacer
 } from '@chakra-ui/react'
 import { MdDeveloperBoard } from 'react-icons/md'
-import { FaSignInAlt } from 'react-icons/fa'
-import { BsFillPersonPlusFill } from 'react-icons/bs'
-import { BiAperture } from 'react-icons/all'
+import { BiAperture, FiLogOut, VscAccount } from 'react-icons/all'
 import { type IconType } from 'react-icons'
-import { useKerbalUIController } from "../context";
 import MotionBox from './containers/MotionBox'
+import { useKerbalUIController } from "../context";
+import { useNavigate } from "react-router-dom";
 
 interface NavbarButtonProp {
   leftIcon: ReactElement<IconType>
@@ -26,19 +25,25 @@ interface NavbarButtonProp {
 
 const Sidebar = () => {
   const buttonsProp: NavbarButtonProp[] = [
-    { leftIcon: <MdDeveloperBoard/>, text: 'Dashboard', to: '/dashboard' },
-    { leftIcon: <FaSignInAlt/>, text: 'Sign In', to: '/sign-in' },
-    { leftIcon: <BsFillPersonPlusFill/>, text: 'Sign Up', to: '/sign-up' }
+    { leftIcon: <MdDeveloperBoard/>, text: 'Domains', to: '/domain' },
+    { leftIcon: <VscAccount/>, text: 'Account', to: '/account' }
   ]
   const variants = {
-    hidden: { opacity: 1, x: '-100vw', width: '0' },
+    hidden: { opacity: 1, x: '-100vw' },
     visible: { opacity: 1, x: '0' }
   }
+
+  const bgColor = useColorModeValue('white', 'gray.700')
   const {controller} = useKerbalUIController()
 
-  const bgColor = useColorModeValue('gray.800', 'gray.200')
-  const normalColor = useColorModeValue('white', 'gray.600')
-  const [selected, setSelected] = useState(0)
+  useEffect(() => {
+    if (localStorage.getItem('selectedSidebarLinkIndex')) {
+      return;
+    }
+    localStorage.setItem('selectedSidebarLinkIndex', '0')
+  })
+
+  const navigate = useNavigate()
 
   return (
     <MotionBox
@@ -49,7 +54,7 @@ const Sidebar = () => {
       display='flex'
       alignItems='center'
       initial='visible'
-      animate={controller.canSidebarHidden !== controller.isSidebarCollapse ? 'visible' : 'hidden'}
+      animate={controller.toggleSidebar ? 'visible' : 'hidden'}
       variants={variants}
       // @ts-ignore
       transition={{ duration: 0.5 }}
@@ -63,8 +68,8 @@ const Sidebar = () => {
       >
 
         <Flex display='flex' alignItems='center' justifyContent='space-evenly'>
-          <Icon as={BiAperture} boxSize={8} color={normalColor}/>
-          <Text color={normalColor} fontSize='2xl' fontWeight='bold'>KERBAL</Text>
+          <Icon as={BiAperture} boxSize={8}/>
+          <Text fontSize='2xl' fontWeight='bold'>KERBAL</Text>
         </Flex>
 
         <Divider my='4' colorScheme='gray'/>
@@ -74,6 +79,7 @@ const Sidebar = () => {
           alignItems="start"
           justifyContent="flex-center"
           width="100%"
+          height='70%'
         >
           {buttonsProp.map((prop, index) => {
             return (
@@ -87,14 +93,27 @@ const Sidebar = () => {
                   w='100%'
                   leftIcon={prop.leftIcon}
                   colorScheme='linkedin'
-                  variant={selected === index ? 'solid' : 'ghost'}
-                  onClick={() => { setSelected(index) }}
+                  variant={parseInt(localStorage.getItem('selectedSidebarLinkIndex') as string) === index ? 'solid' : 'ghost'}
+                  onClick={() => localStorage.setItem('selectedSidebarLinkIndex', index.toString())}
                 >
                   {prop.text}
                 </Button>
               </Link>
             )
           })}
+          <Spacer/>
+          <Button
+            w='100%'
+            leftIcon={<FiLogOut/>}
+            variant='ghost'
+            colorScheme='linkedin'
+            onClick={() => {
+              localStorage.clear()
+              navigate('/login')
+            }}
+          >
+            Log out
+          </Button>
         </VStack>
       </Box>
     </MotionBox>

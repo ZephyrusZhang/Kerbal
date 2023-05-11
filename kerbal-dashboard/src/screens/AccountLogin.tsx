@@ -1,13 +1,12 @@
-import React from 'react'
+import React, { useState } from 'react'
 import {
   Box, Button,
   Flex,
   FormControl, FormErrorMessage, FormLabel, IconButton,
   Input,
   InputGroup,
-  InputLeftElement,
-  Stack, Switch,
-  Text,
+  InputLeftElement, InputRightElement, Stack, Switch,
+  Text, useToast,
   VStack
 } from '@chakra-ui/react'
 import { FiLock, HiOutlineMail, ImGithub, ImGoogle } from 'react-icons/all'
@@ -21,9 +20,10 @@ interface FormProps {
   rememberMe: boolean
 }
 
-const SignIn = () => {
+const AccountLogin = () => {
   const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
   const navigate = useNavigate()
+  const toast = useToast()
   const validate = (form: FormProps) => {
     const errors: Partial<FormProps> = {}
     if (!emailRegex.test(form.email)) errors.email = 'Invalid email'
@@ -46,10 +46,28 @@ const SignIn = () => {
       JSON.stringify({user_params: values}),
       {withCredentials: true}
     ).then((response) => {
-      localStorage.setItem('token', response.headers['Authorization'])
-      navigate('/')
+      if (String(response.data.status) == "ok") {
+        localStorage.setItem('token', response.data['token'])
+        toast({
+          position: 'top',
+          status: 'success',
+          duration: 2000,
+          description: 'Login successfully'
+        })
+        navigate('/')
+      } else {
+        toast({
+          position: 'top',
+          status: 'error',
+          duration: 2000,
+          description: String(response.data.reason)
+        })
+      }
     })
   }
+
+  const [showPassword, setShowPassword] = useState(false)
+  const handleClickShowPassword = () => setShowPassword(!showPassword)
 
   return (
     <Box
@@ -103,23 +121,39 @@ const SignIn = () => {
                   <FormControl isInvalid={!!(errors.email && touched.email)}>
                     <InputGroup>
                       <InputLeftElement><HiOutlineMail/></InputLeftElement>
-                      <Input id='email' name='email' type='email' w='22vw' onChange={handleChange} borderWidth={2} placeholder='Email'/>
+                      <Input
+                        name='email'
+                        type='email'
+                        w='22vw'
+                        onChange={handleChange}
+                        borderWidth={2}
+                        placeholder='Email'
+                      />
                     </InputGroup>
                     <FormErrorMessage>{errors.email}</FormErrorMessage>
                   </FormControl>
                   <FormControl isInvalid={!!(errors.password && touched.password)}>
                     <InputGroup>
                       <InputLeftElement><FiLock/></InputLeftElement>
-                      <Input id='password' name='password' type='password' onChange={handleChange} w='22vw' borderWidth={2} placeholder='Password'/>
+                      <Input
+                        name='password'
+                        type={showPassword ? 'text' : 'password'}
+                        onChange={handleChange} w='22vw'
+                        borderWidth={2}
+                        placeholder='Password'
+                      />
+                      <InputRightElement>
+                        <Button onClick={handleClickShowPassword}>{showPassword ? 'Hide' : 'Show'}</Button>
+                      </InputRightElement>
                     </InputGroup>
                     <FormErrorMessage>{errors.password}</FormErrorMessage>
                   </FormControl>
                   <Flex alignItems='center'>
-                    <Switch id='rememberMe' name='rememberMe' onChange={handleChange}/>
+                    <Switch name='rememberMe' onChange={handleChange}/>
                     <FormLabel color='gray' ml='20px' mb='1'>Remember me</FormLabel>
                   </Flex>
 
-                  <Button type='submit' w='100%' colorScheme='blue' isLoading={isSubmitting}>SIGN IN</Button>
+                  <Button type='submit' w='100%' colorScheme='blue' isLoading={isSubmitting}>LOGIN</Button>
                 </VStack>
               </Form>
             )}
@@ -130,4 +164,4 @@ const SignIn = () => {
   )
 }
 
-export default SignIn
+export default AccountLogin
