@@ -16,7 +16,7 @@ defmodule KerbalWeb.UserSessionController do
     end
   end
 
-  def renew() do
+  def renew(conn, _params) do
     user_id = conn.assigns[:current_user]
     UserAuth.log_in_user(conn, user_id)
   end
