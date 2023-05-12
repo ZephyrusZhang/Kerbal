@@ -13,8 +13,21 @@ import UserEdit from './screens/UserEdit'
 import AccountSetting from "./screens/account-setting";
 import DomainOverview from "./screens/domain/DomainOverview";
 import DomainManagement from "./screens/domain/management";
+import { useEffect } from "react";
+import { isToRenew, renew } from "./util/jwt";
 
 export const App = () => {
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      if (isToRenew()) {
+        renew()
+      }
+    }, 60000)
+
+    return () => clearInterval(intervalId)
+  })
+  
+
   return (
     <ChakraProvider theme={theme}>
       <Routes>
