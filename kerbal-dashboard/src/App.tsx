@@ -40,7 +40,7 @@ export const App = () => {
             <Route path='/domain/management/:domain_uuid' element={<DomainManagement/>}/>
             <Route path='/domain/create' element={<DomainCreation/>}/>
             <Route path='/account/creation' element={<AccountCreation/>}/>
-            <Route path='account' element={<AccountSetting/>}/>
+            <Route path='/account' element={<AccountSetting/>}/>
             <Route path='/' element={<Navigate to='domain' replace/>}/>
           </Route>
         </Route>

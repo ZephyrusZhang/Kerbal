@@ -1,11 +1,11 @@
 import React from 'react'
-import UserEdit from "../screens/UserEdit";
+import AccountSetting from '../screens/account-setting';
 
 const Test = () => {
 
   return (
     <>
-      <UserEdit/>
+      <AccountSetting/>
     </>
   );
 }
