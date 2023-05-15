@@ -1,5 +1,8 @@
 defmodule TrackingStation.Libvirt.Native do
-  use Rustler, otp_app: :tracking_station, crate: "libvirt"
+  use Rustler,
+    otp_app: :tracking_station,
+    crate: "libvirt",
+    skip_compilation?: false
 
   @spec get_resources(String.t()) :: LibvirtResource
   def get_resources(_url), do: :erlang.nif_error(:nif_not_loaded)
@@ -116,9 +119,10 @@ defmodule TrackingStation.Libvirt do
         "#{Keyword.get(options, :timeout)}"
       ])
 
-    response = response
-    |> Jason.decode!()
-    |> Map.fetch!("return")
+    response =
+      response
+      |> Jason.decode!()
+      |> Map.fetch!("return")
 
     output =
       if Map.has_key?(response, "out-data") do

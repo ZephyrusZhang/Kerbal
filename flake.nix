@@ -37,5 +37,6 @@
           backend = backend-env;
           default = backend-env;
         };
+        packages.${system}.default = pkgs.callPackage (import ./package.nix) {};
       };
 }
