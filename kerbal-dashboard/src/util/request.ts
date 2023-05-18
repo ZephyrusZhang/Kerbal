@@ -1,5 +1,4 @@
 import axios from "axios";
-import { decode } from "base-64";
 import { isToRenew } from "./jwt";
 
 const request = axios.create({

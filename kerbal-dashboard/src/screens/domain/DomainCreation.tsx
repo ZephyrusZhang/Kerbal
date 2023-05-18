@@ -70,10 +70,10 @@ const DomainCreation = () => {
   const boxColor = useColorModeValue('#ffffff', '#414040')
 
   const handleSubmit = async (values: FormProps) => {
-    console.log(JSON.stringify({...values, ram_size: values.ram_size * 1024}))
+    // console.log(JSON.stringify({...values, ram_size: values.ram_size * 1024}))
     request.post(
       '/api/cluster/domain',
-      JSON.stringify(values),
+      JSON.stringify({...values, ram_size: values.ram_size * 1024}),
       {withCredentials: true}
     ).then()
   }

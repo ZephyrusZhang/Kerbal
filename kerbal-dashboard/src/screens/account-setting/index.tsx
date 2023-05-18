@@ -20,7 +20,7 @@ const AccountSetting = () => {
     >
       <Tabs w='80%' orientation='vertical'>
         <TabList w='30%'>
-          <Tab>Account Information</Tab>
+          <Tab>Profile</Tab>
           <Tab>Account Email</Tab>
           <Tab>Account Name</Tab>
           <Tab>Account Password</Tab>
