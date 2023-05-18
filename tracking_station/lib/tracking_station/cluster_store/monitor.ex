@@ -3,6 +3,7 @@ defmodule TrackingStation.ClusterStore.Monitor do
   import TrackingStation.ClusterStore.ActiveDomain
   import TrackingStation.ClusterStore.GPUStatus
   import TrackingStation.ClusterStore.NodeInfo
+  import TrackingStation.ClusterStore.StorageInfo
   use GenServer
 
   alias :mnesia, as: Mnesia
@@ -14,7 +15,7 @@ defmodule TrackingStation.ClusterStore.Monitor do
   defp clean_dead_node(node) do
     Mnesia.transaction(fn ->
       # double check because the node may have become online again
-      if node in Node.list() do
+      if node not in Node.list() do
         case Mnesia.match_object(node_info(node_id: node)) do
           [] ->
             # one of the alive node already did the clean up
@@ -34,6 +35,11 @@ defmodule TrackingStation.ClusterStore.Monitor do
             |> Enum.map(fn record ->
               key = gpu_status(record, :gpu_id)
               Mnesia.delete({:gpu_status, key})
+            end)
+
+            Mnesia.match_object(storage_info(node_id: node))
+            |> Enum.map(fn record ->
+              Mnesia.delete_object(record)
             end)
         end
       end
