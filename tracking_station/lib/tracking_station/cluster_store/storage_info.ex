@@ -4,25 +4,29 @@ defmodule TrackingStation.ClusterStore.StorageInfo do
 
   defrecord(
     :storage_info,
-    key: :_,
+    image_id: :_,
     node_id: :_,
     guid: :_,
+    dataset: :_,
     name: :_,
-    type: :_,
     volsize: :_,
-    used: :_
+    used: :_,
+    origin_dataset: :_,
+    origin_name: :_
   )
 
   @type storage_info ::
           record(
             :storage_info,
-            key: {atom(), String.t()},
+            image_id: String.t(),
             node_id: atom(),
             guid: String.t(),
+            dataset: atom(),
             name: String.t(),
-            type: atom(),
             volsize: integer(),
-            used: integer()
+            used: integer(),
+            origin_dataset: atom(),
+            origin_name: String.t()
           )
 
   @impl true
@@ -30,7 +34,7 @@ defmodule TrackingStation.ClusterStore.StorageInfo do
     [
       record_name: :storage_info,
       attributes: storage_info() |> storage_info() |> Keyword.keys(),
-      index: [:guid, :name],
+      index: [:node_id, :dataset, :name],
       ram_copies: [node()]
     ]
   end
