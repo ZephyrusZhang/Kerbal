@@ -52,12 +52,10 @@ defmodule TrackingStation.Scheduler.DomainMonitor do
   # -------------------------
 
   @impl true
-  def init({spec, user_id, domain_uuid}) do
+  def init({%{image_id: image_id} = spec, user_id, domain_uuid}) do
     port = check_and_allocate(spec, user_id, domain_uuid)
-
-    # TODO this step should be done async
-    disk_path = LocalStorage.create_running(:base, "archlinux_cuda_gui")
-    send(self(), {:image_ready, disk_path})
+    {dataset, name} = LocalStorage.path_from_guid(image_id)
+    LocalStorage.prepare_image(dataset, name)
 
     {:ok,
      %{
@@ -255,8 +253,8 @@ defmodule TrackingStation.Scheduler.DomainMonitor do
 
   ### ----- handle_info -----
   @impl true
-  def handle_info(
-        {:image_ready, disk_id},
+  def handle_cast(
+        {:image_ready, dataset, name},
         %{
           domain_uuid: domain_uuid,
           port: spice_port,
@@ -267,6 +265,7 @@ defmodule TrackingStation.Scheduler.DomainMonitor do
     iso_path = LocalStorage.get_installation_image()
     iso_config = LibvirtConfig.iso_config(iso_path)
 
+    disk_id = LocalStorage.create_running(dataset, name)
     disk_path = "/dev/zvol/rpool/running/#{disk_id}"
     disk_config = LibvirtConfig.disk_config(disk_path)
     # Be careful It's not a strong password

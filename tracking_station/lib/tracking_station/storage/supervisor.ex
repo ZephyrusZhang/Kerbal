@@ -8,10 +8,10 @@ defmodule TrackingStation.Storage.Supervisor do
   @impl true
   def init(:ok) do
     children = [
-      {Task.Supervisor, name: TrackingStation.Storage.TaskSupervisor},
+      {Task.Supervisor, name: TrackingStation.Storage.RemoteTaskSupervisor},
       {TrackingStation.Storage.LocalStorage, name: TrackingStation.Storage.LocalStorage}
     ]
 
-    Supervisor.init(children, strategy: :one_for_one)
+    Supervisor.init(children, strategy: :one_for_all)
   end
 end
