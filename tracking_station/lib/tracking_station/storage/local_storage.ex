@@ -110,6 +110,7 @@ defmodule TrackingStation.Storage.LocalStorage do
     if origin_path != "-" do
       ["rpool", origin_dataset, origin_name] = origin_path |> String.split("/")
       origin_dataset = Map.fetch!(@dataset2atom, origin_dataset)
+      [origin_name, "frozen"] = String.split(origin_name, "@")
 
       {origin_dataset, origin_name}
     else
@@ -150,7 +151,7 @@ defmodule TrackingStation.Storage.LocalStorage do
     :ok
   end
 
-  def generate_record_for_image(dataset, name)
+  defp generate_record_for_image(dataset, name)
       when dataset in [:base, :overlay, :running, :live] do
     path = "rpool/#{dataset}/#{name}"
     snap_path = "#{path}@frozen"
