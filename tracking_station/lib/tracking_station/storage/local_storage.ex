@@ -226,7 +226,7 @@ defmodule TrackingStation.Storage.LocalStorage do
   end
 
   def path_exist?(path) do
-    case System.cmd("zfs", ~w(list -Ht all #{path})) do
+    case System.cmd("zfs", ~w(list -Ht all #{path}), stderr_to_stdout: true) do
       {_, 0} -> true
       {_, 1} -> false
     end
@@ -252,10 +252,17 @@ defmodule TrackingStation.Storage.LocalStorage do
             info =
               record
               |> storage_info()
-              |> Keyword.take([:guid, :dataset, :name, :used, :volsize])
+              |> Keyword.take([:guid, :dataset, :name, :used, :volsize, :node_id])
               |> Enum.into(%{})
+              |> then(&Map.put(&1, :available_nodes, [&1.node_id]))
+              |> Map.delete(:node_id)
 
-            Map.put(acc, storage_info(record, :guid), info)
+            Map.update(
+              acc,
+              storage_info(record, :guid),
+              info,
+              &Map.replace(&1, :available_nodes, info.available_nodes ++ &1.available_nodes)
+            )
           end,
           %{},
           :storage_info
@@ -413,10 +420,14 @@ defmodule TrackingStation.Storage.LocalStorage do
         File.rm!(fifo_path)
         end_time = Time.utc_now()
         Logger.warning("Time spent transfering #{inspect(Time.diff(end_time, start_time))}")
-        Task.await(zfs_recv_task)
-        Logger.warning("await end")
 
-        {:recv_complete, dataset, name}
+        case Task.await(zfs_recv_task) do
+          {"", 0} ->
+            {:recv_complete, dataset, name}
+
+          _ ->
+            {:recv_failed, dataset, name}
+        end
       end)
 
     state = put_in(state.recv_tasks[{dataset, name}], notify_list)
@@ -428,7 +439,8 @@ defmodule TrackingStation.Storage.LocalStorage do
   def handle_cast({:send, dataset, name, node}, state) do
     _task =
       Task.Supervisor.async_nolink(TrackingStation.Storage.RemoteTaskSupervisor, fn ->
-        path = "rpool/#{dataset}/#{name}@frozen"
+        path = "rpool/#{dataset}/#{name}"
+        snap_path = "#{path}@frozen"
         fifo_path = "/tmp/#{dataset}#{name}_fifo"
 
         if File.exists?(fifo_path) do
@@ -447,11 +459,11 @@ defmodule TrackingStation.Storage.LocalStorage do
 
         case dataset do
           :base ->
-            System.shell("sudo zfs send #{path} > #{fifo_path}")
+            System.shell("sudo zfs send #{snap_path} > #{fifo_path}")
 
           _ ->
             origin = get_property(path, "origin")
-            System.shell("sudo zfs send -i #{origin} #{path} > #{fifo_path}")
+            System.shell("sudo zfs send -i #{origin} #{snap_path} > #{fifo_path}")
         end
 
         File.rm!(fifo_path)
