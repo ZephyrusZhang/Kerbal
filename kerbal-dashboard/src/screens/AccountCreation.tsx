@@ -16,6 +16,7 @@ import {
 import request from '../util/request'
 import { useNavigate } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
+import { emailRegex, passwordRegex } from "../const"
 
 interface FormProps {
   username: string
@@ -33,8 +34,6 @@ const AccountCreation = () => {
     password: '',
     passwordConfirm: ''
   }
-  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
-  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,16}$/
   const navigate = useNavigate()
 
   const validate = (form: FormProps) => {
