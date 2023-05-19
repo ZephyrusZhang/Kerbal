@@ -74,8 +74,15 @@ defmodule TrackingStation.Scheduler do
     Task.await(task, 5000)
   end
 
-  def get_domain_info(uuid, user_id) do
-    DomainMonitor.get_info(uuid, user_id)
+  def list_domains(user_id) do
+    {:atomic, records} =
+      Mnesia.transaction(fn ->
+        Mnesia.match_object(active_domain(user_id: user_id))
+      end)
+
+    records
+    |> Enum.map(&active_domain(&1, :uuid))
+    |> Enum.map(&DomainMonitor.get_info(&1, user_id))
   end
 
   def list_user_domains(user_id) do
