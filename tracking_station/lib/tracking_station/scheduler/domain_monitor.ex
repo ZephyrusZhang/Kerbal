@@ -53,9 +53,9 @@ defmodule TrackingStation.Scheduler.DomainMonitor do
 
   @impl true
   def init({%{image_id: image_id} = spec, user_id, domain_uuid}) do
-    port = check_and_allocate(spec, user_id, domain_uuid)
     {dataset, name} = LocalStorage.path_from_guid(image_id)
-    LocalStorage.prepare_image(dataset, name)
+    :ok = LocalStorage.prepare_image(dataset, name)
+    port = check_and_allocate(spec, user_id, domain_uuid)
 
     {:ok,
      %{
