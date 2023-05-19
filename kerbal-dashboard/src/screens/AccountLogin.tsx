@@ -6,13 +6,14 @@ import {
   Input,
   InputGroup,
   InputLeftElement, InputRightElement, Stack, Switch,
-  Text, useToast,
-  VStack
+  Text,
+  VStack,
+  useToast
 } from '@chakra-ui/react'
 import { FiLock, HiOutlineMail, ImGithub, ImGoogle } from 'react-icons/all'
 import { Form, Formik } from 'formik'
 import { useNavigate } from "react-router-dom"
-import request from "../util/request"
+import request, { ShowToast } from "../util/request"
 
 interface FormProps {
   email: string
@@ -21,9 +22,9 @@ interface FormProps {
 }
 
 const AccountLogin = () => {
+  const toast = useToast()
   const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
   const navigate = useNavigate()
-  const toast = useToast()
   const validate = (form: FormProps) => {
     const errors: Partial<FormProps> = {}
     if (!emailRegex.test(form.email)) errors.email = 'Invalid email'
@@ -48,20 +49,10 @@ const AccountLogin = () => {
     ).then((response) => {
       if (String(response.data.status) == "ok") {
         localStorage.setItem('token', response.data['token'])
-        toast({
-          position: 'top',
-          status: 'success',
-          duration: 2000,
-          description: 'Login successfully'
-        })
+        ShowToast(toast, 'Login successfully', 'success')
         navigate('/')
       } else {
-        toast({
-          position: 'top',
-          status: 'error',
-          duration: 2000,
-          description: String(response.data.reason)
-        })
+        ShowToast(toast, String(response.data.reason), 'error')
       }
     })
   }
