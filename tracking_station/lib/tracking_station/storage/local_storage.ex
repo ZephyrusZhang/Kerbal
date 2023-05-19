@@ -152,7 +152,7 @@ defmodule TrackingStation.Storage.LocalStorage do
   end
 
   defp generate_record_for_image(dataset, name)
-      when dataset in [:base, :overlay, :running, :live] do
+       when dataset in [:base, :overlay, :running, :live] do
     path = "rpool/#{dataset}/#{name}"
     snap_path = "#{path}@frozen"
     guid = get_property(snap_path, "guid")
@@ -252,7 +252,7 @@ defmodule TrackingStation.Storage.LocalStorage do
             info =
               record
               |> storage_info()
-              |> Keyword.take([:guid, :dataset, :name, :used, :volsize, :node_id])
+              |> Keyword.take([:guid, :dataset, :name, :used, :volsize])
               |> Enum.into(%{})
 
             Map.put(acc, storage_info(record, :guid), info)
@@ -266,7 +266,19 @@ defmodule TrackingStation.Storage.LocalStorage do
   end
 
   def prepare_image(dataset, name) do
-    GenServer.call(__MODULE__, {:prepare, dataset, name})
+    # make sure the image exist
+    result =
+      Mnesia.transaction(fn ->
+        Mnesia.match_object(storage_info(dataset: dataset, name: name))
+      end)
+
+    case result do
+      {:atomic, [_info | _]} ->
+        GenServer.call(__MODULE__, {:prepare, dataset, name})
+
+      _ ->
+        {:error, :not_exist}
+    end
   end
 
   defp submit_task(dataset, name, dom_monitor, state) do
@@ -323,7 +335,7 @@ defmodule TrackingStation.Storage.LocalStorage do
 
           _ ->
             # query info about it's origin
-            {:ok, [info | _]} =
+            {:atomic, [info | _]} =
               Mnesia.transaction(fn ->
                 Mnesia.match_object(storage_info(dataset: dataset, name: name))
               end)
