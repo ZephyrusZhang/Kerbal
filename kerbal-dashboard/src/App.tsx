@@ -35,12 +35,12 @@ export const App = () => {
         <Route path='/login' element={<AccountLogin/>}/>
         <Route path='/test' element={<Test/>}/>
         <Route path='/user_edit' element={<UserEdit/>}/>
+        <Route path='/account/creation' element={<AccountCreation/>}/>
         <Route path='/' element={<Layout/>}>
           <Route path='/' element={<PrivateRoute/>}>
             <Route path='/domain' element={<DomainOverview/>}/>
             <Route path='/domain/management/:domain_uuid' element={<DomainManagement/>}/>
             <Route path='/domain/create' element={<DomainCreation/>}/>
-            <Route path='/account/creation' element={<AccountCreation/>}/>
             <Route path='/account' element={<AccountSetting/>}/>
             <Route path='/board' element={<Visualization/>}/>
             <Route path='/' element={<Navigate to='domain' replace/>}/>
