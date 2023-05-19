@@ -15,6 +15,7 @@ import DomainOverview from "./screens/domain/DomainOverview";
 import DomainManagement from "./screens/domain/management";
 import { useEffect } from "react";
 import { isToRenew, renew } from "./util/jwt";
+import Visualization from "./screens/data-visualization/Visualization";
 
 export const App = () => {
   useEffect(() => {
@@ -41,6 +42,7 @@ export const App = () => {
             <Route path='/domain/create' element={<DomainCreation/>}/>
             <Route path='/account/creation' element={<AccountCreation/>}/>
             <Route path='/account' element={<AccountSetting/>}/>
+            <Route path='/board' element={<Visualization/>}/>
             <Route path='/' element={<Navigate to='domain' replace/>}/>
           </Route>
         </Route>

@@ -26,7 +26,8 @@ interface NavbarButtonProp {
 const Sidebar = () => {
   const buttonsProp: NavbarButtonProp[] = [
     { leftIcon: <MdDeveloperBoard/>, text: 'Domains', to: '/domain' },
-    { leftIcon: <VscAccount/>, text: 'Account', to: '/account' }
+    { leftIcon: <VscAccount/>, text: 'Account', to: '/account' },
+    { leftIcon: <VscAccount/>, text: 'Board', to: '/board' }
   ]
   const variants = {
     hidden: { opacity: 1, x: '-100vw' },
