@@ -3,98 +3,98 @@ import { Field, FieldProps, Form, Formik } from "formik";
 import {
   Box,
   Button,
-  FormControl,
+  FormControl, FormErrorMessage,
   FormLabel,
   HStack,
   IconButton,
   Input, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay,
-  useDisclosure,
-  VStack
+  useDisclosure, VStack
 } from "@chakra-ui/react";
 import { AiOutlineCheck } from "react-icons/all";
 import request from "../../util/request";
-
-interface FormProps {
-  username?: string,
-  email?: string,
-  password?: string,
-}
-
+import { validateEmail, validatePassword } from "../../util/validate";
 const AccountInformation = () => {
-  const { isOpen, onOpen, onClose } = useDisclosure()
+  const {isOpen, onOpen, onClose} = useDisclosure()
   const [action, setAction] = useState<string>()
-  const [userParam, setUserParam] = useState<object>()
-  const [currentPassword, setCurrentPassword] = useState<string>();
+  const [userParams, setUserParams] = useState<object>()
+  const [currentPassword, setCurrentPassword] = useState('')
 
-  const handleClickSave = (values: FormProps, fieldName: string) => {
+  const handleSubmit = (values: {[key: string]: unknown}, fieldName: 'username' | 'email' | 'password') => {
+    console.log(values)
     switch (fieldName) {
       case 'username':
         setAction('update_username')
-        setUserParam({ username: values.username })
+        setUserParams({username: values.username})
         break
       case 'email':
         setAction('update_email')
-        setUserParam({ email: values.email })
+        setUserParams({email: values.email})
+        break
+      case 'password':
+        setAction('update_password')
+        setUserParams({password: values.password, password_confirmation: values.passwordConfirmation})
         break
     }
-
     onOpen()
   }
 
-  const handleSubmit = (values: unknown) => {
+  const handleUpdate = (values: unknown) => {
     onClose()
-    console.log(values)
-    // request.put('', values).then(response => {
-    //   console.log(response)
-    // })
+    request.put('/api/users/settings', values).then(response => {
+      console.log(response)
+    })
   }
 
   return (
     <Box w='50%'>
-      <Formik initialValues={{}} onSubmit={() => console.log('submit')}>
-        {({}) => (
+      <VStack align='flex-start'>
+        <Formik initialValues={{username: ''}} onSubmit={(values) => handleSubmit(values, 'username')}>
           <Form>
-            <VStack>
-              <Field name='username'>
-                {({field, form}: FieldProps) => (
-                  <FormControl>
-                    <FormLabel>Username</FormLabel>
-                    <HStack>
-                      <Input {...field}/>
-                      <IconButton
-                        aria-label='check'
-                        icon={<AiOutlineCheck/>}
-                        onClick={() => handleClickSave(form.values, field.name)}
-                      />
-                    </HStack>
-                  </FormControl>
-                )}
-              </Field>
-              <Field name='email'>
-                {({field, form}: FieldProps) => (
-                  <FormControl>
-                    <FormLabel>Email</FormLabel>
-                    <HStack>
-                      <Input {...field}/>
-                      <IconButton
-                        aria-label='check'
-                        icon={<AiOutlineCheck/>}
-                        onClick={() => handleClickSave(form.values, field.name)}
-                      />
-                    </HStack>
-                  </FormControl>
-                )}
-              </Field>
-            </VStack>
+            <Field name='username'>
+              {({field}: FieldProps) => (
+                <FormControl>
+                  <FormLabel>Username</FormLabel>
+                  <HStack>
+                    <Input {...field} type='username'/>
+                    <IconButton
+                      aria-label='check'
+                      type='submit'
+                      icon={<AiOutlineCheck/>}
+                      // onClick={() => handleClickSave(form.values, field.name)}
+                    />
+                  </HStack>
+                </FormControl>
+              )}
+            </Field>
           </Form>
-        )}
-      </Formik>
+        </Formik>
+        <Formik initialValues={{email: ''}} onSubmit={(values) => handleSubmit(values, 'email')}>
+          <Form>
+            <Field name='email' validate={validateEmail}>
+              {({field, form}: FieldProps) => (
+                <FormControl isInvalid={!!(form.errors.email && form.touched.email)}>
+                  <FormLabel>Email</FormLabel>
+                  <HStack>
+                    <Input {...field} type='email'/>
+                    <FormErrorMessage>{form.errors.email as string}</FormErrorMessage>
+                    <IconButton
+                      aria-label='check'
+                      type='submit'
+                      icon={<AiOutlineCheck/>}
+                    />
+                  </HStack>
+                </FormControl>
+              )}
+            </Field>
+          </Form>
+        </Formik>
+      </VStack>
 
       <Modal isOpen={isOpen} onClose={onClose}>
-        <ModalOverlay />
+        <ModalOverlay/>
         <ModalContent>
           <ModalHeader>Current Password</ModalHeader>
-          <ModalCloseButton />
+          <ModalCloseButton/>
           <ModalBody>
             <Input
               placeholder='Please input current password'
@@ -108,23 +108,38 @@ const AccountInformation = () => {
             <Button colorScheme='blue' mr={3} onClick={onClose}>
               Cancel
             </Button>
-            <Button variant='ghost' onClick={() => handleSubmit({
+            <Button variant='ghost' onClick={() => handleUpdate({
               action: action,
               current_password: currentPassword,
-              user_param: userParam
+              user_params: userParams
             })}>Save</Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
 
-      <Formik initialValues={{}} onSubmit={() => console.log('submit')}>
-        {({}) => (
+      <Formik
+        initialValues={{password: '', passwordConfirmation: ''}}
+        onSubmit={(values) => handleSubmit(values, 'password')}
+        validate={validatePassword}
+      >
+        {({
+            errors,
+            touched
+          }) => (
           <Form>
-            <FormControl>
-              <FormLabel>Password</FormLabel>
-              <Field as={Input} name='password'/>
-            </FormControl>
-            <Button type="submit">Change Password</Button>
+            <VStack>
+              <FormControl isInvalid={!!(errors.password && touched.password)}>
+                <FormLabel>Password</FormLabel>
+                <Field as={Input} name='password' type='password'/>
+                <FormErrorMessage>{errors.password}</FormErrorMessage>
+              </FormControl>
+              <FormControl isInvalid={!!(errors.passwordConfirmation && touched.passwordConfirmation)}>
+                <FormLabel>Password Confirm</FormLabel>
+                <Field as={Input} name='passwordConfirmation' type='password'/>
+                <FormErrorMessage>{errors.passwordConfirmation}</FormErrorMessage>
+              </FormControl>
+              <Button type="submit">Change Password</Button>
+            </VStack>
           </Form>
         )}
       </Formik>
