@@ -10,14 +10,14 @@ defmodule KerbalWeb.DomainController do
   end
 
   def list(conn, _params) do
-    user_id = conn.assigns[:current_user]
+    user_id = conn.assigns.current_user.id
 
     domains = TrackingStation.Scheduler.list_user_domains(user_id)
     json(conn, domains)
   end
 
   def query(conn, %{"domain_uuid" => domain_uuid}) do
-    user_id = conn.assigns[:current_user]
+    user_id = conn.assigns.current_user.id
 
     case TrackingStation.Scheduler.get_domain_info(domain_uuid, user_id) do
       {:ok, info} ->
@@ -35,7 +35,7 @@ defmodule KerbalWeb.DomainController do
   end
 
   def create(conn, %{"cpu_count" => cpu_count, "ram_size" => ram_size, "gpus" => gpus}) do
-    user_id = conn.assigns[:current_user]
+    user_id = conn.assigns.current_user.id
 
     gpus =
       gpus
@@ -57,9 +57,26 @@ defmodule KerbalWeb.DomainController do
   end
 
   def delete(conn, %{"domain_uuid" => domain_uuid}) do
-    user_id = conn.assigns[:current_user]
+    user_id = conn.assigns.current_user.id
 
     case TrackingStation.Scheduler.DomainMonitor.destroy(domain_uuid, user_id) do
+      :ok ->
+        json(conn, %{status: :ok})
+
+      {:error, :not_exist} ->
+        json(conn, %{status: :err, reason: :not_exist})
+
+      {:error, :permission_denied} ->
+        json(conn, %{status: :err, reason: :permission_denied})
+
+      _ ->
+        json(conn, %{status: :err, reason: "unknown error"})
+    end
+  end
+
+  def snapshot(conn, %{"domain_uuid" => domain_uuid}) do
+    user_id = conn.assigns.current_user.id
+    case TrackingStation.Scheduler.DomainMonitor.snapshot(domain_uuid, user_id) do
       :ok ->
         json(conn, %{status: :ok})
 

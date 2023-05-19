@@ -49,6 +49,14 @@ defmodule TrackingStation.Scheduler.DomainMonitor do
     end
   end
 
+  def snapshot(domain_uuid, user_id, overlay_name) do
+    case Registry.lookup(TrackingStation.Scheduler.DomainMonitorRegistry, domain_uuid) do
+      [{pid, ^user_id}] -> {:ok, GenServer.call(pid, {:snapshot, overlay_name})}
+      [{_pid, _}] -> {:error, :permission_denied}
+      [] -> {:error, :not_exist}
+    end
+  end
+
   # -------------------------
 
   @impl true
@@ -251,6 +259,12 @@ defmodule TrackingStation.Scheduler.DomainMonitor do
     {:reply, state, state}
   end
 
+  @impl true
+  def handle_call({:snapshot, name}, _from, %{running_disk_id: running_disk_id} = state) do
+    :ok = LocalStorage.make_overlay(running_disk_id, name)
+    {:reply, :ok, state}
+  end
+
   ### ----- handle_info -----
   @impl true
   def handle_cast(
@@ -265,7 +279,9 @@ defmodule TrackingStation.Scheduler.DomainMonitor do
     iso_path = LocalStorage.get_installation_image()
     iso_config = LibvirtConfig.iso_config(iso_path)
 
+    Logger.warning("image ready: #{dataset} #{name}")
     disk_id = LocalStorage.create_running(dataset, name)
+    Logger.warning("running: #{disk_id}")
     disk_path = "/dev/zvol/rpool/running/#{disk_id}"
     disk_config = LibvirtConfig.disk_config(disk_path)
     # Be careful It's not a strong password
