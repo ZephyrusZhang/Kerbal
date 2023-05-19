@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react';
 import {
   Box,
   Container,
@@ -25,15 +25,28 @@ const Navbar = () => {
     localStorage.removeItem('is-admin')
     navigate('/login')
   }
+  const [visible, setVisible] = useState(true);
 
+  const handleMouseEnter = () => {
+    setVisible(true);
+  };
+
+  const handleMouseLeave = () => {
+    if (parseInt(localStorage.getItem('selectedSidebarLinkIndex') as string) == 2){
+      setVisible(false);
+    }
+  };
   return (
     <Box
       position="fixed"
       as="nav"
       w="100%"
       // css={{ backdropFilter: 'blur(10px)' }}
-      mt='2vh'
+      mt={visible ? '2vh' : '-75px'} // 控制显示和隐藏
       zIndex={2}
+      transition="margin-top 0.7s"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
       <Container
         display="flex"
