@@ -149,6 +149,8 @@ const AccountLogin = () => {
               </Form>
             )}
           </Formik>
+
+          <Button w='100%' colorScheme='blue' onClick={() => navigate('/account/creation')}>Register</Button>
         </VStack>
       </Box>
     </Box>
