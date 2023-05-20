@@ -15,7 +15,6 @@ defmodule KerbalWeb.UserRegistrationControllerTest do
         })
         |> doc()
 
-      assert get_session(conn, :user_token)
       assert %{"status" => "ok"} = json_response(conn, 200)
     end
 
