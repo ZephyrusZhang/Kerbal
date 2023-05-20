@@ -270,6 +270,12 @@ defmodule TrackingStation.Storage.LocalStorage do
       end)
 
     images
+    |> Map.values()
+    |> Enum.map(fn image ->
+      image
+      |> then(&Map.put(&1, :id, &1.guid))
+      |> Map.delete(:guid)
+    end)
   end
 
   def prepare_image(dataset, name) do

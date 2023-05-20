@@ -1,5 +1,9 @@
 defmodule KerbalWeb.DomainController do
+  alias KerbalWeb.DomainController
   use KerbalWeb, :controller
+
+  alias TrackingStation.Scheduler.DomainMonitor
+  alias TrackingStation.Scheduler
 
   defp cast_to_int(x) when is_integer(x) do
     x
@@ -12,14 +16,14 @@ defmodule KerbalWeb.DomainController do
   def list(conn, _params) do
     user_id = conn.assigns.current_user.id
 
-    domains = TrackingStation.Scheduler.list_user_domains(user_id)
+    domains = Scheduler.list_user_domains(user_id)
     json(conn, domains)
   end
 
   def query(conn, %{"domain_uuid" => domain_uuid}) do
     user_id = conn.assigns.current_user.id
 
-    case TrackingStation.Scheduler.get_domain_info(domain_uuid, user_id) do
+    case DomainMonitor.get_info(domain_uuid, user_id) do
       {:ok, info} ->
         json(conn, %{status: :ok, result: info})
 
@@ -34,7 +38,12 @@ defmodule KerbalWeb.DomainController do
     end
   end
 
-  def create(conn, %{"cpu_count" => cpu_count, "ram_size" => ram_size, "gpus" => gpus}) do
+  def create(conn, %{
+        "cpu_count" => cpu_count,
+        "ram_size" => ram_size,
+        "gpus" => gpus,
+        "image_id" => image_id
+      }) do
     user_id = conn.assigns.current_user.id
 
     gpus =
@@ -43,10 +52,11 @@ defmodule KerbalWeb.DomainController do
         %{gpu_id: gpu_id, bus: bus, slot: slot, function: function}
       end)
 
-    case TrackingStation.Scheduler.create_domain(node(), user_id, %{
+    case Scheduler.create_domain(node(), user_id, %{
            cpu_count: cpu_count |> cast_to_int(),
            ram_size: ram_size |> cast_to_int(),
-           gpus: gpus
+           gpus: gpus,
+           image_id: image_id
          }) do
       {:ok, domain_uuid} ->
         json(conn, %{status: :ok, domain_uuid: domain_uuid})
@@ -59,7 +69,7 @@ defmodule KerbalWeb.DomainController do
   def delete(conn, %{"domain_uuid" => domain_uuid}) do
     user_id = conn.assigns.current_user.id
 
-    case TrackingStation.Scheduler.DomainMonitor.destroy(domain_uuid, user_id) do
+    case DomainMonitor.destroy(domain_uuid, user_id) do
       :ok ->
         json(conn, %{status: :ok})
 
@@ -74,9 +84,10 @@ defmodule KerbalWeb.DomainController do
     end
   end
 
-  def snapshot(conn, %{"domain_uuid" => domain_uuid}) do
+  def snapshot(conn, %{"domain_uuid" => domain_uuid, "name" => name}) do
     user_id = conn.assigns.current_user.id
-    case TrackingStation.Scheduler.DomainMonitor.snapshot(domain_uuid, user_id) do
+
+    case DomainMonitor.snapshot(domain_uuid, user_id, name) do
       :ok ->
         json(conn, %{status: :ok})
 

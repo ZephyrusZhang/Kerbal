@@ -20,19 +20,28 @@ defmodule KerbalWeb.DomainControllerTest do
 
     node = Atom.to_string(node())
 
-    self_node =
+    self_node_info =
       result
       |> Enum.filter(&(Map.fetch!(&1, "node_id") == node))
       |> Enum.fetch!(0)
 
-    gpus = Map.fetch!(self_node, "gpus")
+    gpus = self_node_info["gpus"]
+    cpu_count = self_node_info["free_cpu_count"]
+
+    conn = conn
+    |> get(~p"/api/cluster/storage/list")
+
+    assert %{"status" => "ok", "result" => images} = json_response(conn, 200)
+
+    image = Enum.fetch!(images, 0)
 
     conn =
       conn
       |> post(~p"/api/cluster/domain", %{
-        "cpu_count" => 1,
+        "cpu_count" => cpu_count,
         "ram_size" => 2 * 1024 ** 2,
-        "gpus" => gpus
+        "gpus" => gpus,
+        "image_id" => image["id"]
       })
       |> doc()
 
@@ -42,9 +51,10 @@ defmodule KerbalWeb.DomainControllerTest do
     conn =
       conn
       |> post(~p"/api/cluster/domain", %{
-        "cpu_count" => 1,
+        "cpu_count" => cpu_count,
         "ram_size" => 2 * 1024 ** 2,
-        "gpus" => gpus
+        "gpus" => gpus,
+        "image_id" => image["id"]
       })
       |> doc()
 
@@ -58,7 +68,7 @@ defmodule KerbalWeb.DomainControllerTest do
     assert %{
              "domain_uuid" => domain_uuid,
              # 2 * 1024**2 = 2097152
-             "spec" => %{"cpu_count" => 1, "ram_size" => 2_097_152}
+             "spec" => %{"cpu_count" => ^cpu_count, "ram_size" => 2_097_152}
            } = info
 
     # now destroy it

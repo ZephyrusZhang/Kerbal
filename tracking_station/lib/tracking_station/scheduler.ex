@@ -95,12 +95,36 @@ defmodule TrackingStation.Scheduler do
     list_of_domains
   end
 
-  def lookup_resource(%{
-        cpu_count: cpu_count,
-        ram_size: ram_size,
-        gpu_count: gpu_count,
-        gpu: %{name: name, vram_size: vram_size}
-      }) do
+  defp query_node(cpu_count, ram_size) do
+    match_head =
+      node_info(
+        node_id: :"$1",
+        storage_role: :_,
+        cpu_count: :"$2",
+        ram_size: :"$3",
+        free_cpu_count: :"$4",
+        free_ram_size: :"$5"
+      )
+
+    guard = [{:>=, :"$4", cpu_count}, {:>=, :"$5", ram_size}]
+
+    result = [:"$_"]
+
+    {:atomic, available_nodes} =
+      Mnesia.transaction(fn ->
+        Mnesia.select(:node_info, [
+          {
+            match_head,
+            guard,
+            result
+          }
+        ])
+      end)
+
+    available_nodes
+  end
+
+  defp query_gpu(name, vram_size) do
     match_head =
       gpu_status(
         gpu_id: :_,
@@ -126,42 +150,53 @@ defmodule TrackingStation.Scheduler do
 
     result = [:"$_"]
 
-    {:atomic, query_result} =
+    {:atomic, available_gpus} =
       Mnesia.transaction(fn ->
-        available_gpus =
-          Mnesia.select(:gpu_status, [
-            {
-              match_head,
-              guard,
-              result
-            }
-          ])
-          |> Enum.map(fn gpu ->
-            gpu |> gpu_status() |> Enum.into(%{})
-          end)
-
-        available_gpus
-        |> Enum.group_by(&Map.get(&1, :node_id))
-        |> Enum.filter(fn {_node, gpus} -> length(gpus) >= gpu_count end)
-        |> Enum.map(fn {node, gpus} ->
-          [matched_node_info | []] = Mnesia.match_object(node_info(node_id: node))
-
-          {node, gpus, matched_node_info}
-        end)
+        Mnesia.select(:gpu_status, [
+          {
+            match_head,
+            guard,
+            result
+          }
+        ])
       end)
 
-    query_result
-    |> Enum.filter(fn {_node, _gpus, matched_node_info} ->
-      free_cpu_count = node_info(matched_node_info, :free_cpu_count)
-      free_ram_size = node_info(matched_node_info, :free_ram_size)
+    available_gpus
+  end
 
-      free_cpu_count >= cpu_count and free_ram_size >= ram_size
+  def lookup_resource(%{
+        cpu_count: cpu_count,
+        ram_size: ram_size,
+        gpu_count: gpu_count,
+        gpu: %{name: name, vram_size: vram_size}
+      }) do
+    available_nodes = query_node(cpu_count, ram_size)
+
+    available_gpus =
+      query_gpu(name, vram_size)
+      |> Enum.group_by(&gpu_status(&1, :node_id))
+      |> Map.filter(fn {_key, value} -> length(value) >= gpu_count end)
+
+    available_nodes
+    |> Enum.map(fn record ->
+      node_id = node_info(record, :node_id)
+      match_gpus = Map.get(available_gpus, node_id, [])
+      {record, match_gpus}
     end)
-    |> Enum.map(fn {_node, gpus, matched_node_info} ->
-      matched_node_info
+    |> Enum.filter(fn {_record, match_gpus} ->
+      length(match_gpus) >= gpu_count
+    end)
+    |> Enum.map(fn {record, match_gpus} ->
+      map_format_gpus =
+        match_gpus
+        |> Enum.map(fn gpu_status_record ->
+          gpu_status_record |> gpu_status() |> Enum.into(%{})
+        end)
+
+      record
       |> node_info()
       |> Enum.into(%{})
-      |> Map.put(:gpus, gpus)
+      |> Map.put(:gpus, map_format_gpus)
     end)
   end
 end
