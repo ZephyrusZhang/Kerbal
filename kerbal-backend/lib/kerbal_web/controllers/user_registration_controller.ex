@@ -17,7 +17,7 @@ defmodule KerbalWeb.UserRegistrationController do
         # if error, than user is already confirmed
 
         # User created successfully, log in at the same time
-        UserAuth.log_in_user(conn, user)
+        UserAuth.log_in_user(conn, user.id)
 
       {:error, _changeset} ->
         json(conn, %{status: :err, reason: "Invalid email"})
