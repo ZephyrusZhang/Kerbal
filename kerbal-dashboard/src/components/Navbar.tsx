@@ -11,7 +11,8 @@ import {
   MenuItem,
   MenuList, useColorModeValue
 } from '@chakra-ui/react'
-import { AiOutlineMenu, IoIosSettings } from 'react-icons/all'
+import { AiOutlineMenu } from 'react-icons/ai'
+import { IoIosSettings } from 'react-icons/io'
 import ToggleColorModeButton from "./ToggleColorModeButton";
 import { useNavigate } from "react-router-dom";
 import { useKerbalUIController } from "../context";
