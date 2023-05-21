@@ -48,8 +48,8 @@ defmodule KerbalWeb.DomainController do
 
     gpus =
       gpus
-      |> Enum.map(fn %{"gpu_id" => gpu_id, "bus" => bus, "slot" => slot, "function" => function} ->
-        %{gpu_id: gpu_id, bus: bus, slot: slot, function: function}
+      |> Enum.map(fn %{"gpu_id" => gpu_id} ->
+        %{gpu_id: gpu_id}
       end)
 
     case Scheduler.create_domain(node(), user_id, %{

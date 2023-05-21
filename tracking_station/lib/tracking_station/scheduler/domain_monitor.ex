@@ -63,7 +63,7 @@ defmodule TrackingStation.Scheduler.DomainMonitor do
   def init({%{image_id: image_id} = spec, user_id, domain_uuid}) do
     {dataset, name} = LocalStorage.path_from_guid(image_id)
     :ok = LocalStorage.prepare_image(dataset, name)
-    port = check_and_allocate(spec, user_id, domain_uuid)
+    {port, current_gpus_info} = check_and_allocate(spec, user_id, domain_uuid)
 
     {:ok,
      %{
@@ -72,7 +72,7 @@ defmodule TrackingStation.Scheduler.DomainMonitor do
        running_disk_id: nil,
        status: :creating,
        password: "",
-       spec: spec,
+       spec: Map.replace!(spec, :gpus, current_gpus_info),
        port: port
      }}
   end
@@ -87,7 +87,7 @@ defmodule TrackingStation.Scheduler.DomainMonitor do
     # allocate spice port
     {:ok, port} = Network.allocate_spice_port()
     # allocate cpu, ram & gpu
-    {:atomic, :ok} =
+    {:atomic, current_gpus_info} =
       Mnesia.transaction(fn ->
         current_gpus_info =
           Enum.map(gpus, fn gpu ->
@@ -113,7 +113,7 @@ defmodule TrackingStation.Scheduler.DomainMonitor do
         true = free_cpu_count >= cpu_count and free_ram_size >= ram_size
 
         Enum.map(current_gpus_info, fn gpu ->
-          Mnesia.write(gpu_status(gpu, free: false))
+          Mnesia.write(gpu_status(gpu, free: false, domain_uuid: domain_uuid))
         end)
 
         Mnesia.write(
@@ -131,16 +131,10 @@ defmodule TrackingStation.Scheduler.DomainMonitor do
           )
         )
 
-        Enum.map(gpus, fn gpu ->
-          [matched_gpu | []] = Mnesia.match_object(gpu_status(gpu_id: gpu.gpu_id))
-
-          Mnesia.write(gpu_status(matched_gpu, domain_uuid: domain_uuid))
-        end)
-
-        :ok
+        current_gpus_info
       end)
 
-    port
+    {port, current_gpus_info}
   end
 
   @impl true
@@ -180,12 +174,8 @@ defmodule TrackingStation.Scheduler.DomainMonitor do
         Mnesia.delete({:active_domain, domain_uuid})
 
         gpus
-        |> Enum.map(fn gpu ->
-          # since gpu_is the key, there should be exactly one match
-          Mnesia.match_object(gpu_status(gpu_id: gpu.gpu_id))
-        end)
-        |> Enum.map(fn [record | []] ->
-          Mnesia.write(gpu_status(record, free: true))
+        |> Enum.map(fn record ->
+          Mnesia.write(gpu_status(record, free: true, domain_uuid: ""))
         end)
 
         [current_node_info | _] = Mnesia.match_object(node_info(node_id: node()))
@@ -290,7 +280,10 @@ defmodule TrackingStation.Scheduler.DomainMonitor do
 
     gpu_passthrough =
       gpus
-      |> Enum.map(fn %{bus: bus, slot: slot, function: function} ->
+      |> Enum.map(fn record ->
+        bus = gpu_status(record, :bus)
+        slot = gpu_status(record, :slot)
+        function = gpu_status(record, :function)
         LibvirtConfig.gpu_passthrough(bus, slot, function)
       end)
       |> Enum.join("\n")
