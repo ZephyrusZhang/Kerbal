@@ -1,7 +1,8 @@
-import React, { useEffect, useState, ChangeEvent } from 'react';
+import React, { ChangeEvent, useEffect, useState } from 'react';
 import { Field, Form, Formik } from "formik";
 import {
-  Button, ButtonGroup,
+  Button,
+  ButtonGroup,
   Flex,
   FormControl,
   FormLabel,
@@ -10,12 +11,13 @@ import {
   TabPanel,
   TabPanels,
   Tabs,
-  Text, useColorModeValue, VStack
+  Text,
+  useColorModeValue,
+  VStack
 } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
 import SelectMenu from "../../components/SelectMenu";
-import GpuSelectTable, { GpuInfo } from "../../components/GpuSelectTable";
-import SelectedGpuTable from "../../components/SelectedGpuTable";
+import GpuSelectTable from "../../components/GpuSelectTable";
 import MainLayout from "../../layouts/MainLayout";
 import request from '../../util/request';
 import { GpuProps, ImageProps, NodeProps } from "../../types";
@@ -31,42 +33,32 @@ interface FormProps {
 }
 
 const DomainCreation = () => {
-  const formInitValue: FormProps = {
+  const [formInitialValue, setFormInitialValue] = useState<FormProps>({
     cpu_count: 0,
     gpus: [],
     ram_size: 0,
     public_image_id: '',
     custom_image_id: '',
     node_id: ''
-  }
-  const [selectedGpu, setSelectedGpu] = useState<GpuInfo[]>([])
+  });
   const [publicImageOption, setPublicImageOption] = useState([])
   const [customImageOption, setCustomImageOption] = useState([])
   const [nodeOption, setNodeOption] = useState([])
-  const [tabIndex, setTabIndex] = useState(0);
+  const [nodes, setNodes] = useState<Array<NodeProps>>([])
+  const [gpus, setGpus] = useState<Array<GpuProps & { isSelected?: boolean }>>([])
+  const [tabIndex, setTabIndex] = useState(0)
   const navigate = useNavigate()
   const boxColor = useColorModeValue('#ffffff', '#414040')
 
-  const handleAddGpu = (gpu: GpuInfo) => {
-    const index = selectedGpu.findIndex(item => item.name === gpu.name)
-    if (index < 0) {
-      setSelectedGpu([...selectedGpu, {...gpu, count: 1}])
-    } else {
-      const temp = [...selectedGpu]
-      temp[index].count = temp[index].count as number + 1
-      setSelectedGpu(temp)
-    }
-  }
-
-  const handleDeleteGpu = (gpu: GpuInfo) => {
-    const index = selectedGpu.findIndex(item => item.name === gpu.name)
-    const temp = [...selectedGpu]
-    temp[index].count = temp[index].count as number - 1
-    setSelectedGpu(temp.filter(item => item.count as number > 0))
-  }
-
-  const handleSubmit = async (values: FormProps) => {
-
+  const handleSelectGpu = (gpu_id: string, isSelected: boolean) => {
+    setGpus((prevState) => {
+      return prevState.map(item => {
+        if (item.gpu_id === gpu_id) {
+          return {...item, isSelected: isSelected}
+        }
+        return item
+      })
+    })
   }
 
   const fetchNodes = (values: FormProps) => {
@@ -81,6 +73,7 @@ const DomainCreation = () => {
         }
       }
     ).then(response => {
+      setNodes(response.data.result)
       setNodeOption(response.data.result
         .map((item: NodeProps) => ({value: item.node_id, text: item.node_id})))
     })
@@ -88,25 +81,59 @@ const DomainCreation = () => {
 
   useEffect(() => {
     request.get('/api/cluster/storage/list').then(response => {
-      setPublicImageOption(response.data.result
-        .filter((item: ImageProps) => item.dataset === 'base')
+      const publicImages = response.data.result.filter((item: ImageProps) => item.dataset === 'base')
+      const customImages = response.data.result.filter((item: ImageProps) => item.dataset === 'overlay')
+      setPublicImageOption(publicImages
         .map((item: ImageProps) => ({value: item.id, text: item.name})))
-      setCustomImageOption(response.data.result
-        .filter((item: ImageProps) => item.dataset === 'overlay')
+      setFormInitialValue(prevState => ({
+        ...prevState,
+        public_image_id: publicImages[0] ? publicImages[0].id : '',
+        custom_image_id: customImages[0] ? customImages[0].id : ''
+      }))
+      setCustomImageOption(customImages
         .map((item: ImageProps) => ({value: item.id, text: item.name})))
     })
 
-    fetchNodes(formInitValue)
+    fetchNodes(formInitialValue)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  useEffect(() => {
+    if (nodes[0]) {
+      setGpus(nodes[0].gpus.map((item) => ({...item, isSelected: false})) as Array<never>)
+    }
+  }, [nodes])
+
+  const handleSubmit = async (values: FormProps) => {
+    const body = {
+      cpu_count: values.cpu_count,
+      ram_size: values.ram_size,
+      gpus: gpus
+        .filter(item => item.isSelected)
+        .map(item => ({gpu_id: item.gpu_id})),
+      image_id: tabIndex === 0 ? values.public_image_id : values.custom_image_id
+    }
+    console.log(body)
+    request.post('/api/cluster/domain', body).then(response => {
+      console.log(response)
+    })
+  }
+
   return (
     <MainLayout>
-      <Formik initialValues={formInitValue} onSubmit={handleSubmit}>
+      <Formik initialValues={formInitialValue} onSubmit={handleSubmit} enableReinitialize>
         {({values, handleChange}) => {
-          const handleFormChange = (e: ChangeEvent<unknown>) => {
+          const handleChangeAndFetchNodes = (e: ChangeEvent<unknown>) => {
             handleChange(e)
             fetchNodes(values)
+          }
+
+          const handleNodeChange = (e: ChangeEvent<unknown>) => {
+            handleChange(e)
+            setGpus(nodes
+              .find(item => item.node_id === values.node_id)!
+              .gpus
+              .map((item) => ({...item, isSelected: false})))
           }
 
           return (
@@ -146,7 +173,7 @@ const DomainCreation = () => {
                       name='cpu_count'
                       defaultValue={0}
                       options={cpuOptions}
-                      onChange={handleFormChange}
+                      onChange={handleChangeAndFetchNodes}
                     />
                   </FormControl>
                   <FormControl display='flex'>
@@ -156,7 +183,7 @@ const DomainCreation = () => {
                       name='ram_size'
                       defaultValue={0}
                       options={memoryOptions}
-                      onChange={handleFormChange}
+                      onChange={handleChangeAndFetchNodes}
                     />
                   </FormControl>
                   <FormControl display='flex'>
@@ -166,22 +193,15 @@ const DomainCreation = () => {
                       name='node_id'
                       defaultValue={0}
                       options={nodeOption}
-                      onChange={handleChange}
+                      onChange={handleNodeChange}
                     />
                   </FormControl>
                   <FormControl display='flex'>
                     <FormLabel w='25%'>GPU</FormLabel>
-                    <VStack w='80%'>
-                      <SelectedGpuTable data={selectedGpu} onDeleteGpu={handleDeleteGpu}/>
-                      <GpuSelectTable
-                        data={[
-                          {name: 'RTX 3090 Ti', vram: 24},
-                          {name: 'RTX 4090 Ti', vram: 32},
-                          {name: 'RTX 2060', vram: 6}
-                        ]}
-                        onAddGpu={handleAddGpu}
-                      />
-                    </VStack>
+                    <GpuSelectTable
+                      data={gpus}
+                      onCheckGpu={handleSelectGpu}
+                    />
                   </FormControl>
                 </VStack>
               </Flex>

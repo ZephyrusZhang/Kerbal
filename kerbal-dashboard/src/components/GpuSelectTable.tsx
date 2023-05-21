@@ -1,6 +1,6 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
-  Button,
+  Button, Checkbox,
   Drawer, DrawerBody, DrawerCloseButton, DrawerContent, DrawerFooter, DrawerHeader,
   DrawerOverlay, FormControl, FormLabel,
   IconButton, NumberDecrementStepper, NumberIncrementStepper, NumberInput, NumberInputField, NumberInputStepper,
@@ -13,40 +13,35 @@ import {
   Tr,
   useDisclosure
 } from "@chakra-ui/react";
-import { AddIcon, ArrowDownIcon, ArrowUpIcon } from "@chakra-ui/icons";
+import { ArrowDownIcon, ArrowUpIcon } from "@chakra-ui/icons";
 import { BsFilter } from "react-icons/bs";
 import { Field, FieldInputProps, Form, Formik, FormikProps } from "formik";
 import SelectMenu from "./SelectMenu";
-
-export type GpuInfo = {
-  name: string,
-  vram: number,
-  count?: number
-}
+import { GpuProps } from "../types";
 
 interface Props extends TableProps {
-  data: GpuInfo[],
-  onAddGpu: (gpu: GpuInfo) => void
+  data: Array<GpuProps & {isSelected?: boolean}>,
+  onCheckGpu: (gpu_id: string, isSelected: boolean) => void
 }
 
 interface FilterOptionProps {
   name?: string,
-  vram?: number
+  vram_size?: number
 }
 
-const GPUSelectTable = ({data, onAddGpu, ...props}: Props) => {
+const GPUSelectTable = ({data, onCheckGpu, ...props}: Props) => {
   const [sortOrder, setSortOrder] = useState<'sequence' | 'reverse'>('reverse')
   const [displayData, setDisplayData] = useState(data)
   const {isOpen, onOpen, onClose} = useDisclosure()
   const filterBtnRef = useRef<HTMLButtonElement>(null)
   const filterInitialValue: FilterOptionProps = {
     name: undefined,
-    vram: 0
+    vram_size: 0
   }
 
   const handleFilterSubmit = async (values: FilterOptionProps) => {
     onClose()
-    setDisplayData(data.filter(item => item.vram > (values.vram as number)))
+    setDisplayData(data.filter(item => item.vram_size > (values.vram_size as number)))
     if (values.name !== undefined)
       setDisplayData(data.filter(item => item.name === values.name))
 
@@ -62,14 +57,17 @@ const GPUSelectTable = ({data, onAddGpu, ...props}: Props) => {
 
   const handleClickSort = () => {
     if (sortOrder == 'sequence') {
-      displayData.sort((a, b) => a.vram - b.vram)
+      displayData.sort((a, b) => a.vram_size - b.vram_size)
       setSortOrder('reverse')
     } else {
-      displayData.sort((a, b) => b.vram - a.vram)
+      displayData.sort((a, b) => b.vram_size - a.vram_size)
       setSortOrder('sequence')
     }
   }
 
+  useEffect(() => {
+    setDisplayData(data)
+  }, [data])
 
   return (
     <>
@@ -111,15 +109,12 @@ const GPUSelectTable = ({data, onAddGpu, ...props}: Props) => {
           {displayData.map((item, index) => (
             <Tr key={index}>
               <Td>{item.name}</Td>
-              <Td>{item.vram}</Td>
+              <Td>{item.vram_size}</Td>
               <Td>
-                <IconButton
-                  borderRadius='full'
-                  size='xs'
-                  aria-label={'Add GPU'}
-                  icon={<AddIcon/>}
-                  onClick={() => onAddGpu(item)}
-                />
+                <Checkbox
+                  isChecked={item.isSelected}
+                  onChange={event => onCheckGpu(item.gpu_id, event.target.checked)
+                }/>
               </Td>
             </Tr>
           ))}
