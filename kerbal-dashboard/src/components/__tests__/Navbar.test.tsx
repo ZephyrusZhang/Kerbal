@@ -4,33 +4,47 @@ import '@testing-library/jest-dom/extend-expect';
 import { BrowserRouter as Router } from 'react-router-dom';
 import Navbar from '../Navbar';
 
+
+jest.mock('react-router-dom', () => ({
+  ...jest.requireActual('react-router-dom'),
+  useNavigate: jest.fn(),
+}));
+
 describe('Navbar', () => {
-  test('renders Navbar component', () => {
-    render(
-      <Router>
-        <Navbar />
-      </Router>  
-    );
-    
-    // 断言Navbar组件中的元素是否存在
-    expect(screen.getByText('Kerbal')).toBeInTheDocument();
+  it('renders Navbar component correctly', () => {
+    render(<Navbar />);
+  
+    // Assert the presence of certain elements
+    expect(screen.getByRole('heading', { name: /Kerbal/i })).toBeInTheDocument();
     expect(screen.getByLabelText('toggleSiderbar')).toBeInTheDocument();
-    // ...
+    expect(screen.getByLabelText('toggleSiderbar')).toHaveAttribute('aria-label', 'toggleSiderbar');
+    // Add more assertions based on your component's structure and behavior
   });
 
-  test('clicking toggleSidebar button should update controller state', () => {
-    const { container } = render(
-        <Router>
-          <Navbar />
-        </Router>  
-      );
+  it('handles logout correctly', () => {
+    // Mocking localStorage methods
+    const removeItemSpy = jest.spyOn(window.localStorage.__proto__, 'removeItem');
+    removeItemSpy.mockImplementation(() => {});
+
+    // Mocking useNavigate hook
+    const navigateMock = jest.fn();
+    require('react-router-dom').useNavigate.mockImplementation(() => navigateMock);
     
-    // 模拟点击toggleSidebar按钮
-    fireEvent.click(screen.getByLabelText('toggleSiderbar'));
-    
-    // 检查controller状态是否更新
-    // ...
+    // Render the component
+    render(<Navbar />);
+  
+    // Simulate click event on logout button
+    fireEvent.click(screen.getByText('Setting'));
+  
+    // Assert the correct behavior
+    expect(removeItemSpy).toHaveBeenCalledTimes(0);
+    expect(navigateMock).toHaveBeenCalledWith('/account');
+  
+    // Clean up
+    removeItemSpy.mockRestore();
   });
 
-  // 编写更多的测试用例...
+  // Add more test cases to cover other functionality and edge cases
+
 });
+
