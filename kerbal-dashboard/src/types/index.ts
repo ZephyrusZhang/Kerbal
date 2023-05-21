@@ -26,3 +26,20 @@ export interface DomainProps {
   status: DomainStatus,
   password: string
 }
+
+export interface ImageProps {
+  available_nodes?: Array<string>,
+  dataset?: 'base' | 'overlay',
+  id?: string,
+  name?: string
+}
+
+export interface NodeProps {
+  cpu_count?: number,
+  free_cpu_count?: number,
+  ram_size?: number,
+  free_ram_size?: number,
+  gpus?: Array<GpuProps>
+  node_id?: string,
+  storage_role?: string
+}

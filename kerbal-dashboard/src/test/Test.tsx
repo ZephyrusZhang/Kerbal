@@ -1,11 +1,18 @@
 import React from 'react'
-import AccountCreation from '../screens/AccountCreation';
+import { Button } from "@chakra-ui/react";
+import request from "../util/request";
 
 const Test = () => {
+  const handleClick = () => {
+    request.get('/api/cluster')
+      .then(response => {
+        console.log(response)
+      })
+  }
 
   return (
     <>
-      <AccountCreation/>
+      <Button onClick={handleClick}>Send</Button>
     </>
   );
 }
