@@ -13,7 +13,7 @@ import {
 import { AiOutlineCheck } from "react-icons/all";
 import request from "../../util/request";
 import { validateEmail, validatePassword } from "../../util/validate";
-const AccountInformation = () => {
+const AccountProfile = () => {
   const {isOpen, onOpen, onClose} = useDisclosure()
   const [action, setAction] = useState<string>()
   const [userParams, setUserParams] = useState<object>()
@@ -147,4 +147,4 @@ const AccountInformation = () => {
   )
 }
 
-export default AccountInformation;
+export default AccountProfile;

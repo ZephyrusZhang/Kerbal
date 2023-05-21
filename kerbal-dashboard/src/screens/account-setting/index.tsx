@@ -7,10 +7,7 @@ import {
   Tabs
 } from "@chakra-ui/react";
 import MainLayout from "../../layouts/MainLayout";
-import AccountInformation from "./AccountInformation";
-import AccountEmail from './AccountEmail';
-import AccountName from './AccountName';
-import AccountPassword from './AccountPassword';
+import AccountProfile from "./AccountProfile";
 
 const AccountSetting = () => {
   return (
@@ -21,23 +18,11 @@ const AccountSetting = () => {
       <Tabs w='80%' orientation='vertical'>
         <TabList w='30%'>
           <Tab>Profile</Tab>
-          <Tab>Account Email</Tab>
-          <Tab>Account Name</Tab>
-          <Tab>Account Password</Tab>
         </TabList>
 
         <TabPanels>
           <TabPanel>
-            <AccountInformation/>
-          </TabPanel>
-          <TabPanel>
-            <AccountEmail/>
-          </TabPanel>
-          <TabPanel>
-            <AccountName/>
-          </TabPanel>
-          <TabPanel>
-            <AccountPassword/>
+            <AccountProfile/>
           </TabPanel>
         </TabPanels>
       </Tabs>
