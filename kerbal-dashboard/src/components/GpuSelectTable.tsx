@@ -14,7 +14,7 @@ import {
   useDisclosure
 } from "@chakra-ui/react";
 import { AddIcon, ArrowDownIcon, ArrowUpIcon } from "@chakra-ui/icons";
-import { BsFilter } from "react-icons/all";
+import { BsFilter } from "react-icons/bs";
 import { Field, FieldInputProps, Form, Formik, FormikProps } from "formik";
 import SelectMenu from "./SelectMenu";
 
@@ -49,6 +49,15 @@ const GPUSelectTable = ({data, onAddGpu, ...props}: Props) => {
     setDisplayData(data.filter(item => item.vram > (values.vram as number)))
     if (values.name !== undefined)
       setDisplayData(data.filter(item => item.name === values.name))
+
+    //GPT xjb改的，先扔一个在这里看看
+    // setDisplayData(
+    //   data.filter((item) => {
+    //     const isVramMatched = item.vram > (values.vram as number);
+    //     const isNameMatched = values.name === undefined || item.name === values.name;
+    //     return isVramMatched && isNameMatched;
+    //   })
+    // );
   }
 
   const handleClickSort = () => {

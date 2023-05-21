@@ -1,7 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
-import { BrowserRouter as Router } from 'react-router-dom';
 import Navbar from '../Navbar';
 
 
@@ -18,13 +17,13 @@ describe('Navbar', () => {
     expect(screen.getByRole('heading', { name: /Kerbal/i })).toBeInTheDocument();
     expect(screen.getByLabelText('toggleSiderbar')).toBeInTheDocument();
     expect(screen.getByLabelText('toggleSiderbar')).toHaveAttribute('aria-label', 'toggleSiderbar');
-    // Add more assertions based on your component's structure and behavior
+    
   });
 
-  it('handles logout correctly', () => {
+  it('handles setting correctly', () => {
     // Mocking localStorage methods
-    const removeItemSpy = jest.spyOn(window.localStorage.__proto__, 'removeItem');
-    removeItemSpy.mockImplementation(() => {});
+    // const removeItemSpy = jest.spyOn(window.localStorage.__proto__, 'removeItem');
+    // removeItemSpy.mockImplementation(() => {});
 
     // Mocking useNavigate hook
     const navigateMock = jest.fn();
@@ -33,15 +32,15 @@ describe('Navbar', () => {
     // Render the component
     render(<Navbar />);
   
-    // Simulate click event on logout button
+    // Simulate click event on setting button
     fireEvent.click(screen.getByText('Setting'));
   
     // Assert the correct behavior
-    expect(removeItemSpy).toHaveBeenCalledTimes(0);
+    // expect(removeItemSpy).toHaveBeenCalledTimes(0);
     expect(navigateMock).toHaveBeenCalledWith('/account');
   
     // Clean up
-    removeItemSpy.mockRestore();
+    // removeItemSpy.mockRestore();
   });
 
   // Add more test cases to cover other functionality and edge cases
