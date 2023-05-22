@@ -74,6 +74,7 @@ const DomainCreation = () => {
         }
       }
     ).then(response => {
+      setFormInitialValue({...values, node_id: response.data.result[0].node_id})
       setNodes(response.data.result)
       setNodeOption(response.data.result
         .map((item: NodeProps) => ({value: item.node_id, text: item.node_id})))
@@ -86,16 +87,18 @@ const DomainCreation = () => {
       const customImages = response.data.result.filter((item: ImageProps) => item.dataset === 'overlay')
       setPublicImageOption(publicImages
         .map((item: ImageProps) => ({value: item.id, text: item.name})))
-      setFormInitialValue(prevState => ({
-        ...prevState,
-        public_image_id: publicImages[0] ? publicImages[0].id : '',
-        custom_image_id: customImages[0] ? customImages[0].id : ''
-      }))
       setCustomImageOption(customImages
         .map((item: ImageProps) => ({value: item.id, text: item.name})))
+      setFormInitialValue(prevState => {
+        const updateValue = {
+          ...prevState,
+          public_image_id: publicImages[0] ? publicImages[0].id : '',
+          custom_image_id: customImages[0] ? customImages[0].id : ''
+        }
+        fetchNodes(updateValue)
+        return updateValue
+      })
     })
-
-    fetchNodes(formInitialValue)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -125,15 +128,15 @@ const DomainCreation = () => {
     <MainLayout>
       <Formik initialValues={formInitialValue} onSubmit={handleSubmit} enableReinitialize>
         {({values, handleChange}) => {
-          const handleChangeAndFetchNodes = (e: ChangeEvent<unknown>) => {
+          const handleChangeAndFetchNodes = (e: ChangeEvent<HTMLInputElement>) => {
             handleChange(e)
             fetchNodes(values)
           }
 
-          const handleNodeChange = (e: ChangeEvent<unknown>) => {
+          const handleNodeChange = (e: ChangeEvent<HTMLInputElement>) => {
             handleChange(e)
             setGpus(nodes
-              .find(item => item.node_id === values.node_id)!
+              .find(item => item.node_id === e.target.value)!
               .gpus
               .map((item) => ({...item, isSelected: false})))
           }
@@ -152,12 +155,22 @@ const DomainCreation = () => {
                     <TabPanels>
                       <TabPanel>
                         <FormControl>
-                          <Field as={SelectMenu} name='public_image_id' options={publicImageOption}/>
+                          <Field
+                            as={SelectMenu}
+                            name='public_image_id'
+                            options={publicImageOption}
+                            onChange={handleChangeAndFetchNodes}
+                          />
                         </FormControl>
                       </TabPanel>
                       <TabPanel>
                         <FormControl>
-                          <Field as={SelectMenu} name='custom_image_id' options={customImageOption}/>
+                          <Field
+                            as={SelectMenu}
+                            name='custom_image_id'
+                            options={customImageOption}
+                            onChange={handleChangeAndFetchNodes}
+                          />
                         </FormControl>
                       </TabPanel>
                     </TabPanels>
@@ -193,7 +206,6 @@ const DomainCreation = () => {
                     <Field
                       as={SelectMenu}
                       name='node_id'
-                      defaultValue={0}
                       options={nodeOption}
                       onChange={handleNodeChange}
                     />
