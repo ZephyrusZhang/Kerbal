@@ -39,6 +39,7 @@ defmodule KerbalWeb.DomainController do
   end
 
   def create(conn, %{
+        "node_id" => node_id,
         "cpu_count" => cpu_count,
         "ram_size" => ram_size,
         "gpus" => gpus,
@@ -52,17 +53,26 @@ defmodule KerbalWeb.DomainController do
         %{gpu_id: gpu_id}
       end)
 
-    case Scheduler.create_domain(node(), user_id, %{
-           cpu_count: cpu_count |> cast_to_int(),
-           ram_size: ram_size |> cast_to_int(),
-           gpus: gpus,
-           image_id: image_id
-         }) do
-      {:ok, domain_uuid} ->
-        json(conn, %{status: :ok, domain_uuid: domain_uuid})
+    node =
+      Enum.find(Node.list(), fn node_atom ->
+        Atom.to_string(node_atom) == node_id
+      end)
 
-      {:error, reason} ->
-        json(conn, %{status: :err, reason: inspect(reason)})
+    if node == nil do
+      json(conn, %{status: :err, reason: :no_such_node})
+    else
+      case Scheduler.create_domain(node, user_id, %{
+             cpu_count: cpu_count |> cast_to_int(),
+             ram_size: ram_size |> cast_to_int(),
+             gpus: gpus,
+             image_id: image_id
+           }) do
+        {:ok, domain_uuid} ->
+          json(conn, %{status: :ok, domain_uuid: domain_uuid})
+
+        {:error, reason} ->
+          json(conn, %{status: :err, reason: inspect(reason)})
+      end
     end
   end
 
