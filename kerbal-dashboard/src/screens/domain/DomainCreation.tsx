@@ -22,6 +22,7 @@ import MainLayout from "../../layouts/MainLayout";
 import request from '../../util/request';
 import { GpuProps, ImageProps, NodeProps } from "../../types";
 import { cpuOptions, memoryOptions } from "../../const";
+import { responseToast } from "../../util/toast";
 
 interface FormProps {
   cpu_count: number,
@@ -116,6 +117,7 @@ const DomainCreation = () => {
     console.log(body)
     request.post('/api/cluster/domain', body).then(response => {
       console.log(response)
+      responseToast(response.data.status, 'Domain Created Successfully', response.data.reason)
     })
   }
 

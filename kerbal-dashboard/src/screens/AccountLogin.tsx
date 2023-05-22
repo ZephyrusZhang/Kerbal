@@ -7,13 +7,13 @@ import {
   InputGroup,
   InputLeftElement, InputRightElement, Stack, Switch,
   Text,
-  VStack,
-  useToast
+  VStack
 } from '@chakra-ui/react'
 import { FiLock, HiOutlineMail, ImGithub, ImGoogle } from 'react-icons/all'
 import { Form, Formik } from 'formik'
 import { useNavigate } from "react-router-dom"
-import request, { ShowToast } from "../util/request"
+import request from "../util/request"
+import { showToast } from "../util/toast";
 
 interface FormProps {
   email: string
@@ -22,7 +22,6 @@ interface FormProps {
 }
 
 const AccountLogin = () => {
-  const toast = useToast()
   const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
   const navigate = useNavigate()
   const validate = (form: FormProps) => {
@@ -49,10 +48,10 @@ const AccountLogin = () => {
     ).then((response) => {
       if (String(response.data.status) == "ok") {
         localStorage.setItem('token', response.data['token'])
-        ShowToast(toast, 'Login successfully', 'success')
+        showToast('Login successfully', 'success')
         navigate('/')
       } else {
-        ShowToast(toast, String(response.data.reason), 'error')
+        showToast(String(response.data.reason), 'error')
       }
     })
   }
