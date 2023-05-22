@@ -5,11 +5,9 @@ import {
 import { Navigate, Route, Routes } from 'react-router-dom'
 import AccountLogin from './screens/AccountLogin'
 import Layout from './layouts/Layout'
-import AccountCreation from './screens/AccountCreation'
 import Test from './test/Test'
 import PrivateRoute from "./routes/PrivateRoute";
 import DomainCreation from "./screens/domain/DomainCreation";
-import UserEdit from './screens/UserEdit'
 import AccountSetting from "./screens/account-setting";
 import DomainOverview from "./screens/domain/DomainOverview";
 import DomainManagement from "./screens/domain/management";
@@ -34,8 +32,6 @@ export const App = () => {
       <Routes>
         <Route path='/login' element={<AccountLogin/>}/>
         <Route path='/test' element={<Test/>}/>
-        <Route path='/user_edit' element={<UserEdit/>}/>
-        <Route path='/account/creation' element={<AccountCreation/>}/>
         <Route path='/' element={<Layout/>}>
           <Route path='/' element={<PrivateRoute/>}>
             <Route path='/domain' element={<DomainOverview/>}/>

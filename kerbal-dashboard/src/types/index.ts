@@ -13,12 +13,6 @@ export interface GpuProps {
   vram_size: number
 }
 
-export interface GpuInfo {
-  name: string,
-  vram_size: number,
-  count?: number
-}
-
 export interface DomainProps {
   domain_id?: number,
   domain_uuid?: string,
