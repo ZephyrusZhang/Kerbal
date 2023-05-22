@@ -9,6 +9,7 @@ defmodule TrackingStation.Storage.Supervisor do
   def init(:ok) do
     children = [
       {Task.Supervisor, name: TrackingStation.Storage.RemoteTaskSupervisor},
+      {Task.Supervisor, name: TrackingStation.Storage.LocalTaskSupervisor},
       {TrackingStation.Storage.LocalStorage, name: TrackingStation.Storage.LocalStorage}
     ]
 

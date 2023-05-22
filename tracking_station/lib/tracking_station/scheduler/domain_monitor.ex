@@ -62,13 +62,24 @@ defmodule TrackingStation.Scheduler.DomainMonitor do
   @impl true
   def init({%{image_id: image_id} = spec, user_id, domain_uuid}) do
     {dataset, name} = LocalStorage.path_from_guid(image_id)
-    :ok = LocalStorage.prepare_image(dataset, name)
     {port, current_gpus_info} = check_and_allocate(spec, user_id, domain_uuid)
+
+    Task.Supervisor.async_nolink(
+      TrackingStation.Storage.LocalTaskSupervisor,
+      LocalStorage,
+      :prepare_image,
+      [
+        dataset,
+        name
+      ]
+    )
 
     {:ok,
      %{
        domain_uuid: domain_uuid,
        domain_id: nil,
+       image_dataset: dataset,
+       image_name: name,
        running_disk_id: nil,
        status: :creating,
        password: "",
@@ -256,15 +267,20 @@ defmodule TrackingStation.Scheduler.DomainMonitor do
   end
 
   ### ----- handle_info -----
+
   @impl true
-  def handle_cast(
-        {:image_ready, dataset, name},
+  def handle_info(
+        {ref, :ok},
         %{
           domain_uuid: domain_uuid,
           port: spice_port,
-          spec: spec
+          spec: spec,
+          image_dataset: dataset,
+          image_name: name
         } = state
       ) do
+    # ignore DOWN message
+    Process.demonitor(ref, [:flush])
     %{cpu_count: cpu_count, ram_size: ram_size, gpus: gpus} = spec
     iso_path = LocalStorage.get_installation_image()
     iso_config = LibvirtConfig.iso_config(iso_path)
@@ -322,5 +338,18 @@ defmodule TrackingStation.Scheduler.DomainMonitor do
   @impl true
   def handle_info(:poll, state) do
     poll_domain_info(state)
+  end
+
+  # The task failed
+  @impl true
+  def handle_info({:DOWN, _ref, :process, _pid, _reason}, state) do
+    # Log and possibly restart the task...
+    {:stop, :normal, state}
+  end
+
+  @impl true
+  def handle_info(message, state) do
+    Logger.warning("unknown message #{inspect(message)} exiting")
+    {:stop, :normal, state}
   end
 end

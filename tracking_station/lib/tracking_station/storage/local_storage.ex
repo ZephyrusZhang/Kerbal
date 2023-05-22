@@ -10,7 +10,9 @@ defmodule TrackingStation.Storage.LocalStorage do
   use GenServer
   require Logger
   import TrackingStation.ClusterStore.StorageInfo
+  alias TrackingStation.Storage.RemoteTaskSupervisor
   alias :mnesia, as: Mnesia
+  @pool "rpool"
 
   @dataset2atom %{
     "base" => :base,
@@ -29,11 +31,14 @@ defmodule TrackingStation.Storage.LocalStorage do
     list_running_images()
     |> Enum.map(&destroy_image(:running, &1))
 
+    list_tmp_images()
+    |> Enum.map(&destroy_image(:tmp, &1))
+
     # submit info about local storages to mnesia
     local_storages =
       [:base, :overlay, :live]
       |> Enum.flat_map(fn dataset ->
-        list_path("rpool/#{dataset}")
+        list_path("#{@pool}/#{dataset}")
         |> Enum.map(fn name -> generate_record_for_image(dataset, name) end)
       end)
 
@@ -45,7 +50,7 @@ defmodule TrackingStation.Storage.LocalStorage do
         end)
       end)
 
-    {:ok, %{recv_tasks: %{}, pending: %{}, deps: %{}}}
+    {:ok, %{}}
   end
 
   defp valid_name(name) do
@@ -76,6 +81,24 @@ defmodule TrackingStation.Storage.LocalStorage do
     end)
   end
 
+  defp find_image_available_nodes(dataset, name) do
+    {:atomic, records} =
+      Mnesia.transaction(fn ->
+        Mnesia.match_object(storage_info(dataset: dataset, name: name))
+      end)
+
+    records
+    |> Enum.map(&storage_info(&1, :node_id))
+  end
+
+  defp to_path(dataset, name) do
+    "#{@pool}/#{dataset}/#{name}"
+  end
+
+  defp to_snap_path(dataset, name) do
+    "#{@pool}/#{dataset}/#{name}@frozen"
+  end
+
   defp register_image(dataset, name) do
     record = generate_record_for_image(dataset, name)
 
@@ -84,16 +107,48 @@ defmodule TrackingStation.Storage.LocalStorage do
     end)
   end
 
+  def allocate_tmp_name() do
+    UUID.uuid1()
+  end
+
+  def create_from_tmp(tmp_name, dataset, name) do
+    tmp_path = to_path(:tmp, tmp_name)
+    target_path = to_path(dataset, name)
+
+    if path_exist?(target_path) do
+      destroy_image(:tmp, tmp_name)
+      :ok
+    else
+      case System.cmd("sudo", ~w(zfs rename #{tmp_path} #{target_path}), stderr_to_stdout: true) do
+        {"", 0} ->
+          register_image(dataset, name)
+          :ok
+
+        {output, 1} ->
+          destroy_image(:tmp, tmp_name)
+          {:error, output}
+      end
+    end
+  end
+
+  def destroy_image(:tmp, name) do
+    path = to_path(:tmp, name)
+    {_, 0} = System.cmd("sudo", ~w(zfs destroy -r #{path}))
+  end
+
   def destroy_image(dataset, name) when dataset in [:running, :live] do
     valid_name!(name)
-    {_, 0} = System.cmd("sudo", ~w(zfs destroy rpool/#{dataset}/#{name}))
+    path = to_path(dataset, name)
+    {_, 0} = System.cmd("sudo", ~w(zfs destroy #{path}))
   end
 
   def destroy_image(dataset, name) when dataset in [:base, :overlay] do
     valid_name!(name)
     :ok = unregister_image(dataset, name)
-    {_, 0} = System.cmd("sudo", ~w(zfs destroy rpool/#{dataset}/#{name}@frozen))
-    {_, 0} = System.cmd("sudo", ~w(zfs destroy rpool/#{dataset}/#{name}))
+    path = to_path(dataset, name)
+    snap_path = to_snap_path(dataset, name)
+    {_, 0} = System.cmd("sudo", ~w(zfs destroy #{snap_path}))
+    {_, 0} = System.cmd("sudo", ~w(zfs destroy #{path}))
   end
 
   defp get_property(path, property) do
@@ -104,7 +159,7 @@ defmodule TrackingStation.Storage.LocalStorage do
     |> Enum.fetch!(2)
   end
 
-  defp get_origin(dataset, name) do
+  def get_origin_local(dataset, name) do
     origin_path = get_property("rpool/#{dataset}/#{name}", "origin")
 
     if origin_path != "-" do
@@ -115,6 +170,43 @@ defmodule TrackingStation.Storage.LocalStorage do
       {origin_dataset, origin_name}
     else
       {"", ""}
+    end
+  end
+
+  def get_origin(dataset, name) do
+    {:atomic, result} =
+      Mnesia.transaction(fn ->
+        Mnesia.match_object(storage_info(dataset: dataset, name: name))
+      end)
+
+    case result do
+      [] ->
+        {:error, :not_exist}
+
+      [info | _] ->
+        origin_dataset = storage_info(info, :origin_dataset)
+        origin_name = storage_info(info, :origin_name)
+        {:ok, {origin_dataset, origin_name}}
+    end
+  end
+
+  def get_parent_path(:base, name) do
+    {:ok, [{:base, name}]}
+  end
+
+  def get_parent_path(dataset, name) do
+    case get_origin(dataset, name) do
+      {:ok, {origin_dataset, origin_name}} ->
+        case get_parent_path(origin_dataset, origin_name) do
+          {:ok, parent_path} ->
+            {:ok, [{dataset, name} | parent_path]}
+
+          {:error, _} ->
+            {:error, :parent_not_exist}
+        end
+
+      {:error, :not_exist} ->
+        {:error, :not_exist}
     end
   end
 
@@ -153,12 +245,12 @@ defmodule TrackingStation.Storage.LocalStorage do
 
   defp generate_record_for_image(dataset, name)
        when dataset in [:base, :overlay, :running, :live] do
-    path = "rpool/#{dataset}/#{name}"
-    snap_path = "#{path}@frozen"
+    path = to_path(dataset, name)
+    snap_path = to_snap_path(dataset, name)
     guid = get_property(snap_path, "guid")
     used = get_property(path, "used") |> String.to_integer()
     volsize = get_property(path, "volsize") |> String.to_integer()
-    origin = get_origin(dataset, name)
+    origin = get_origin_local(dataset, name)
 
     {origin_dataset, origin_name} = origin
 
@@ -225,6 +317,10 @@ defmodule TrackingStation.Storage.LocalStorage do
     list_path("rpool/running")
   end
 
+  def list_tmp_images() do
+    list_path("rpool/tmp")
+  end
+
   def path_exist?(path) do
     case System.cmd("zfs", ~w(list -Ht all #{path}), stderr_to_stdout: true) do
       {_, 0} -> true
@@ -279,264 +375,111 @@ defmodule TrackingStation.Storage.LocalStorage do
   end
 
   def prepare_image(dataset, name) do
-    # make sure the image exist
-    result =
-      Mnesia.transaction(fn ->
-        Mnesia.match_object(storage_info(dataset: dataset, name: name))
+    case get_parent_path(dataset, name) do
+      {:ok, parents} ->
+        parents
+        |> Enum.reverse()
+        |> Stream.reject(fn {dataset, name} ->
+          path = to_path(dataset, name)
+          path_exist?(path)
+        end)
+        |> Enum.reduce_while(:ok, fn {dataset, name}, _acc ->
+          case find_image_available_nodes(dataset, name) do
+            [] ->
+              {:halt, {:error, :not_available}}
+
+            available_nodes ->
+              pull_task = pull_image(dataset, name, Enum.random(available_nodes))
+              :ok = Task.await(pull_task, :infinity)
+              {:cont, :ok}
+          end
+        end)
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  def recv_image(producer, dataset, name) do
+    tmp_name = allocate_tmp_name()
+    tmp_snap_path = to_snap_path(:tmp, tmp_name)
+    fifo_path = "/tmp/#{tmp_name}_fifo"
+
+    if File.exists?(fifo_path) do
+      Logger.warning("fifo file #{fifo_path} already exist")
+      File.rm!(fifo_path)
+    end
+
+    {"", 0} = System.cmd("mkfifo", [fifo_path])
+
+    fifo_stream = File.stream!(fifo_path, [:binary, :write], 4096 * 16)
+
+    input_stream =
+      GenStage.stream([{producer, cancel: :temporary, max_demand: 64, min_demand: 62}])
+
+    start_time = Time.utc_now()
+
+    zfs_recv_task =
+      Task.async(fn ->
+        System.shell("sudo zfs recv #{tmp_snap_path} < #{fifo_path}")
       end)
 
-    case result do
-      {:atomic, [_info | _]} ->
-        GenServer.call(__MODULE__, {:prepare, dataset, name})
+    input_stream |> Enum.into(fifo_stream)
+
+    File.rm!(fifo_path)
+    end_time = Time.utc_now()
+
+    Logger.warning("Time spent streaming #{inspect(Time.diff(end_time, start_time))}")
+
+    case Task.await(zfs_recv_task) do
+      {"", 0} ->
+        Logger.warning("Time spent completing #{inspect(Time.diff(end_time, start_time))}")
+        create_from_tmp(tmp_name, dataset, name)
 
       _ ->
-        {:error, :not_exist}
+        {:error, :recv_error}
     end
   end
 
-  defp submit_task(dataset, name, dom_monitor, state) do
-    key = {dataset, name}
-    path = "rpool/#{dataset}/#{name}"
+  def pull_image(dataset, name, source_node) do
+    target_node = node()
 
-    cond do
-      Map.has_key?(state.recv_tasks, key) ->
-        # transfering
-        if dom_monitor == nil do
-          state
-        else
-          update_in(state.recv_tasks[key], &[dom_monitor | &1])
-        end
+    Task.Supervisor.async({RemoteTaskSupervisor, source_node}, fn ->
+      path = "rpool/#{dataset}/#{name}"
+      snap_path = "#{path}@frozen"
+      fifo_path = "/tmp/#{dataset}#{name}_fifo"
 
-      Map.has_key?(state.pending, key) ->
-        # pending
-        if dom_monitor == nil do
-          state
-        else
-          update_in(state.pending[key], &[dom_monitor | &1])
-        end
-
-      path_exist?(path) ->
-        # already present, do nothing
-        GenServer.cast(self(), {:schedule, key})
-
-        if dom_monitor != nil do
-          GenServer.cast(dom_monitor, {:image_ready, dataset, name})
-        end
-
-        state
-
-      true ->
-        # the dataset doesn't exist
-        state =
-          if dom_monitor == nil do
-            state
-          else
-            put_in(state.pending[key], [dom_monitor])
-          end
-
-        case dataset do
-          :base ->
-            # it's a base layer
-            # so the dataset doesn't have a origin
-            GenServer.cast(self(), {:schedule, :base})
-
-            if Map.has_key?(state.deps, :base) do
-              update_in(state.deps[:base], &[key | &1])
-            else
-              put_in(state.deps[:base], [key])
-            end
-
-          _ ->
-            # query info about it's origin
-            {:atomic, [info | _]} =
-              Mnesia.transaction(fn ->
-                Mnesia.match_object(storage_info(dataset: dataset, name: name))
-              end)
-
-            origin_ds = storage_info(info, :origin_dataset)
-            origin_name = storage_info(info, :origin_name)
-            origin = {origin_ds, origin_name}
-
-            state =
-              if Map.has_key?(state.deps, origin) do
-                update_in(state.deps[origin], &[key | &1])
-              else
-                put_in(state.deps[origin], [key])
-              end
-
-            submit_task(origin_ds, origin_name, dom_monitor, state)
-        end
-    end
-  end
-
-  def force_pull_image(dataset, name, node) do
-    # pull is just request the other node to push
-    GenServer.cast(
-      {__MODULE__, node},
-      {:send, dataset, name, node()}
-    )
-  end
-
-  def force_push_image(dataset, name, node) do
-    GenServer.cast(
-      __MODULE__,
-      {:send, dataset, name, node}
-    )
-  end
-
-  @impl true
-  def handle_call({:prepare, dataset, name}, {pid, _tag}, state) do
-    state = submit_task(dataset, name, pid, state)
-    {:reply, :ok, state}
-  end
-
-  @impl true
-  def handle_call({:recv, producer, dataset, name}, _from, state) do
-    {notify_list, state} = pop_in(state.pending[{dataset, name}])
-
-    if notify_list == nil do
-      Logger.warning("Got a unscheduled recv task #{dataset} #{name}")
-    end
-
-    _task =
-      Task.Supervisor.async_nolink(TrackingStation.Storage.RemoteTaskSupervisor, fn ->
-        fifo_path = "/tmp/#{dataset}#{name}_fifo"
-
-        if File.exists?(fifo_path) do
-          Logger.warning("fifo file #{fifo_path} already exist")
-          File.rm!(fifo_path)
-        end
-
-        {"", 0} = System.cmd("mkfifo", [fifo_path])
-
-        fifo_stream = File.stream!(fifo_path, [:binary, :write], 4096 * 16)
-
-        input_stream =
-          GenStage.stream([{producer, cancel: :temporary, max_demand: 64, min_demand: 62}])
-
-        start_time = Time.utc_now()
-
-        zfs_recv_task =
-          Task.async(fn ->
-            System.shell("sudo zfs recv rpool/#{dataset}/#{name}@frozen < #{fifo_path}")
-          end)
-
-        input_stream |> Enum.into(fifo_stream)
-
+      if File.exists?(fifo_path) do
+        Logger.warning("fifo file #{fifo_path} already exist")
         File.rm!(fifo_path)
-        end_time = Time.utc_now()
-        Logger.warning("Time spent transfering #{inspect(Time.diff(end_time, start_time))}")
+      end
 
-        case Task.await(zfs_recv_task) do
-          {"", 0} ->
-            {:recv_complete, dataset, name}
+      {"", 0} = System.cmd("mkfifo", [fifo_path])
 
-          _ ->
-            {:recv_failed, dataset, name}
-        end
-      end)
+      fifo_stream = File.stream!(fifo_path, [:binary, :read, read_ahead: 4096 * 16], 4096 * 16)
 
-    state = put_in(state.recv_tasks[{dataset, name}], notify_list)
+      {:ok, producer} =
+        GenStage.from_enumerable(fifo_stream, demand: :accumulate, on_cancel: :stop)
 
-    {:reply, :ok, state}
-  end
+      recv_task =
+        Task.Supervisor.async({RemoteTaskSupervisor, target_node}, __MODULE__, :recv_image, [
+          producer,
+          dataset,
+          name
+        ])
 
-  @impl true
-  def handle_cast({:send, dataset, name, node}, state) do
-    _task =
-      Task.Supervisor.async_nolink(TrackingStation.Storage.RemoteTaskSupervisor, fn ->
-        path = "rpool/#{dataset}/#{name}"
-        snap_path = "#{path}@frozen"
-        fifo_path = "/tmp/#{dataset}#{name}_fifo"
+      case dataset do
+        :base ->
+          System.shell("sudo zfs send #{snap_path} > #{fifo_path}")
 
-        if File.exists?(fifo_path) do
-          Logger.warning("fifo file #{fifo_path} already exist")
-          File.rm!(fifo_path)
-        end
+        _ ->
+          origin = get_property(path, "origin")
+          System.shell("sudo zfs send -i #{origin} #{snap_path} > #{fifo_path}")
+      end
 
-        {"", 0} = System.cmd("mkfifo", [fifo_path])
-
-        fifo_stream = File.stream!(fifo_path, [:binary, :read, read_ahead: 4096 * 16], 4096 * 16)
-
-        {:ok, producer} =
-          GenStage.from_enumerable(fifo_stream, demand: :accumulate, on_cancel: :stop)
-
-        GenServer.call({__MODULE__, node}, {:recv, producer, dataset, name})
-
-        case dataset do
-          :base ->
-            System.shell("sudo zfs send #{snap_path} > #{fifo_path}")
-
-          _ ->
-            origin = get_property(path, "origin")
-            System.shell("sudo zfs send -i #{origin} #{snap_path} > #{fifo_path}")
-        end
-
-        File.rm!(fifo_path)
-        {:send_complete, dataset, name}
-      end)
-
-    {:noreply, state}
-  end
-
-  @impl true
-  def handle_cast({:schedule, ds_ready}, state) do
-    {images, state} = pop_in(state.deps[ds_ready])
-
-    if images != nil do
-      Enum.map(images, fn {dataset, name} ->
-        node = node()
-
-        {:atomic, available_source} =
-          Mnesia.transaction(fn ->
-            Mnesia.match_object(
-              storage_info(
-                dataset: dataset,
-                name: name
-              )
-            )
-          end)
-
-        chosen_source = available_source |> Enum.random()
-
-        force_pull_image(dataset, name, storage_info(chosen_source, :node_id))
-        {dataset, name, node}
-      end)
-    end
-
-    {:noreply, state}
-  end
-
-  @impl true
-  def handle_info({ref, {:recv_complete, dataset, name}}, state) do
-    Process.demonitor(ref, [:flush])
-    image = {dataset, name}
-    {:atomic, _} = register_image(dataset, name)
-    {notify_list, state} = pop_in(state.recv_tasks[image])
-
-    if notify_list != nil do
-      # notify
-      notify_list
-      |> Enum.map(fn dom_monitor ->
-        GenServer.cast(dom_monitor, {:image_ready, dataset, name})
-      end)
-
-      state
-    end
-
-    GenServer.cast(self(), {:schedule, image})
-
-    {:noreply, state}
-  end
-
-  @impl true
-  def handle_info({ref, {:send_complete, _dataset, _name}}, state) do
-    Process.demonitor(ref, [:flush])
-    {:noreply, state}
-  end
-
-  @impl true
-  def handle_info({:DOWN, _ref, _, _, _reason}, _state) do
-    raise "Tranfer crashed"
+      File.rm!(fifo_path)
+      # wait 60 sec for the receiver to complete
+      Task.await(recv_task, 60_000)
+    end)
   end
 end
