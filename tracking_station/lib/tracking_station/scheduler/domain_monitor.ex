@@ -14,6 +14,7 @@ defmodule TrackingStation.Scheduler.DomainMonitor do
   alias TrackingStation.Libvirt
   alias TrackingStation.Storage.LocalStorage
   alias TrackingStation.Scheduler.LibvirtConfig
+  alias TrackingStation.Scheduler.TaskSupervisor
 
   ### ----- client api -----
   def start_link({spec, user_id, domain_uuid}) do
