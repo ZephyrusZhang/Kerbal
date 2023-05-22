@@ -9,6 +9,8 @@ export const validatePassword = (values: {password: string, passwordConfirmation
 }
 
 export const validateEmail = (email: string) => {
-  if (email === '') return 'Email is required'
-  else if (!emailRegex.test(email)) return 'Email is invalid'
+  const errors: {email?: string} = {}
+  if (email === '') errors.email = 'Email is required'
+  else if (!emailRegex.test(email)) errors.email = 'Email is invalid'
+  return errors
 }

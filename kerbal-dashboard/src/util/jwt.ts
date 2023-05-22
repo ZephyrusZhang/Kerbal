@@ -20,3 +20,10 @@ export const renew = () => {
     localStorage.setItem('token', response.data['token'])
   })
 }
+
+export const isAdmin = () => {
+  if (localStorage.getItem('token')) {
+    const payload = JSON.parse(decode((localStorage.getItem('token') as string).split('.')[1]))
+    return payload['role'] == 'admin'
+  }
+}
