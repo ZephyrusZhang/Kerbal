@@ -17,7 +17,7 @@ defmodule KerbalWeb.DomainController do
     user_id = conn.assigns.current_user.id
 
     domains = Scheduler.list_user_domains(user_id)
-    json(conn, domains)
+    json(conn, %{status: :ok, result: domains})
   end
 
   def query(conn, %{"domain_uuid" => domain_uuid}) do

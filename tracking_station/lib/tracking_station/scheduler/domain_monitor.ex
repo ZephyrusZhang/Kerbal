@@ -71,7 +71,6 @@ defmodule TrackingStation.Scheduler.DomainMonitor do
         {:ok, GenServer.call(pid, :info)}
 
       {:error, reason} ->
-        Logger.warning(inspect(reason))
         {:error, reason}
     end
   end

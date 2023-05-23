@@ -36,11 +36,11 @@ defmodule KerbalWeb.Router do
     get "/cluster/domain/:domain_uuid", DomainController, :query
     post "/cluster/domain", DomainController, :create
     delete "/cluster/domain/:domain_uuid", DomainController, :delete
+    # create a snapshot of this domain, pass the domain_uuid
+    put "/cluster/domain/:domain_uuid", DomainController, :snapshot
 
     # list all domains belong to the current user, no parameter
-    get "/cluster/domain/list", DomainController, :list
-    # create a snapshot of this domain, pass the domain_uuid
-    post "/cluster/domain/snapshot/:domain_uuid", DomainController, :snapshot
+    get "/cluster/user/domains", DomainController, :list
     # list all available images, no parameter
     get "/cluster/storage/list", StorageController, :list
   end
