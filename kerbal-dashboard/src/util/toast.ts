@@ -3,7 +3,6 @@ import { createStandaloneToast } from "@chakra-ui/react";
 const {ToastContainer, toast} = createStandaloneToast()
 
 const responseToast = (status: 'ok' | 'err', okmsg = 'success', errmsg = 'error') => {
-  console.log(status)
   toast({
     title: function () {
       switch (status) {

@@ -115,7 +115,8 @@ const DomainCreation = () => {
       gpus: gpus
         .filter(item => item.isSelected)
         .map(item => ({gpu_id: item.gpu_id})),
-      image_id: tabIndex === 0 ? values.public_image_id : values.custom_image_id
+      image_id: tabIndex === 0 ? values.public_image_id : values.custom_image_id,
+      node_id: values.node_id
     }
     console.log(body)
     request.post('/api/cluster/domain', body).then(response => {
