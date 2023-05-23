@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import {
-  Box,
   Button,
-  Flex, HStack, IconButton, Input, InputGroup, InputRightElement,
+  Flex, IconButton, Input, InputGroup, InputRightElement,
   Menu,
   MenuButton, MenuItem,
   MenuList, Spacer, Stack,
@@ -12,42 +11,37 @@ import {
   Td,
   Th,
   Thead,
-  Tr, useColorModeValue
+  Tr
 } from "@chakra-ui/react";
 import request from "../../util/request";
 import { AiOutlineDown, AiOutlineSearch, BsTrash, FiRefreshCw } from "react-icons/all";
 import { useNavigate } from "react-router-dom";
 import MainLayout from "../../layouts/MainLayout";
 import KerbalBox from "../../components/containers/KerbalBox";
+import { DomainProps } from "../../types";
 
-interface TableProps {
-  username?: string,
-  name: string,
-  state: 'Running' | 'Stopping' | 'Stopped' | 'Starting',
-  ip: string,
-  image: string,
-  specification: string
-}
+type RowProps = DomainProps & { showPassword: boolean }
 
 const DomainOverview = () => {
-  const [tableData, setTableData] = useState<TableProps[]>([
-    { "username": "zephyrus", "name": "test_instance", "state": "Running", "ip":  "11.45.14.00", "image": "PyTorch-2.0", "specification": "Intel-i7 RTX-2060" },
-    { "username": "zephyrus", "name": "demo", "state": "Stopped", "ip":  "19.19.81.00","image": "ubuntu-clean", "specification": "Intel-i5 RTX-2060" },
-    { "username": "zephyrus", "name": "jeb", "state": "Stopping", "ip":  "1.1.1.1","image": "debian-clean", "specification": "Intel-i7 RTX-3090" },
-    { "username": "zephyrus", "name": "cs", "state": "Starting", "ip":  "114.114.114.114","image": "arch-clean", "specification": "Intel-i5 RTX-2060" }
-  ])
+  const [tableData, setTableData] = useState<Array<RowProps>>([])
 
   const navigate = useNavigate()
 
-  // useEffect(() => {
-  //   console.log(tableData)
-  //   request.get<TableProps[]>('/api', {
-  //     headers: { 'cache-control': 'no-cache' },
-  //     params: { 'username': 'zephyrus' }
-  //   }).then(response => setTableData(response.data))
-  //   console.log(tableData)
-  // }, [])
+  useEffect(() => {
+    request.get('/api/cluster/user/domains').then(response => {
+      setTableData(response.data.result.map((item: RowProps) => ({...item, showPassword: false})))
+    })
+  }, [])
 
+  const toggleShowPassword = (uuid: string) => {
+    const updated = tableData.map(item => {
+      if (item.domain_uuid === uuid) {
+        return {...item, showPassword: !item.showPassword}
+      }
+      return item
+    })
+    setTableData(updated)
+  }
 
   return (
     <MainLayout>
@@ -65,22 +59,24 @@ const DomainOverview = () => {
           <Table variant='simple'>
             <Thead>
               <Tr>
-                <Th>Name</Th>
-                <Th>State</Th>
-                <Th>IP</Th>
+                <Th>ID</Th>
                 <Th>Image</Th>
-                <Th>Specification</Th>
+                <Th>Port</Th>
+                <Th>Password</Th>
+                <Th>Status</Th>
                 <Th>Operation</Th>
               </Tr>
             </Thead>
             <Tbody>
-              {tableData?.map(item => (
-                <Tr key={item.name}>
-                  <Td>{item.name}</Td>
-                  <Td>{item.state}</Td>
-                  <Td>{item.ip}</Td>
-                  <Td>{item.image}</Td>
-                  <Td>{item.specification}</Td>
+              {tableData?.map((value, index) => (
+                <Tr key={index}>
+                  <Td>{value.domain_id}</Td>
+                  <Td>{value.image_name}</Td>
+                  <Td>{value.port}</Td>
+                  <Td onClick={() => toggleShowPassword(value.domain_uuid as string)}>
+                    {value.showPassword ? value.password : '*'.repeat(value.password!.length)}
+                  </Td>
+                  <Td>{value.status}</Td>
                   <Td>
                     <Stack direction='row' spacing='2'>
                       <Button colorScheme='whatsapp' size='xs'>Start</Button>

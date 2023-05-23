@@ -1,4 +1,5 @@
 export type DomainStatus = 'running' | 'terminating' | 'terminated' | 'booting'
+export type ImageDataset = 'base' | 'overlay'
 
 export interface GpuProps {
   bus: string,
@@ -16,20 +17,25 @@ export interface GpuProps {
 export interface DomainProps {
   domain_id?: number,
   domain_uuid?: string,
+  image_dataset?: ImageDataset,
+  image_name?: string,
+  password?: string,
   port?: number,
   running_disk_id?: string,
-  spec?: {
-    cpu_count: number,
-    gpus: Array<GpuProps>,
-    ram_size: number
-  },
-  status: DomainStatus,
-  password: string
+  spec?: DomainSpec,
+  status: DomainStatus
+}
+
+export interface DomainSpec {
+  cpu_count?: number,
+  gpus?: Array<GpuProps>,
+  image_id?: string,
+  ram_size?: number
 }
 
 export interface ImageProps {
   available_nodes?: Array<string>,
-  dataset?: 'base' | 'overlay',
+  dataset?: ImageDataset,
   id?: string,
   name?: string
 }
