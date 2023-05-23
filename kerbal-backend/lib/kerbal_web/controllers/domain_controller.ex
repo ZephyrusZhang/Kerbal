@@ -54,7 +54,7 @@ defmodule KerbalWeb.DomainController do
       end)
 
     node =
-      Enum.find(Node.list(), fn node_atom ->
+      Enum.find([node() | Node.list()], fn node_atom ->
         Atom.to_string(node_atom) == node_id
       end)
 

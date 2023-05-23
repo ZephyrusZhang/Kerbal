@@ -39,6 +39,7 @@ defmodule KerbalWeb.DomainControllerTest do
     conn =
       conn
       |> post(~p"/api/cluster/domain", %{
+        "node_id" => node,
         "cpu_count" => cpu_count,
         "ram_size" => 2 * 1024 ** 2,
         "gpus" => gpus,
@@ -52,6 +53,7 @@ defmodule KerbalWeb.DomainControllerTest do
     conn =
       conn
       |> post(~p"/api/cluster/domain", %{
+        "node_id" => node,
         "cpu_count" => cpu_count,
         "ram_size" => 2 * 1024 ** 2,
         "gpus" => gpus,
