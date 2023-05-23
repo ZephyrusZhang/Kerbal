@@ -145,6 +145,14 @@ defmodule TrackingStation.Scheduler.DomainMonitor do
         current_gpus_info
       end)
 
+    current_gpus_info =
+      current_gpus_info
+      |> Enum.map(
+        &(gpu_status(&1)
+          |> Enum.into(%{})
+          |> Map.take([:name, :vram_size, :bus, :slot, :function]))
+      )
+
     {port, current_gpus_info}
   end
 
@@ -207,6 +215,28 @@ defmodule TrackingStation.Scheduler.DomainMonitor do
   def terminate(reason, spec) do
     Logger.warning("unexpected stop reason #{inspect(reason)} try to stop normally")
     terminate(:normal, spec)
+  end
+
+  defp execute_command(domain_id, cmd, args) do
+    Task.Supervisor.async_nolink(TaskSupervisor, fn ->
+      pid = Libvirt.guest_exec(domain_id, cmd, args)
+
+      output =
+        Enum.reduce_while(1..10, nil, fn _i, _acc ->
+          response = Libvirt.guest_exec_status(domain_id, pid)
+
+          case response do
+            %{output: nil} ->
+              Process.sleep(0.1)
+              {:cont, nil}
+
+            %{output: output} ->
+              {:halt, output}
+          end
+        end)
+
+      output
+    end)
   end
 
   defp poll_domain_info(%{domain_id: domain_id, status: :creating} = state) do
@@ -296,12 +326,7 @@ defmodule TrackingStation.Scheduler.DomainMonitor do
 
     gpu_passthrough =
       gpus
-      |> Enum.map(fn record ->
-        bus = gpu_status(record, :bus)
-        slot = gpu_status(record, :slot)
-        function = gpu_status(record, :function)
-        LibvirtConfig.gpu_passthrough(bus, slot, function)
-      end)
+      |> Enum.map(&LibvirtConfig.gpu_passthrough(&1.bus, &1.slot, &1.function))
       |> Enum.join("\n")
 
     xml_config =
