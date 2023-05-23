@@ -18,23 +18,31 @@ defmodule TrackingStation.Scheduler.DomainMonitor do
 
   ### ----- client api -----
   def start_link({spec, user_id, domain_uuid}) do
-    GenServer.start_link(__MODULE__, {spec, user_id, domain_uuid},
-      name:
-        {:via, Registry, {TrackingStation.Scheduler.DomainMonitorRegistry, domain_uuid, user_id}}
-    )
+    case GenServer.start_link(__MODULE__, {spec, user_id, domain_uuid}) do
+      {:ok, pid} ->
+        Mnesia.transaction(fn ->
+          [dom] = Mnesia.match_object(active_domain(uuid: domain_uuid))
+          Mnesia.write(active_domain(dom, pid: pid))
+        end)
+
+        {:ok, pid}
+
+      result ->
+        result
+    end
   end
 
-  def shutdown(_domain_uuid) do
-    # gracefully shutdown this vm
-  end
+  defp find_pid(domain_uuid, user_id) do
+    {:atomic, result} =
+      Mnesia.transaction(fn ->
+        Mnesia.match_object(active_domain(uuid: domain_uuid))
+      end)
 
-  def destroy(domain_uuid, user_id) do
-    case Registry.lookup(TrackingStation.Scheduler.DomainMonitorRegistry, domain_uuid) do
-      [{pid, ^user_id}] ->
-        GenServer.call(pid, :destroy, 30000)
-        :ok
+    case result do
+      [{:active_domain, _uuid, _node_id, pid, ^user_id}] ->
+        {:ok, pid}
 
-      [{_pid, _}] ->
+      [{:active_domain, _uuid, _node_id, _pid, _user_id}] ->
         {:error, :permission_denied}
 
       [] ->
@@ -42,19 +50,39 @@ defmodule TrackingStation.Scheduler.DomainMonitor do
     end
   end
 
+  def shutdown(_domain_uuid) do
+    # gracefully shutdown this vm
+  end
+
+  def destroy(domain_uuid, user_id) do
+    case find_pid(domain_uuid, user_id) do
+      {:ok, pid} ->
+        GenServer.call(pid, :destroy, 30000)
+        :ok
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
   def get_info(domain_uuid, user_id) do
-    case Registry.lookup(TrackingStation.Scheduler.DomainMonitorRegistry, domain_uuid) do
-      [{pid, ^user_id}] -> {:ok, GenServer.call(pid, :info)}
-      [{_pid, _}] -> {:error, :permission_denied}
-      [] -> {:error, :not_exist}
+    case find_pid(domain_uuid, user_id) do
+      {:ok, pid} ->
+        {:ok, GenServer.call(pid, :info)}
+
+      {:error, reason} ->
+        Logger.warning(inspect(reason))
+        {:error, reason}
     end
   end
 
   def snapshot(domain_uuid, user_id, overlay_name) do
-    case Registry.lookup(TrackingStation.Scheduler.DomainMonitorRegistry, domain_uuid) do
-      [{pid, ^user_id}] -> {:ok, GenServer.call(pid, {:snapshot, overlay_name})}
-      [{_pid, _}] -> {:error, :permission_denied}
-      [] -> {:error, :not_exist}
+    case find_pid(domain_uuid, user_id) do
+      {:ok, pid} ->
+        {:ok, GenServer.call(pid, {:snapshot, overlay_name})}
+
+      {:error, reason} ->
+        {:error, reason}
     end
   end
 

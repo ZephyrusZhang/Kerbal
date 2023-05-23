@@ -6,6 +6,7 @@ defmodule TrackingStation.ClusterStore.ActiveDomain do
     :active_domain,
     uuid: :_,
     node_id: :_,
+    pid: :_,
     user_id: :_
   )
 
@@ -14,7 +15,8 @@ defmodule TrackingStation.ClusterStore.ActiveDomain do
             :active_domain,
             uuid: String.t(),
             node_id: atom(),
-            user_id: String.t() # reserved
+            pid: pid(),
+            user_id: String.t()
           )
 
   @impl true
