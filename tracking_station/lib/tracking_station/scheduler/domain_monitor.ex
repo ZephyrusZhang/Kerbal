@@ -151,7 +151,7 @@ defmodule TrackingStation.Scheduler.DomainMonitor do
       |> Enum.map(
         &(gpu_status(&1)
           |> Enum.into(%{})
-          |> Map.take([:name, :vram_size, :bus, :slot, :function]))
+          |> Map.take([:gpu_id, :name, :vram_size, :bus, :slot, :function]))
       )
 
     {port, current_gpus_info}
@@ -194,7 +194,8 @@ defmodule TrackingStation.Scheduler.DomainMonitor do
         Mnesia.delete({:active_domain, domain_uuid})
 
         gpus
-        |> Enum.map(fn record ->
+        |> Enum.map(&Mnesia.match_object(gpu_status(gpu_id: &1.gpu_id)))
+        |> Enum.map(fn [record] ->
           Mnesia.write(gpu_status(record, free: true, domain_uuid: ""))
         end)
 
