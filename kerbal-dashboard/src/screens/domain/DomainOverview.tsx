@@ -1,34 +1,38 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import {
+  AlertDialog, AlertDialogBody, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogOverlay,
   Button,
-  Flex, IconButton, Input, InputGroup, InputRightElement,
-  Menu,
-  MenuButton, MenuItem,
-  MenuList, Spacer, Stack,
-  Table,
+  Flex, HStack, IconButton, Input, InputGroup, InputRightElement,
+  Spacer, Table,
   TableContainer,
   Tbody,
   Td,
   Th,
   Thead,
-  Tr
+  Tr, useDisclosure
 } from "@chakra-ui/react";
 import request from "../../util/request";
-import { AiOutlineDown, AiOutlineSearch, BsTrash, FiRefreshCw } from "react-icons/all";
+import { AiOutlineSearch, FiRefreshCw } from "react-icons/all";
 import { useNavigate } from "react-router-dom";
 import MainLayout from "../../layouts/MainLayout";
 import KerbalBox from "../../components/containers/KerbalBox";
 import { DomainProps } from "../../types";
+import { DeleteIcon } from "@chakra-ui/icons";
+import { responseToast } from "../../util/toast";
+import { refresh } from "../../util/page";
 
 type RowProps = DomainProps & { showPassword: boolean }
 
 const DomainOverview = () => {
   const [tableData, setTableData] = useState<Array<RowProps>>([])
-
+  const [domainUUIDToDelete, setDomainUUIDToDelete] = useState<string | null>(null)
+  const {isOpen, onOpen, onClose} = useDisclosure()
+  const cancelRef = useRef<HTMLButtonElement>(null)
   const navigate = useNavigate()
 
   useEffect(() => {
     request.get('/api/cluster/user/domains').then(response => {
+      console.log(response)
       setTableData(response.data.result.map((item: RowProps) => ({...item, showPassword: false})))
     })
   }, [])
@@ -43,8 +47,44 @@ const DomainOverview = () => {
     setTableData(updated)
   }
 
+  const handleDeleteDomain = () => {
+    request.delete(`/api/cluster/domain/${domainUUIDToDelete}`).then(response => {
+      responseToast(response.data.status, 'Domain Destroy Successfully', response.data.reason)
+    })
+    setDomainUUIDToDelete(null)
+    onClose()
+    refresh()
+  }
+
   return (
     <MainLayout>
+      <AlertDialog
+        isOpen={isOpen}
+        leastDestructiveRef={cancelRef}
+        onClose={onClose}
+      >
+        <AlertDialogOverlay>
+          <AlertDialogContent>
+            <AlertDialogHeader fontSize='lg' fontWeight='bold'>
+              Delete Domain
+            </AlertDialogHeader>
+
+            <AlertDialogBody>
+              Are you sure? You can&apos;t undo this action afterwards.
+            </AlertDialogBody>
+
+            <AlertDialogFooter>
+              <Button ref={cancelRef} onClick={onClose}>
+                Cancel
+              </Button>
+              <Button colorScheme='red' onClick={handleDeleteDomain} ml={3}>
+                Delete
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialogOverlay>
+      </AlertDialog>
+
       <Flex>
         <Button colorScheme='messenger' mb='20px' onClick={() => navigate('/domain/create')}>Create</Button>
         <Spacer/>
@@ -78,16 +118,20 @@ const DomainOverview = () => {
                   </Td>
                   <Td>{value.status}</Td>
                   <Td>
-                    <Stack direction='row' spacing='2'>
+                    <HStack spacing='2'>
                       <Button colorScheme='whatsapp' size='xs'>Start</Button>
                       <Button colorScheme='orange' size='xs'>Stop</Button>
-                      <Menu>
-                        <MenuButton size='xs' as={IconButton} icon={<AiOutlineDown/>}/>
-                        <MenuList>
-                          <MenuItem icon={<BsTrash/>}>Delete</MenuItem>
-                        </MenuList>
-                      </Menu>
-                    </Stack>
+                      <IconButton
+                        colorScheme='red'
+                        aria-label='deleter'
+                        icon={<DeleteIcon/>}
+                        size='xs'
+                        onClick={() => {
+                          setDomainUUIDToDelete(value.domain_uuid as string)
+                          onOpen()
+                        }}
+                      />
+                    </HStack>
                   </Td>
                 </Tr>
               ))}
