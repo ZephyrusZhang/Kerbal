@@ -122,6 +122,7 @@ const DomainCreation = () => {
     request.post('/api/cluster/domain', body).then(response => {
       console.log(response)
       responseToast(response.data.status, 'Domain Created Successfully', response.data.reason)
+      setTimeout(() => navigate('/'), 2000)
     })
   }
 
