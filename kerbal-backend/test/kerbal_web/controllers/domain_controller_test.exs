@@ -28,8 +28,9 @@ defmodule KerbalWeb.DomainControllerTest do
     gpus = self_node_info["gpus"]
     cpu_count = self_node_info["free_cpu_count"]
 
-    conn = conn
-    |> get(~p"/api/cluster/storage/list")
+    conn =
+      conn
+      |> get(~p"/api/cluster/storage/list")
 
     assert %{"status" => "ok", "result" => images} = json_response(conn, 200)
 
