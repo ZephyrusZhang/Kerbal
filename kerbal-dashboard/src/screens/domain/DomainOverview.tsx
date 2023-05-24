@@ -2,18 +2,19 @@ import React, { useEffect, useRef, useState } from 'react'
 import {
   AlertDialog, AlertDialogBody, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogOverlay,
   Button,
-  Flex, HStack, IconButton, Input, InputGroup, InputRightElement,
+  Flex, HStack, IconButton, Input, InputGroup, InputRightElement, Link, Skeleton,
   Spacer, Table,
   TableContainer,
   Tbody,
   Td,
+  Text,
   Th,
   Thead,
   Tr, useDisclosure
 } from "@chakra-ui/react";
 import request from "../../util/request";
-import { AiOutlineSearch, FiRefreshCw } from "react-icons/all";
-import { useNavigate } from "react-router-dom";
+import { AiFillEye, AiFillEyeInvisible, AiOutlineSearch, FiRefreshCw } from "react-icons/all";
+import { useNavigate, Link as ReachLink } from "react-router-dom";
 import MainLayout from "../../layouts/MainLayout";
 import KerbalBox from "../../components/containers/KerbalBox";
 import { DomainProps } from "../../types";
@@ -24,7 +25,8 @@ import { refresh } from "../../util/page";
 type RowProps = DomainProps & { showPassword: boolean }
 
 const DomainOverview = () => {
-  const [tableData, setTableData] = useState<Array<RowProps>>([])
+  const [domains, setDomains] = useState<Array<RowProps>>([])
+  const [isLoading, setIsLoading] = useState(true)
   const [domainUUIDToDelete, setDomainUUIDToDelete] = useState<string | null>(null)
   const {isOpen, onOpen, onClose} = useDisclosure()
   const cancelRef = useRef<HTMLButtonElement>(null)
@@ -33,18 +35,19 @@ const DomainOverview = () => {
   useEffect(() => {
     request.get('/api/cluster/user/domains').then(response => {
       console.log(response)
-      setTableData(response.data.result.map((item: RowProps) => ({...item, showPassword: false})))
+      setDomains(response.data.result.map((item: RowProps) => ({...item, showPassword: false})))
+      setIsLoading(false)
     })
   }, [])
 
   const toggleShowPassword = (uuid: string) => {
-    const updated = tableData.map(item => {
+    const updated = domains.map(item => {
       if (item.domain_uuid === uuid) {
         return {...item, showPassword: !item.showPassword}
       }
       return item
     })
-    setTableData(updated)
+    setDomains(updated)
   }
 
   const handleDeleteDomain = () => {
@@ -90,55 +93,74 @@ const DomainOverview = () => {
         <Spacer/>
         <IconButton colorScheme='gray' variant='ghost' aria-label='refresh' icon={<FiRefreshCw/>}/>
       </Flex>
-      <KerbalBox p='50px'>
-        <InputGroup pb='30px'>
-          <Input/>
-          <InputRightElement><AiOutlineSearch/></InputRightElement>
-        </InputGroup>
-        <TableContainer>
-          <Table variant='simple'>
-            <Thead>
-              <Tr>
-                <Th>ID</Th>
-                <Th>Image</Th>
-                <Th>Port</Th>
-                <Th>Password</Th>
-                <Th>Status</Th>
-                <Th>Operation</Th>
-              </Tr>
-            </Thead>
-            <Tbody>
-              {tableData?.map((value, index) => (
-                <Tr key={index}>
-                  <Td>{value.domain_id}</Td>
-                  <Td>{value.image_name}</Td>
-                  <Td>{value.port}</Td>
-                  <Td onClick={() => toggleShowPassword(value.domain_uuid as string)}>
-                    {value.showPassword ? value.password : '*'.repeat(value.password!.length)}
-                  </Td>
-                  <Td>{value.status}</Td>
-                  <Td>
-                    <HStack spacing='2'>
-                      <Button colorScheme='whatsapp' size='xs'>Start</Button>
-                      <Button colorScheme='orange' size='xs'>Stop</Button>
-                      <IconButton
-                        colorScheme='red'
-                        aria-label='deleter'
-                        icon={<DeleteIcon/>}
-                        size='xs'
-                        onClick={() => {
-                          setDomainUUIDToDelete(value.domain_uuid as string)
-                          onOpen()
-                        }}
-                      />
-                    </HStack>
-                  </Td>
-                </Tr>
-              ))}
-            </Tbody>
-          </Table>
-        </TableContainer>
-      </KerbalBox>
+      <Skeleton isLoaded={!isLoading}>
+        <KerbalBox p='50px'>
+          {domains.length === 0 ?
+            <Text fontSize='4xl'>No Domains Been Created</Text> :
+            <>
+              <InputGroup pb='30px'>
+                <Input/>
+                <InputRightElement><AiOutlineSearch/></InputRightElement>
+              </InputGroup>
+              <TableContainer>
+                <Table variant='simple'>
+                  <Thead>
+                    <Tr>
+                      <Th>ID</Th>
+                      <Th>Image</Th>
+                      <Th>Port</Th>
+                      <Th>Password</Th>
+                      <Th>Status</Th>
+                      <Th>Operation</Th>
+                    </Tr>
+                  </Thead>
+                  <Tbody>
+                    {domains?.map((value, index) => (
+                      <Tr key={index}>
+                        <Td>
+                          <Link as={ReachLink} to={`/domain/management/${value.domain_uuid}`}>{value.domain_id}</Link>
+                        </Td>
+                        <Td>{value.image_name}</Td>
+                        <Td>{value.port}</Td>
+                        <Td>
+                          <HStack>
+                            <Text>
+                              {value.showPassword ? value.password : '*'.repeat(value.password!.length)}
+                            </Text>
+                            <IconButton
+                              aria-label='show'
+                              size='xs'
+                              variant='ghost'
+                              icon={value.showPassword ? <AiFillEyeInvisible/> : <AiFillEye/>}
+                              onClick={() => toggleShowPassword(value.domain_uuid as string)}
+                            />
+                          </HStack>
+                        </Td>
+                        <Td>{value.status}</Td>
+                        <Td>
+                          <HStack spacing='2'>
+                            <Button colorScheme='whatsapp' size='xs'>Start</Button>
+                            <Button colorScheme='orange' size='xs'>Stop</Button>
+                            <IconButton
+                              colorScheme='red'
+                              aria-label='deleter'
+                              icon={<DeleteIcon/>}
+                              size='xs'
+                              onClick={() => {
+                                setDomainUUIDToDelete(value.domain_uuid as string)
+                                onOpen()
+                              }}
+                            />
+                          </HStack>
+                        </Td>
+                      </Tr>
+                    ))}
+                  </Tbody>
+                </Table>
+              </TableContainer>
+            </>}
+        </KerbalBox>
+      </Skeleton>
     </MainLayout>
   )
 }
