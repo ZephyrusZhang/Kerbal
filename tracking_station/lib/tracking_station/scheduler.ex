@@ -67,11 +67,11 @@ defmodule TrackingStation.Scheduler do
       Task.Supervisor.async(
         {TrackingStation.Scheduler.TaskSupervisor, node},
         TrackingStation.Scheduler,
-        :create_vm,
+        :create_domain,
         [node, user_id, spec]
       )
 
-    Task.await(task, 5000)
+    Task.await(task, 10_000)
   end
 
   def list_user_domains(user_id) do
