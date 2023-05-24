@@ -1,7 +1,6 @@
 defmodule KerbalWeb.JWTTokenTest do
   use KerbalWeb.ConnCase, async: true
   import KerbalWeb.JWTToken
-  alias Joken.Signer
 
   setup do
     extra_claims = %{claims: "expected"}
