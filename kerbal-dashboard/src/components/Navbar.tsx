@@ -20,23 +20,18 @@ import { useKerbalUIController } from "../context";
 const Navbar = () => {
   const navigate = useNavigate()
   const {controller, dispatch} = useKerbalUIController()
-
-  const logout = () => {
-    localStorage.removeItem('token')
-    localStorage.removeItem('is-admin')
-    navigate('/login')
-  }
   const [visible, setVisible] = useState(true);
 
   const handleMouseEnter = () => {
-    setVisible(true);
-  };
+    setVisible(true)
+  }
 
   const handleMouseLeave = () => {
     if (parseInt(localStorage.getItem('selectedSidebarLinkIndex') as string) == 2){
       setVisible(false);
     }
-  };
+  }
+
   return (
     <Box
       position="fixed"
@@ -59,7 +54,7 @@ const Navbar = () => {
         justifyContent="space-between"
       >
         <Flex align="center" mr={5}>
-          <Heading as="h1" size="lg" letterSpacing={'tighter'}>
+          <Heading as="h1" size="lg" letterSpacing={'tighter'} onClick={() => navigate('/')}>
             Kerbal
           </Heading>
         </Flex>
@@ -76,7 +71,6 @@ const Navbar = () => {
             <MenuButton as={IconButton} icon={<IoIosSettings/>} bg='transparent'/>
             <MenuList>
               <MenuItem onClick={() => navigate('/account')}>Setting</MenuItem>
-              {/*<MenuItem onClick={logout}>Log out</MenuItem>*/}
             </MenuList>
           </Menu>
         </HStack>

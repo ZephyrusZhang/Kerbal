@@ -109,7 +109,7 @@ const Sidebar = () => {
             variant='ghost'
             colorScheme='linkedin'
             onClick={() => {
-              localStorage.clear()
+              localStorage.removeItem('token')
               navigate('/login')
             }}
           >
