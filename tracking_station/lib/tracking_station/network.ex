@@ -150,7 +150,7 @@ defmodule TrackingStation.Network do
 
   @impl true
   def handle_cast({:free_port, pool_name, port}, state) do
-    {_, new_state} = Map.get_and_update!(state, pool_name, fn pool -> {pool, [port | pool]} end)
+    new_state = update_in(state[pool_name], fn pool -> [port | pool] end)
     {:noreply, new_state}
   end
 end

@@ -31,10 +31,9 @@ defmodule KerbalWeb.ClusterController do
           gpu_count: gpu_count |> cast_to_int(),
           gpu: %{
             name: name,
-            vram_size: vram_size |> String.to_integer()
+            vram_size: vram_size |> cast_to_int()
           }
         }
-        |> IO.inspect()
       )
 
     json(conn, %{

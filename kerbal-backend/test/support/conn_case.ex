@@ -56,10 +56,11 @@ defmodule KerbalWeb.ConnCase do
   It returns an updated `conn`.
   """
   def log_in_user(conn, user) do
-    token = Kerbal.Accounts.generate_user_session_token(user)
+    extra_claims = %{user_id: user.id, role: "admin"}
+    token = KerbalWeb.JWTToken.generate_and_sign!(extra_claims)
 
     conn
     |> Phoenix.ConnTest.init_test_session(%{})
-    |> Plug.Conn.put_session(:user_token, token)
+    |> Plug.Conn.put_req_header("authorization", token)
   end
 end

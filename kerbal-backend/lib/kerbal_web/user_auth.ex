@@ -46,7 +46,7 @@ defmodule KerbalWeb.UserAuth do
   #     end
   #
   defp renew_session(conn) do
-    conn |> log_in_user(conn.assigns[:current_user])
+    conn |> log_in_user(conn.assigns.current_user.id)
   end
 
   @doc """
@@ -55,7 +55,9 @@ defmodule KerbalWeb.UserAuth do
   """
   def fetch_current_user(conn, _opts) do
     if conn.assigns[:claims] do
-      conn |> assign(:current_user, conn.assigns[:claims]["user_id"])
+      user_id = conn.assigns[:claims]["user_id"]
+      user = Accounts.get_user!(user_id)
+      conn |> assign(:current_user, user)
     else
       conn
     end

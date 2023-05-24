@@ -14,26 +14,35 @@ defmodule TrackingStation.Scheduler.DomainMonitor do
   alias TrackingStation.Libvirt
   alias TrackingStation.Storage.LocalStorage
   alias TrackingStation.Scheduler.LibvirtConfig
+  alias TrackingStation.Scheduler.TaskSupervisor
 
   ### ----- client api -----
   def start_link({spec, user_id, domain_uuid}) do
-    GenServer.start_link(__MODULE__, {spec, user_id, domain_uuid},
-      name:
-        {:via, Registry, {TrackingStation.Scheduler.DomainMonitorRegistry, domain_uuid, user_id}}
-    )
+    case GenServer.start_link(__MODULE__, {spec, user_id, domain_uuid}) do
+      {:ok, pid} ->
+        Mnesia.transaction(fn ->
+          [dom] = Mnesia.match_object(active_domain(uuid: domain_uuid))
+          Mnesia.write(active_domain(dom, pid: pid))
+        end)
+
+        {:ok, pid}
+
+      result ->
+        result
+    end
   end
 
-  def shutdown(_domain_uuid) do
-    # gracefully shutdown this vm
-  end
+  defp find_pid(domain_uuid, user_id) do
+    {:atomic, result} =
+      Mnesia.transaction(fn ->
+        Mnesia.match_object(active_domain(uuid: domain_uuid))
+      end)
 
-  def destroy(domain_uuid, user_id) do
-    case Registry.lookup(TrackingStation.Scheduler.DomainMonitorRegistry, domain_uuid) do
-      [{pid, ^user_id}] ->
-        GenServer.call(pid, :destroy, 30000)
-        :ok
+    case result do
+      [{:active_domain, _uuid, _node_id, pid, ^user_id}] ->
+        {:ok, pid}
 
-      [{_pid, _}] ->
+      [{:active_domain, _uuid, _node_id, _pid, _user_id}] ->
         {:error, :permission_denied}
 
       [] ->
@@ -41,32 +50,68 @@ defmodule TrackingStation.Scheduler.DomainMonitor do
     end
   end
 
+  def shutdown(_domain_uuid) do
+    # gracefully shutdown this vm
+  end
+
+  def destroy(domain_uuid, user_id) do
+    case find_pid(domain_uuid, user_id) do
+      {:ok, pid} ->
+        GenServer.call(pid, :destroy, 30000)
+        :ok
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
   def get_info(domain_uuid, user_id) do
-    case Registry.lookup(TrackingStation.Scheduler.DomainMonitorRegistry, domain_uuid) do
-      [{pid, ^user_id}] -> {:ok, GenServer.call(pid, :info)}
-      [{_pid, _}] -> {:error, :permission_denied}
-      [] -> {:error, :not_exist}
+    case find_pid(domain_uuid, user_id) do
+      {:ok, pid} ->
+        {:ok, GenServer.call(pid, :info)}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  def snapshot(domain_uuid, user_id, overlay_name) do
+    case find_pid(domain_uuid, user_id) do
+      {:ok, pid} ->
+        {:ok, GenServer.call(pid, {:snapshot, overlay_name})}
+
+      {:error, reason} ->
+        {:error, reason}
     end
   end
 
   # -------------------------
 
   @impl true
-  def init({spec, user_id, domain_uuid}) do
-    port = check_and_allocate(spec, user_id, domain_uuid)
+  def init({%{image_id: image_id} = spec, user_id, domain_uuid}) do
+    {dataset, name} = LocalStorage.path_from_guid(image_id)
+    {port, current_gpus_info} = check_and_allocate(spec, user_id, domain_uuid)
 
-    # TODO this step should be done async
-    disk_path = LocalStorage.create_running(:base, "archlinux_cuda_gui")
-    send(self(), {:image_ready, disk_path})
+    Task.Supervisor.async_nolink(
+      TrackingStation.Storage.LocalTaskSupervisor,
+      LocalStorage,
+      :prepare_image,
+      [
+        dataset,
+        name
+      ]
+    )
 
     {:ok,
      %{
        domain_uuid: domain_uuid,
        domain_id: nil,
+       image_dataset: dataset,
+       image_name: name,
        running_disk_id: nil,
        status: :creating,
        password: "",
-       spec: spec,
+       spec: Map.replace!(spec, :gpus, current_gpus_info),
        port: port
      }}
   end
@@ -81,7 +126,7 @@ defmodule TrackingStation.Scheduler.DomainMonitor do
     # allocate spice port
     {:ok, port} = Network.allocate_spice_port()
     # allocate cpu, ram & gpu
-    {:atomic, :ok} =
+    {:atomic, current_gpus_info} =
       Mnesia.transaction(fn ->
         current_gpus_info =
           Enum.map(gpus, fn gpu ->
@@ -107,7 +152,7 @@ defmodule TrackingStation.Scheduler.DomainMonitor do
         true = free_cpu_count >= cpu_count and free_ram_size >= ram_size
 
         Enum.map(current_gpus_info, fn gpu ->
-          Mnesia.write(gpu_status(gpu, free: false))
+          Mnesia.write(gpu_status(gpu, free: false, domain_uuid: domain_uuid))
         end)
 
         Mnesia.write(
@@ -125,16 +170,18 @@ defmodule TrackingStation.Scheduler.DomainMonitor do
           )
         )
 
-        Enum.map(gpus, fn gpu ->
-          [matched_gpu | []] = Mnesia.match_object(gpu_status(gpu_id: gpu.gpu_id))
-
-          Mnesia.write(gpu_status(matched_gpu, domain_uuid: domain_uuid))
-        end)
-
-        :ok
+        current_gpus_info
       end)
 
-    port
+    current_gpus_info =
+      current_gpus_info
+      |> Enum.map(
+        &(gpu_status(&1)
+          |> Enum.into(%{})
+          |> Map.take([:gpu_id, :name, :vram_size, :bus, :slot, :function]))
+      )
+
+    {port, current_gpus_info}
   end
 
   @impl true
@@ -174,12 +221,9 @@ defmodule TrackingStation.Scheduler.DomainMonitor do
         Mnesia.delete({:active_domain, domain_uuid})
 
         gpus
-        |> Enum.map(fn gpu ->
-          # since gpu_is the key, there should be exactly one match
-          Mnesia.match_object(gpu_status(gpu_id: gpu.gpu_id))
-        end)
-        |> Enum.map(fn [record | []] ->
-          Mnesia.write(gpu_status(record, free: true))
+        |> Enum.map(&Mnesia.match_object(gpu_status(gpu_id: &1.gpu_id)))
+        |> Enum.map(fn [record] ->
+          Mnesia.write(gpu_status(record, free: true, domain_uuid: ""))
         end)
 
         [current_node_info | _] = Mnesia.match_object(node_info(node_id: node()))
@@ -200,6 +244,28 @@ defmodule TrackingStation.Scheduler.DomainMonitor do
   def terminate(reason, spec) do
     Logger.warning("unexpected stop reason #{inspect(reason)} try to stop normally")
     terminate(:normal, spec)
+  end
+
+  defp execute_command(domain_id, cmd, args) do
+    Task.Supervisor.async_nolink(TaskSupervisor, fn ->
+      pid = Libvirt.guest_exec(domain_id, cmd, args)
+
+      output =
+        Enum.reduce_while(1..10, nil, fn _i, _acc ->
+          response = Libvirt.guest_exec_status(domain_id, pid)
+
+          case response do
+            %{output: nil} ->
+              Process.sleep(0.1)
+              {:cont, nil}
+
+            %{output: output} ->
+              {:halt, output}
+          end
+        end)
+
+      output
+    end)
   end
 
   defp poll_domain_info(%{domain_id: domain_id, status: :creating} = state) do
@@ -253,20 +319,34 @@ defmodule TrackingStation.Scheduler.DomainMonitor do
     {:reply, state, state}
   end
 
+  @impl true
+  def handle_call({:snapshot, name}, _from, %{running_disk_id: running_disk_id} = state) do
+    :ok = LocalStorage.make_overlay(running_disk_id, name)
+    {:reply, :ok, state}
+  end
+
   ### ----- handle_info -----
+
   @impl true
   def handle_info(
-        {:image_ready, disk_id},
+        {ref, :ok},
         %{
           domain_uuid: domain_uuid,
           port: spice_port,
-          spec: spec
+          spec: spec,
+          image_dataset: dataset,
+          image_name: name
         } = state
       ) do
+    # ignore DOWN message
+    Process.demonitor(ref, [:flush])
     %{cpu_count: cpu_count, ram_size: ram_size, gpus: gpus} = spec
     iso_path = LocalStorage.get_installation_image()
     iso_config = LibvirtConfig.iso_config(iso_path)
 
+    Logger.warning("image ready: #{dataset} #{name}")
+    disk_id = LocalStorage.create_running(dataset, name)
+    Logger.warning("running: #{disk_id}")
     disk_path = "/dev/zvol/rpool/running/#{disk_id}"
     disk_config = LibvirtConfig.disk_config(disk_path)
     # Be careful It's not a strong password
@@ -275,9 +355,7 @@ defmodule TrackingStation.Scheduler.DomainMonitor do
 
     gpu_passthrough =
       gpus
-      |> Enum.map(fn %{bus: bus, slot: slot, function: function} ->
-        LibvirtConfig.gpu_passthrough(bus, slot, function)
-      end)
+      |> Enum.map(&LibvirtConfig.gpu_passthrough(&1.bus, &1.slot, &1.function))
       |> Enum.join("\n")
 
     xml_config =
@@ -314,5 +392,18 @@ defmodule TrackingStation.Scheduler.DomainMonitor do
   @impl true
   def handle_info(:poll, state) do
     poll_domain_info(state)
+  end
+
+  # The task failed
+  @impl true
+  def handle_info({:DOWN, _ref, :process, _pid, _reason}, state) do
+    # Log and possibly restart the task...
+    {:stop, :normal, state}
+  end
+
+  @impl true
+  def handle_info(message, state) do
+    Logger.warning("unknown message #{inspect(message)} exiting")
+    {:stop, :normal, state}
   end
 end

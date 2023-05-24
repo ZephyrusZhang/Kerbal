@@ -28,7 +28,8 @@ defmodule TrackingStation.MixProject do
       {:uuid, "~> 1.1"},
       {:mnesiac, "~> 0.3"},
       {:libcluster, "~> 3.3"},
-      {:jason, "~> 1.4"}
+      {:jason, "~> 1.4"},
+      {:gen_stage, "~> 1.2.0"}
     ]
   end
 end

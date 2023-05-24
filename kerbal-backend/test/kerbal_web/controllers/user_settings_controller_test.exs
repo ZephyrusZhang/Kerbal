@@ -18,7 +18,6 @@ defmodule KerbalWeb.UserSettingsControllerTest do
             "password_confirmation" => "new valid password"
           }
         })
-        |> doc()
 
       assert %{"status" => "ok"} = json_response(new_password_conn, 200)
 
@@ -36,7 +35,6 @@ defmodule KerbalWeb.UserSettingsControllerTest do
             "password_confirmation" => "does not match"
           }
         })
-        |> doc()
 
       assert %{"status" => "err"} = json_response(old_password_conn, 200)
 
@@ -54,7 +52,6 @@ defmodule KerbalWeb.UserSettingsControllerTest do
           "current_password" => valid_user_password(),
           "user_params" => %{"email" => unique_user_email()}
         })
-        |> doc()
 
       assert %{"status" => "ok"} = json_response(conn, 200)
 
@@ -119,7 +116,7 @@ defmodule KerbalWeb.UserSettingsControllerTest do
     test "redirects if user is not logged in", %{token: token} do
       conn = build_conn()
       conn = get(conn, ~p"/api/users/settings/confirm_email/#{token}")
-      assert redirected_to(conn) == "/users/log_in"
+      assert %{"status" => "err", "reason" => "not_login"} = json_response(conn, 200)
     end
   end
 end
