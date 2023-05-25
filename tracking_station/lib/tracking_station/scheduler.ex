@@ -16,38 +16,50 @@ defmodule TrackingStation.Scheduler do
     {:ok, cpu_and_mem} = TrackingStation.Libvirt.get_resources()
     IO.inspect({cpu_and_mem, gpus})
 
-    {:atomic, :ok} = Mnesia.transaction(fn ->
-      Mnesia.write(
-        node_info(
-          node_id: node(),
-          cpu_count: cpu_and_mem.cpu_count,
-          ram_size: cpu_and_mem.ram_size,
-          free_cpu_count: cpu_and_mem.cpu_count,
-          free_ram_size: cpu_and_mem.ram_size,
-          ipv4_addr: get_self_address(:inet),
-          ipv6_addr: get_self_address(:inet6)
-        )
-      )
-
-      for gpu <- gpus do
+    {:atomic, :ok} =
+      Mnesia.transaction(fn ->
         Mnesia.write(
-          gpu_status(
-            gpu_id: Atom.to_string(node()) <> gpu.id,
+          node_info(
             node_id: node(),
-            name: gpu.device,
-            vram_size: 0,
-            bus: gpu.bus,
-            slot: gpu.slot,
-            function: gpu.function,
-            domain_uuid: "",
-            free: true,
-            online: true
+            cpu_count: cpu_and_mem.cpu_count,
+            ram_size: cpu_and_mem.ram_size,
+            free_cpu_count: cpu_and_mem.cpu_count,
+            free_ram_size: cpu_and_mem.ram_size,
+            ipv4_addr: get_self_address(:inet),
+            ipv6_addr: get_self_address(:inet6)
           )
         )
-      end
 
-      :ok
-    end)
+        for gpu <- gpus do
+          Mnesia.write(
+            gpu_status(
+              gpu_id: Atom.to_string(node()) <> gpu.id,
+              node_id: node(),
+              name: gpu.device,
+              vram_size: 0,
+              bus: gpu.bus,
+              slot: gpu.slot,
+              function: gpu.function,
+              domain_uuid: "",
+              free: true,
+              online: true
+            )
+          )
+        end
+
+        :ok
+      end)
+  end
+
+  defp is_loopback_addr(ip, address_family) do
+    case address_family do
+      :inet ->
+        {prefix, _, _, _} = ip
+        prefix == 127
+
+      :inet6 ->
+        ip == {0, 0, 0, 0, 0, 0, 0, 1}
+    end
   end
 
   @doc """
@@ -57,11 +69,15 @@ defmodule TrackingStation.Scheduler do
   def get_self_address(address_family) do
     {:ok, hostname} = :inet.gethostname()
 
-    case :inet.getaddr(hostname, address_family) do
-      {:ok, addr} ->
-        addr
-        |> :inet.ntoa()
-        |> to_string()
+    case :inet.getaddrs(hostname, address_family) do
+      {:ok, addrs} ->
+        case Enum.find(addrs, nil, &(not is_loopback_addr(&1, address_family))) do
+          nil ->
+            ""
+
+          addr ->
+            addr |> :inet.ntoa() |> to_string()
+        end
 
       {:error, _} ->
         ""

@@ -52,6 +52,10 @@ defmodule TrackingStation.Libvirt do
     {"", 0} = System.cmd("virsh", ["-c", @libvirt_url, "reset", "#{domain_id}"])
   end
 
+  def shutdown(domain_id) do
+    {"", 0} = System.cmd("virsh", ["-c", @libvirt_url, "shutdown", "#{domain_id}"])
+  end
+
   def valid_gpu_resource(gpu_ids) do
     case System.cmd("lspci", ["-nnk"]) do
       {output, 0} ->

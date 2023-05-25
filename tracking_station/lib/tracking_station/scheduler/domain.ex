@@ -51,8 +51,19 @@ defmodule TrackingStation.Scheduler.Domain do
     end
   end
 
-  def shutdown(_domain_uuid) do
-    # gracefully shutdown this vm
+  @doc """
+  Control the power of this domain,
+  operation can be :shutdown, :reset or :reboot
+  """
+  def power_control(domain_uuid, user_id, operation) do
+    case find_pid(domain_uuid, user_id) do
+      {:ok, pid} ->
+        GenServer.call(pid, {:power_control, operation}, 30000)
+        :ok
+
+      {:error, reason} ->
+        {:error, reason}
+    end
   end
 
   def destroy(domain_uuid, user_id) do
@@ -400,6 +411,13 @@ defmodule TrackingStation.Scheduler.Domain do
   end
 
   ### ----- handle_call -----
+
+  @impl true
+  def handle_call({:power_control, operation}, _from, %{domain_id: domain_id} = state) do
+    apply(Libvirt, operation, domain_id)
+    {:reply, :ok, state}
+  end
+
   @impl true
   def handle_call(:destroy, _from, state) do
     # simple stop this GenServer, terminate/2 will then do the dirty work
@@ -407,14 +425,16 @@ defmodule TrackingStation.Scheduler.Domain do
   end
 
   @impl true
-  def handle_call(:info, _from, state) do
+  def handle_call(:info, _from, %{domain_uuid: domain_uuid} = state) do
     # reply the client with the current state
-    {:reply, state, state}
+    [{_, res}] = :ets.lookup(:domain_res, domain_uuid)
+    {:reply, res, state}
   end
 
   @impl true
-  def handle_call({:snapshot, name}, _from, %{running_disk_id: running_disk_id} = state) do
-    :ok = LocalStorage.make_overlay(running_disk_id, name)
+  def handle_call({:snapshot, name}, _from, %{domain_uuid: domain_uuid} = state) do
+    [{_, res}] = :ets.lookup(:domain_res, domain_uuid)
+    :ok = LocalStorage.make_overlay(res.running_disk_id, name)
     {:reply, :ok, state}
   end
 

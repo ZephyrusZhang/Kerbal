@@ -2,7 +2,7 @@ defmodule KerbalWeb.DomainController do
   alias KerbalWeb.DomainController
   use KerbalWeb, :controller
 
-  alias TrackingStation.Scheduler.DomainMonitor
+  alias TrackingStation.Scheduler.Domain
   alias TrackingStation.Scheduler
 
   defp cast_to_int(x) when is_integer(x) do
@@ -23,7 +23,7 @@ defmodule KerbalWeb.DomainController do
   def query(conn, %{"domain_uuid" => domain_uuid}) do
     user_id = conn.assigns.current_user.id
 
-    case DomainMonitor.get_info(domain_uuid, user_id) do
+    case Domain.get_info(domain_uuid, user_id) do
       {:ok, info} ->
         json(conn, %{status: :ok, result: info})
 
@@ -79,7 +79,7 @@ defmodule KerbalWeb.DomainController do
   def delete(conn, %{"domain_uuid" => domain_uuid}) do
     user_id = conn.assigns.current_user.id
 
-    case DomainMonitor.destroy(domain_uuid, user_id) do
+    case Domain.destroy(domain_uuid, user_id) do
       :ok ->
         json(conn, %{status: :ok})
 
@@ -97,7 +97,7 @@ defmodule KerbalWeb.DomainController do
   def snapshot(conn, %{"domain_uuid" => domain_uuid, "name" => name}) do
     user_id = conn.assigns.current_user.id
 
-    case DomainMonitor.snapshot(domain_uuid, user_id, name) do
+    case Domain.snapshot(domain_uuid, user_id, name) do
       :ok ->
         json(conn, %{status: :ok})
 
