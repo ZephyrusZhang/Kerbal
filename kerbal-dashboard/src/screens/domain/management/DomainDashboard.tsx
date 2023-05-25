@@ -1,13 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import KerbalBox from "../../../components/containers/KerbalBox";
 import {
-  AlertDialog,
-  AlertDialogBody,
-  AlertDialogCloseButton,
-  AlertDialogContent,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogOverlay,
   Box,
   Button,
   Card,
@@ -40,7 +33,7 @@ import {
   AiFillEyeInvisible,
   AiOutlinePauseCircle,
   BsPlay, FaMemory,
-  RiCpuLine, RiScreenshot2Fill,
+  RiCpuLine, RiScreenshot2Fill, TiClipboard,
   VscDebugRestart
 } from "react-icons/all";
 import request from "../../../util/request";
@@ -69,9 +62,7 @@ const DomainDashboard = ({uuid}: Props) => {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const {isOpen: isModalOpen, onOpen: onOpenModal, onClose: onCloseModal} = useDisclosure()
-  const {isOpen: isAlertDialogOpen, onOpen: onOpenAlertDialog, onClose: onCloseAlertDialog} = useDisclosure()
   const [snapshotName, setSnapshotName] = useState('')
-  const cancelRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
     request.get(
@@ -105,9 +96,22 @@ const DomainDashboard = ({uuid}: Props) => {
         name: snapshotName
       }
     ).then(response => {
+      console.log(response)
       responseToast(response.data.status, 'Snapshot Created Successfully', response.data.reason)
     })
     closeModal()
+  }
+
+  const handleCopySpiceAddress = (address: string) => {
+    navigator.clipboard.writeText(address).then(() => {
+      toast({
+        title: 'Address Copied Successfully',
+        status: 'success',
+        duration: 2000,
+        position: 'top',
+        isClosable: true
+      })
+    })
   }
 
   return (
@@ -130,22 +134,32 @@ const DomainDashboard = ({uuid}: Props) => {
                   <Heading size='xs' textTransform='uppercase'>
                     REMOTE VIEWER ADDRESS
                   </Heading>
-                  <Text pt='2' fontSize='sm'>
-                    spice://10.16.97.70:{domainProperties?.port}
-                  </Text>
+                  <HStack mt='5'>
+                    <Text fontSize='sm'>
+                      spice://10.16.97.70:{domainProperties?.port}
+                    </Text>
+                    <Spacer/>
+                    <IconButton
+                      aria-label='copy'
+                      size='2xs'
+                      variant='ghost'
+                      icon={<TiClipboard/>}
+                      onClick={() => handleCopySpiceAddress(`spice://10.16.97.70:${domainProperties?.port}`)}
+                    />
+                  </HStack>
                 </Box>
                 <Box>
                   <Heading size='xs' textTransform='uppercase'>
                     Remote Viewer Pwd
                   </Heading>
-                  <HStack pt='2'>
+                  <HStack mt='5'>
                     <Text>
                       {showPassword ? domainProperties.password : '*'.repeat(domainProperties.password!.length)}
                     </Text>
                     <Spacer/>
                     <IconButton
                       aria-label='show'
-                      size='xs'
+                      size='2xs'
                       variant='ghost'
                       icon={showPassword ? <AiFillEyeInvisible/> : <AiFillEye/>}
                       onClick={() => setShowPassword(!showPassword)}
@@ -218,10 +232,10 @@ const DomainDashboard = ({uuid}: Props) => {
       </HStack>
 
       <Modal isOpen={isModalOpen} onClose={closeModal} isCentered>
-        <ModalOverlay />
+        <ModalOverlay/>
         <ModalContent>
           <ModalHeader>Create New Snapshot</ModalHeader>
-          <ModalCloseButton />
+          <ModalCloseButton/>
           <ModalBody>
             <Input
               placeholder='Please input snapshot name'
@@ -238,32 +252,6 @@ const DomainDashboard = ({uuid}: Props) => {
           </ModalFooter>
         </ModalContent>
       </Modal>
-
-      <AlertDialog
-        motionPreset='slideInBottom'
-        leastDestructiveRef={cancelRef}
-        onClose={onCloseAlertDialog}
-        isOpen={isAlertDialogOpen}
-        isCentered
-      >
-        <AlertDialogOverlay />
-        <AlertDialogContent>
-          <AlertDialogHeader>Discard Changes?</AlertDialogHeader>
-          <AlertDialogCloseButton />
-          <AlertDialogBody>
-            Are you sure you want to discard all of your notes? 44 words will be
-            deleted.
-          </AlertDialogBody>
-          <AlertDialogFooter>
-            <Button ref={cancelRef} onClick={onCloseAlertDialog}>
-              No
-            </Button>
-            <Button colorScheme='red' ml={3}>
-              Yes
-            </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </Skeleton>
   )
 }
