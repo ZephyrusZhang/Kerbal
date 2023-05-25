@@ -42,7 +42,15 @@ defmodule TrackingStation.Libvirt do
   def qemu_guest_agent(domain_id, data),
     do: Native.qemu_guest_agent(@libvirt_url, domain_id, data)
 
-  def reset(), do: Native.reset(@libvirt_url)
+  def init(), do: Native.reset(@libvirt_url)
+
+  def reboot(domain_id) do
+    {"", 0} = System.cmd("virsh", ["-c", @libvirt_url, "reboot", "#{domain_id}"])
+  end
+
+  def reset(domain_id) do
+    {"", 0} = System.cmd("virsh", ["-c", @libvirt_url, "reset", "#{domain_id}"])
+  end
 
   def valid_gpu_resource(gpu_ids) do
     case System.cmd("lspci", ["-nnk"]) do
@@ -96,8 +104,7 @@ defmodule TrackingStation.Libvirt do
 
     response
     |> Jason.decode!()
-    |> Map.fetch!("return")
-    |> Map.fetch("pid")
+    |> get_in(["return", "pid"])
   end
 
   def guest_exec_status(domain_id, pid, options \\ []) do
@@ -133,7 +140,7 @@ defmodule TrackingStation.Libvirt do
 
     %{
       exitcode: Map.get(response, "exitcode"),
-      exited: Map.fetch!(response, "exitcode"),
+      exited: Map.fetch!(response, "exited"),
       output: output
     }
   end

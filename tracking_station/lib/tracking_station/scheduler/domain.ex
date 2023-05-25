@@ -1,15 +1,16 @@
-defmodule TrackingStation.Scheduler.DomainMonitor do
+defmodule TrackingStation.Scheduler.Domain do
   @moduledoc """
-  TrackingStation.Scheduler.DomainMonitor manages
+  TrackingStation.Scheduler.Domain manages
   the life time of the domain, it keeps monitoring the domain
   and handles requests related to this domain (e.g. shutdown the domain)
   """
-  use GenServer, restart: :temporary
+  use GenServer, restart: :transient
   require Logger
   import TrackingStation.ClusterStore.ActiveDomain
   import TrackingStation.ClusterStore.GPUStatus
   import TrackingStation.ClusterStore.NodeInfo
   alias :mnesia, as: Mnesia
+  alias NimbleCSV.RFC4180, as: CSV
   alias TrackingStation.Network
   alias TrackingStation.Libvirt
   alias TrackingStation.Storage.LocalStorage
@@ -89,31 +90,68 @@ defmodule TrackingStation.Scheduler.DomainMonitor do
 
   @impl true
   def init({%{image_id: image_id} = spec, user_id, domain_uuid}) do
-    {dataset, name} = LocalStorage.path_from_guid(image_id)
-    {port, current_gpus_info} = check_and_allocate(spec, user_id, domain_uuid)
+    case :ets.lookup(:domain_res, domain_uuid) do
+      [] ->
+        {dataset, name} = LocalStorage.path_from_guid(image_id)
+        {port, current_gpus_info} = check_and_allocate(spec, user_id, domain_uuid)
 
-    Task.Supervisor.async_nolink(
-      TrackingStation.Storage.LocalTaskSupervisor,
-      LocalStorage,
-      :prepare_image,
-      [
-        dataset,
-        name
-      ]
-    )
+        Task.Supervisor.async_nolink(
+          TrackingStation.Storage.LocalTaskSupervisor,
+          LocalStorage,
+          :prepare_image,
+          [
+            dataset,
+            name
+          ]
+        )
 
-    {:ok,
-     %{
-       domain_uuid: domain_uuid,
-       domain_id: nil,
-       image_dataset: dataset,
-       image_name: name,
-       running_disk_id: nil,
-       status: :creating,
-       password: "",
-       spec: Map.replace!(spec, :gpus, current_gpus_info),
-       port: port
-     }}
+        true =
+          :ets.insert_new(
+            :domain_res,
+            {domain_uuid,
+             %{
+               domain_id: nil,
+               image_dataset: dataset,
+               image_name: name,
+               running_disk_id: nil,
+               status: :creating,
+               password: "",
+               spec: Map.replace!(spec, :gpus, current_gpus_info),
+               port: port
+             }}
+          )
+
+        {:ok,
+         %{
+           domain_uuid: domain_uuid,
+           domain_id: nil,
+           status: :creating
+         }}
+
+      [{_, res}] ->
+        Logger.warning("restoring from crashed domain")
+
+        if res.status == :creating do
+          {dataset, name} = LocalStorage.path_from_guid(image_id)
+
+          Task.Supervisor.async_nolink(
+            TrackingStation.Storage.LocalTaskSupervisor,
+            LocalStorage,
+            :prepare_image,
+            [
+              dataset,
+              name
+            ]
+          )
+        end
+
+        {:ok,
+         %{
+           domain_uuid: domain_uuid,
+           domain_id: res.domain_id,
+           status: res.status
+         }}
+    end
   end
 
   defp check_and_allocate(
@@ -126,7 +164,7 @@ defmodule TrackingStation.Scheduler.DomainMonitor do
     # allocate spice port
     {:ok, port} = Network.allocate_spice_port()
     # allocate cpu, ram & gpu
-    {:atomic, current_gpus_info} =
+    allocate_operation =
       Mnesia.transaction(fn ->
         current_gpus_info =
           Enum.map(gpus, fn gpu ->
@@ -144,7 +182,7 @@ defmodule TrackingStation.Scheduler.DomainMonitor do
           end)
 
         # there should be existly one match
-        [current_node_info | _] = Mnesia.match_object(node_info(node_id: node))
+        [current_node_info] = Mnesia.match_object(node_info(node_id: node))
 
         free_cpu_count = node_info(current_node_info, :free_cpu_count)
         free_ram_size = node_info(current_node_info, :free_ram_size)
@@ -173,20 +211,26 @@ defmodule TrackingStation.Scheduler.DomainMonitor do
         current_gpus_info
       end)
 
-    current_gpus_info =
-      current_gpus_info
-      |> Enum.map(
-        &(gpu_status(&1)
-          |> Enum.into(%{})
-          |> Map.take([:gpu_id, :name, :vram_size, :bus, :slot, :function]))
-      )
+    case allocate_operation do
+      {:atomic, current_gpus_info} ->
+        current_gpus_info =
+          current_gpus_info
+          |> Enum.map(
+            &(gpu_status(&1)
+              |> Enum.into(%{})
+              |> Map.take([:gpu_id, :name, :vram_size, :bus, :slot, :function]))
+          )
 
-    {port, current_gpus_info}
+        {port, current_gpus_info}
+
+      error ->
+        # remember to free the spice port we just allocated
+        Network.free_spice_port(port)
+        raise "Failed to allocate resource, reason: #{inspect(error)}"
+    end
   end
 
-  @impl true
-  def terminate(:normal, %{
-        domain_uuid: domain_uuid,
+  def release_resources(domain_uuid, %{
         domain_id: domain_id,
         running_disk_id: running_disk_id,
         spec: spec,
@@ -241,13 +285,13 @@ defmodule TrackingStation.Scheduler.DomainMonitor do
   end
 
   @impl true
-  def terminate(reason, spec) do
-    Logger.warning("unexpected stop reason #{inspect(reason)} try to stop normally")
-    terminate(:normal, spec)
+  def terminate(:normal, %{domain_uuid: domain_uuid}) do
+    [{_, res}] = :ets.lookup(:domain_res, domain_uuid)
+    release_resources(domain_uuid, res)
   end
 
-  defp execute_command(domain_id, cmd, args) do
-    Task.Supervisor.async_nolink(TaskSupervisor, fn ->
+  def execute_command(domain_id, cmd, args, interval \\ 100) do
+    Task.Supervisor.async(TaskSupervisor, fn ->
       pid = Libvirt.guest_exec(domain_id, cmd, args)
 
       output =
@@ -256,7 +300,7 @@ defmodule TrackingStation.Scheduler.DomainMonitor do
 
           case response do
             %{output: nil} ->
-              Process.sleep(0.1)
+              Process.sleep(interval)
               {:cont, nil}
 
             %{output: output} ->
@@ -265,6 +309,55 @@ defmodule TrackingStation.Scheduler.DomainMonitor do
         end)
 
       output
+    end)
+  end
+
+  def get_ram_stat(domain_id) do
+    execute_command(domain_id, "free", ["-bw"])
+    |> Task.await()
+    |> String.split("\n", trim: true)
+    # fetch the Mem: line,
+    |> Enum.fetch!(1)
+    |> String.split()
+    # drop the Mem: header
+    |> Enum.drop(1)
+    |> Enum.map(&String.to_integer/1)
+    |> then(fn [total, used, free, shared, buffers, cache, available] ->
+      %{
+        total: total,
+        used: used,
+        free: free,
+        shared: shared,
+        buffers: buffers,
+        cache: cache,
+        available: available
+      }
+    end)
+  end
+
+  def get_ip(domain_id) do
+    execute_command(domain_id, "ip", ["--json", "-br", "addr"])
+    |> Task.await()
+    |> Jason.decode!()
+  end
+
+  def get_gpu_stat(domain_id) do
+    execute_command(domain_id, "nvidia-smi", [
+      "--query-gpu=index,name,driver_version,temperature.gpu,utilization.gpu,utilization.memory",
+      "--format=csv"
+    ])
+    |> Task.await()
+    |> String.trim()
+    |> CSV.parse_string()
+    |> Enum.map(fn [index, name, driver_version, temperature, gpu_usage, mem_usage] ->
+      %{
+        index: index,
+        name: name,
+        driver_version: driver_version,
+        temperature: String.to_float(temperature),
+        gpu_usage: String.to_float(gpu_usage),
+        mem_usage: String.to_float(mem_usage)
+      }
     end)
   end
 
@@ -328,19 +421,13 @@ defmodule TrackingStation.Scheduler.DomainMonitor do
   ### ----- handle_info -----
 
   @impl true
-  def handle_info(
-        {ref, :ok},
-        %{
-          domain_uuid: domain_uuid,
-          port: spice_port,
-          spec: spec,
-          image_dataset: dataset,
-          image_name: name
-        } = state
-      ) do
+  def handle_info({ref, :ok}, %{domain_uuid: domain_uuid} = state) do
     # ignore DOWN message
     Process.demonitor(ref, [:flush])
+    [{_, res}] = :ets.lookup(:domain_res, domain_uuid)
+    %{image_dataset: dataset, image_name: name, spec: spec, port: spice_port} = res
     %{cpu_count: cpu_count, ram_size: ram_size, gpus: gpus} = spec
+
     iso_path = LocalStorage.get_installation_image()
     iso_config = LibvirtConfig.iso_config(iso_path)
 
@@ -372,14 +459,19 @@ defmodule TrackingStation.Scheduler.DomainMonitor do
 
     case Libvirt.create_vm_from_xml(xml_config) do
       {:ok, domain_id} ->
-        {:noreply,
-         %{
-           state
-           | running_disk_id: disk_id,
-             domain_id: domain_id,
-             status: :booting,
-             password: random_password
-         }}
+        :ets.insert(
+          :domain_res,
+          {domain_uuid,
+           %{
+             res
+             | password: random_password,
+               status: :booting,
+               running_disk_id: disk_id,
+               domain_id: domain_id
+           }}
+        )
+
+        {:noreply, %{state | status: :booting}}
 
       {:error, reason} ->
         # handle side-effects
@@ -396,14 +488,9 @@ defmodule TrackingStation.Scheduler.DomainMonitor do
 
   # The task failed
   @impl true
-  def handle_info({:DOWN, _ref, :process, _pid, _reason}, state) do
+  def handle_info({:DOWN, _ref, :process, _pid, reason}, state) do
+    Logger.warning("failed to transfer image: #{inspect(reason)}")
     # Log and possibly restart the task...
-    {:stop, :normal, state}
-  end
-
-  @impl true
-  def handle_info(message, state) do
-    Logger.warning("unknown message #{inspect(message)} exiting")
-    {:stop, :normal, state}
+    {:stop, :no_image, state}
   end
 end

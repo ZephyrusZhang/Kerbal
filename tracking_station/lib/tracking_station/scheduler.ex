@@ -1,14 +1,10 @@
-defmodule TrackingStation.Scheduler.Domain do
-  defstruct [:node_id, :domain_id, :base_img, :img, gpu_list: []]
-end
-
 defmodule TrackingStation.Scheduler do
   @moduledoc """
   TrackingStation.Scheduler manages available resources
   and allocate these resources to create new VMs.
   """
   alias :mnesia, as: Mnesia
-  alias TrackingStation.Scheduler.DomainMonitor
+  alias TrackingStation.Scheduler.Domain
   alias TrackingStation.Libvirt
   import TrackingStation.ClusterStore.NodeInfo
   import TrackingStation.ClusterStore.GPUStatus
@@ -20,14 +16,16 @@ defmodule TrackingStation.Scheduler do
     {:ok, cpu_and_mem} = TrackingStation.Libvirt.get_resources()
     IO.inspect({cpu_and_mem, gpus})
 
-    Mnesia.transaction(fn ->
+    {:atomic, :ok} = Mnesia.transaction(fn ->
       Mnesia.write(
         node_info(
           node_id: node(),
           cpu_count: cpu_and_mem.cpu_count,
           ram_size: cpu_and_mem.ram_size,
           free_cpu_count: cpu_and_mem.cpu_count,
-          free_ram_size: cpu_and_mem.ram_size
+          free_ram_size: cpu_and_mem.ram_size,
+          ipv4_addr: get_self_address(:inet),
+          ipv6_addr: get_self_address(:inet6)
         )
       )
 
@@ -47,15 +45,35 @@ defmodule TrackingStation.Scheduler do
           )
         )
       end
+
+      :ok
     end)
+  end
+
+  @doc """
+  Get the ip address of this node,
+  address family should be :inet or inet6
+  """
+  def get_self_address(address_family) do
+    {:ok, hostname} = :inet.gethostname()
+
+    case :inet.getaddr(hostname, address_family) do
+      {:ok, addr} ->
+        addr
+        |> :inet.ntoa()
+        |> to_string()
+
+      {:error, _} ->
+        ""
+    end
   end
 
   def create_domain(node, user_id, spec) when node == node() do
     uuid = UUID.uuid4()
 
     case DynamicSupervisor.start_child(
-           TrackingStation.Scheduler.DomainMonitorSupervisor,
-           {DomainMonitor, {spec, user_id, uuid}}
+           TrackingStation.Scheduler.DomainSupervisor,
+           {Domain, {spec, user_id, uuid}}
          ) do
       {:ok, _pid} -> {:ok, uuid}
       {:error, reason} -> {:error, reason}
@@ -83,12 +101,12 @@ defmodule TrackingStation.Scheduler do
     records
     |> Enum.map(&active_domain(&1, :uuid))
     |> Enum.map(fn uuid ->
-      {:ok, info} = DomainMonitor.get_info(uuid, user_id)
+      {:ok, info} = Domain.get_info(uuid, user_id)
       info
     end)
   end
 
-  defp query_node(cpu_count, ram_size) do
+  def query_node(cpu_count, ram_size) do
     match_head =
       node_info(
         node_id: :"$1",
@@ -117,7 +135,7 @@ defmodule TrackingStation.Scheduler do
     available_nodes
   end
 
-  defp query_gpu(name, vram_size) do
+  def query_gpu(name, vram_size) do
     match_head =
       gpu_status(
         gpu_id: :_,

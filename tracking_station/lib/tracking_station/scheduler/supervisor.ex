@@ -10,11 +10,18 @@ defmodule TrackingStation.Scheduler.Supervisor do
     children = [
       {Task.Supervisor, name: TrackingStation.Scheduler.TaskSupervisor},
       {DynamicSupervisor,
-       name: TrackingStation.Scheduler.DomainMonitorSupervisor, strategy: :one_for_one},
-      {Registry, [keys: :unique, name: TrackingStation.Scheduler.DomainMonitorRegistry]}
+       name: TrackingStation.Scheduler.DomainSupervisor, strategy: :one_for_one}
     ]
 
     TrackingStation.Scheduler.init()
+
+    :ets.new(:domain_res, [
+      :set,
+      :public,
+      :named_table,
+      read_concurrency: true,
+      write_concurrency: :auto
+    ])
 
     Supervisor.init(children, strategy: :one_for_one)
   end

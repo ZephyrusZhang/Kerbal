@@ -9,7 +9,9 @@ defmodule TrackingStation.ClusterStore.NodeInfo do
     cpu_count: :_,
     ram_size: :_,
     free_cpu_count: :_,
-    free_ram_size: :_
+    free_ram_size: :_,
+    ipv4_addr: :_,
+    ipv6_addr: :_
   )
 
   @type node_info ::
@@ -20,7 +22,9 @@ defmodule TrackingStation.ClusterStore.NodeInfo do
             cpu_count: integer(),
             ram_size: integer(),
             free_cpu_count: integer(),
-            free_ram_size: integer()
+            free_ram_size: integer(),
+            ipv4_addr: String.t(),
+            ipv6_addr: String.t()
           )
 
   @impl true

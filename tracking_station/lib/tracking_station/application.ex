@@ -23,7 +23,7 @@ defmodule TrackingStation.Application do
       {TrackingStation.Scheduler.Supervisor, name: TrackingStation.Scheduler.Supervisor}
     ]
 
-    TrackingStation.Libvirt.reset()
+    TrackingStation.Libvirt.init()
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
