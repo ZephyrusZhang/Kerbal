@@ -1,16 +1,37 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import KerbalBox from "../../../components/containers/KerbalBox";
 import {
+  AlertDialog,
+  AlertDialogBody,
+  AlertDialogCloseButton,
+  AlertDialogContent,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogOverlay,
   Box,
   Button,
   Card,
   CardBody,
-  CircularProgress, CircularProgressLabel,
+  CardHeader,
+  CircularProgress,
+  CircularProgressLabel,
   Heading,
-  HStack, IconButton, Skeleton, Spacer,
+  HStack,
+  IconButton,
+  Input,
+  Modal,
+  ModalBody,
+  ModalCloseButton,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+  ModalOverlay,
+  Skeleton,
+  Spacer,
   Stack,
   StackDivider,
   Text,
+  useDisclosure,
   VStack
 } from "@chakra-ui/react";
 import DomainStatusHead from "../../../components/DomainStatusHead";
@@ -18,12 +39,14 @@ import {
   AiFillEye,
   AiFillEyeInvisible,
   AiOutlinePauseCircle,
-  BsPlay,
-  RiCpuLine,
+  BsPlay, FaMemory,
+  RiCpuLine, RiScreenshot2Fill,
   VscDebugRestart
 } from "react-icons/all";
 import request from "../../../util/request";
 import { DomainProps } from "../../../types";
+import { responseToast, toast } from "../../../util/toast";
+import { snapshotNameRegex } from "../../../const";
 
 interface Props {
   uuid: string
@@ -45,6 +68,10 @@ const DomainDashboard = ({uuid}: Props) => {
   })
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const {isOpen: isModalOpen, onOpen: onOpenModal, onClose: onCloseModal} = useDisclosure()
+  const {isOpen: isAlertDialogOpen, onOpen: onOpenAlertDialog, onClose: onCloseAlertDialog} = useDisclosure()
+  const [snapshotName, setSnapshotName] = useState('')
+  const cancelRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
     request.get(
@@ -55,14 +82,42 @@ const DomainDashboard = ({uuid}: Props) => {
     })
   }, [uuid])
 
+  const closeModal = () => {
+    setSnapshotName('')
+    onCloseModal()
+  }
+
+  const handleCreateSnapShot = () => {
+    if (!snapshotNameRegex.test(snapshotName)) {
+      toast({
+        title: 'Invalid Snapshot Name',
+        status: 'error',
+        duration: 3000,
+        isClosable: true
+      })
+      return
+    }
+
+    request.put(
+      `/api/cluster/domain/${uuid}`,
+      {
+        domain_uuid: uuid,
+        name: snapshotName
+      }
+    ).then(response => {
+      responseToast(response.data.status, 'Snapshot Created Successfully', response.data.reason)
+    })
+    closeModal()
+  }
+
   return (
     <Skeleton isLoaded={!isLoading}>
-      <HStack spacing={5}>
-        <KerbalBox as={VStack} minW='25vw' p='10px'>
+      <HStack spacing={5} align='flex-start'>
+        <KerbalBox as={VStack} minW='25vw' maxW='30vw' p='10px'>
           <DomainStatusHead w='80%' name={uuid} status={domainProperties.status}/>
           <Card w='90%' bgColor='transparent'>
             <CardBody>
-              <Stack divider={<StackDivider />} spacing='4'>
+              <Stack divider={<StackDivider/>} spacing='4'>
                 <Box>
                   <Heading size='xs' textTransform='uppercase'>
                     UUID
@@ -108,31 +163,107 @@ const DomainDashboard = ({uuid}: Props) => {
               </Stack>
             </CardBody>
           </Card>
-          <HStack spacing={5}>
+          <HStack spacing={5} pb='20px'>
             <Button w='50%' leftIcon={<BsPlay/>} colorScheme='whatsapp'>Start</Button>
             <Button w='50%' leftIcon={<VscDebugRestart/>} colorScheme='orange'>Restart</Button>
             <Button w='50%' leftIcon={<AiOutlinePauseCircle/>} colorScheme='red'>Stop</Button>
           </HStack>
         </KerbalBox>
-        <KerbalBox display='flex' flexDirection='column' p='10px' alignItems='center'>
-          <HStack w='20vw' pb='20px'>
-            <RiCpuLine size={25}/>
-            <Text fontSize='2xl' as='b'>CPU Utility</Text>
+        <VStack spacing={5}>
+          <HStack spacing={5}>
+            <Card>
+              <CardHeader as={HStack}>
+                <RiCpuLine size={25}/>
+                <Text fontSize='2xl' as='b'>CPU Utility</Text>
+              </CardHeader>
+              <CardBody>
+                <CircularProgress value={40} size='200px' thickness='6px'>
+                  <CircularProgressLabel>40%</CircularProgressLabel>
+                </CircularProgress>
+              </CardBody>
+            </Card>
+            <Card>
+              <CardHeader as={HStack}>
+                <FaMemory size={25}/>
+                <Text fontSize='2xl' as='b'>Memory Utility</Text>
+              </CardHeader>
+              <CardBody>
+                <CircularProgress value={25} size='200px' thickness='6px'>
+                  <CircularProgressLabel>1145MB</CircularProgressLabel>
+                </CircularProgress>
+              </CardBody>
+            </Card>
           </HStack>
-          <CircularProgress value={40} size='200px' thickness='6px'>
-            <CircularProgressLabel>40%</CircularProgressLabel>
-          </CircularProgress>
-        </KerbalBox>
-        <KerbalBox display='flex' flexDirection='column' p='10px' alignItems='center'>
-          <HStack w='20vw' pb='20px'>
-            <RiCpuLine size={25}/>
-            <Text fontSize='2xl' as='b'>Memory Utility</Text>
-          </HStack>
-          <CircularProgress value={25} size='200px' thickness='6px'>
-            <CircularProgressLabel>1145MB</CircularProgressLabel>
-          </CircularProgress>
-        </KerbalBox>
+
+          <Card w='full'>
+            <CardBody>
+              <Stack divider={<StackDivider/>}>
+                <Box>
+                  <Heading size='xs' textTransform='uppercase'>
+                    Snapshot
+                  </Heading>
+                  <Button
+                    mt='3'
+                    leftIcon={<RiScreenshot2Fill/>}
+                    colorScheme='purple'
+                    onClick={onOpenModal}
+                  >
+                    Take Snapshot
+                  </Button>
+                </Box>
+              </Stack>
+            </CardBody>
+          </Card>
+        </VStack>
       </HStack>
+
+      <Modal isOpen={isModalOpen} onClose={closeModal} isCentered>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Create New Snapshot</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <Input
+              placeholder='Please input snapshot name'
+              value={snapshotName}
+              onChange={event => setSnapshotName(event.target.value)}
+            />
+          </ModalBody>
+
+          <ModalFooter>
+            <Button colorScheme='blue' mr={3} onClick={closeModal}>
+              Close
+            </Button>
+            <Button variant='ghost' onClick={handleCreateSnapShot}>Create</Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      <AlertDialog
+        motionPreset='slideInBottom'
+        leastDestructiveRef={cancelRef}
+        onClose={onCloseAlertDialog}
+        isOpen={isAlertDialogOpen}
+        isCentered
+      >
+        <AlertDialogOverlay />
+        <AlertDialogContent>
+          <AlertDialogHeader>Discard Changes?</AlertDialogHeader>
+          <AlertDialogCloseButton />
+          <AlertDialogBody>
+            Are you sure you want to discard all of your notes? 44 words will be
+            deleted.
+          </AlertDialogBody>
+          <AlertDialogFooter>
+            <Button ref={cancelRef} onClick={onCloseAlertDialog}>
+              No
+            </Button>
+            <Button colorScheme='red' ml={3}>
+              Yes
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Skeleton>
   )
 }
