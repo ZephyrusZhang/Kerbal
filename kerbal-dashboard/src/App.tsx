@@ -25,6 +25,19 @@ export const App = () => {
 
     return () => clearInterval(intervalId)
   })
+
+  useEffect(() => {
+    const pathSegments = (window.location.pathname).split('/').filter(segment => segment !== '')
+    console.log(pathSegments)
+    if (pathSegments[0] === 'domain') {
+      localStorage.setItem('selectedSidebarLinkIndex', '0')
+    } else if (pathSegments[0] === 'account') {
+      localStorage.setItem('selectedSidebarLinkIndex', '1')
+    } else if (pathSegments[0] === 'board') {
+      localStorage.setItem('selectedSidebarLinkIndex', '2')
+    }
+  }, [])
+
   
 
   return (

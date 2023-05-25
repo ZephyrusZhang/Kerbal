@@ -27,8 +27,8 @@ const Navbar = () => {
   }
 
   const handleMouseLeave = () => {
-    if (parseInt(localStorage.getItem('selectedSidebarLinkIndex') as string) == 2){
-      setVisible(false);
+    if (parseInt(localStorage.getItem('selectedSidebarLinkIndex') as string) == 2) {
+      setVisible(false)
     }
   }
 
