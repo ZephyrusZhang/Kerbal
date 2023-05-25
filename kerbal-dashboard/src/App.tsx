@@ -2,7 +2,7 @@ import * as React from 'react'
 import {
   ChakraProvider, theme
 } from '@chakra-ui/react'
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import AccountLogin from './screens/AccountLogin'
 import Layout from './layouts/Layout'
 import Test from './test/Test'
@@ -25,20 +25,6 @@ export const App = () => {
 
     return () => clearInterval(intervalId)
   })
-
-  useEffect(() => {
-    const pathSegments = (window.location.pathname).split('/').filter(segment => segment !== '')
-    console.log(pathSegments)
-    if (pathSegments[0] === 'domain') {
-      localStorage.setItem('selectedSidebarLinkIndex', '0')
-    } else if (pathSegments[0] === 'account') {
-      localStorage.setItem('selectedSidebarLinkIndex', '1')
-    } else if (pathSegments[0] === 'board') {
-      localStorage.setItem('selectedSidebarLinkIndex', '2')
-    }
-  }, [])
-
-  
 
   return (
     <ChakraProvider theme={theme}>
