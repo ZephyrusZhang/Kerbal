@@ -21,6 +21,7 @@ defmodule KerbalWeb.UserSessionController do
     UserAuth.log_in_user(conn, user.id)
   end
 
+  # is this still in use?
   def delete(conn, _params) do
     # Logged out successfully
     UserAuth.log_out_user(conn)

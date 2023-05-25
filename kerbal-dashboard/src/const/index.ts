@@ -1,6 +1,6 @@
 const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
 const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,16}$/
-
+const snapshotNameRegex = /^[0-9a-z_\-]+$/
 const cpuOptions = [
   {value: 0, text: 'Any'},
   {value: 1, text: '1 vCPU'},
@@ -18,4 +18,4 @@ const memoryOptions = [
   {value: 8 * 1024 * 1024, text: '8 GB'},
 ]
 
-export { emailRegex, passwordRegex, cpuOptions, memoryOptions }
+export { emailRegex, passwordRegex, snapshotNameRegex, cpuOptions, memoryOptions }

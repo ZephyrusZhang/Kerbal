@@ -2,7 +2,7 @@ import * as React from 'react'
 import {
   ChakraProvider, theme
 } from '@chakra-ui/react'
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import AccountLogin from './screens/AccountLogin'
 import Layout from './layouts/Layout'
 import Test from './test/Test'
@@ -25,7 +25,6 @@ export const App = () => {
 
     return () => clearInterval(intervalId)
   })
-  
 
   return (
     <ChakraProvider theme={theme}>

@@ -15,7 +15,7 @@ import { BiAperture, FiLogOut, VscAccount } from 'react-icons/all'
 import { type IconType } from 'react-icons'
 import MotionBox from './containers/MotionBox'
 import { useKerbalUIController } from "../context";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 interface NavbarButtonProp {
   leftIcon: ReactElement<IconType>
@@ -39,10 +39,23 @@ const Sidebar = () => {
 
   useEffect(() => {
     if (localStorage.getItem('selectedSidebarLinkIndex')) {
-      return;
+      return
     }
     localStorage.setItem('selectedSidebarLinkIndex', '0')
   })
+
+  const location = useLocation()
+  useEffect(() => {
+    const pathSegments = (window.location.pathname).split('/').filter(segment => segment !== '')
+    console.log(pathSegments)
+    if (pathSegments[0] === 'domain') {
+      localStorage.setItem('selectedSidebarLinkIndex', '0')
+    } else if (pathSegments[0] === 'account') {
+      localStorage.setItem('selectedSidebarLinkIndex', '1')
+    } else if (pathSegments[0] === 'board') {
+      localStorage.setItem('selectedSidebarLinkIndex', '2')
+    }
+  }, [location.pathname])
 
   const navigate = useNavigate()
 

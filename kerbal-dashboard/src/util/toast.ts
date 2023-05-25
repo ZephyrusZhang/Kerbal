@@ -46,4 +46,4 @@ export const showToast = (msg: string, typ: string) => {
   })
 }
 
-export { ToastContainer, responseToast }
+export { ToastContainer, responseToast, toast }

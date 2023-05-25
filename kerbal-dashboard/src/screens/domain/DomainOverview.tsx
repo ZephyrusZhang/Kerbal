@@ -118,7 +118,13 @@ const DomainOverview = () => {
                     {domains?.map((value, index) => (
                       <Tr key={index}>
                         <Td>
-                          <Link as={ReachLink} to={`/domain/management/${value.domain_uuid}`}>{value.domain_id}</Link>
+                          <Link
+                            as={ReachLink}
+                            color='cyan.700'
+                            to={`/domain/management/${value.domain_uuid}`}
+                          >
+                            {value.domain_id}
+                          </Link>
                         </Td>
                         <Td>{value.image_name}</Td>
                         <Td>{value.port}</Td>
