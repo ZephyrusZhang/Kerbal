@@ -31,4 +31,17 @@ defmodule KerbalWeb.UserSessionControllerTest do
       assert %{"status" => "err", "reason" => "Invalid email or password"} = response
     end
   end
+
+  describe "POST /api/users/renew" do
+    test "renews the user session", %{conn: conn, user: user} do
+      conn =
+        conn
+        |> assign(:current_user, user)
+        |> post("/api/users/renew")
+        |> doc()
+
+      assert %{"status" => "ok", "token" => _token} = json_response(conn, 200)
+    end
+  end
+
 end
