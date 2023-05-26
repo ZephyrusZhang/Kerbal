@@ -4,12 +4,12 @@ import {
   Container,
   Flex,
   Heading,
-  HStack,
+  HStack, Icon,
   IconButton,
   Menu,
   MenuButton,
   MenuItem,
-  MenuList, useColorModeValue
+  MenuList, Text, useColorModeValue
 } from '@chakra-ui/react'
 import { AiOutlineMenu } from 'react-icons/ai'
 import { IoIosSettings } from 'react-icons/io'
@@ -17,6 +17,7 @@ import ToggleColorModeButton from "./ToggleColorModeButton";
 import { useNavigate } from "react-router-dom";
 import { useKerbalUIController } from "../context";
 import { parsePathSegments } from "../util/page";
+import { BiAperture } from "react-icons/all";
 
 const Navbar = () => {
   const navigate = useNavigate()
@@ -57,7 +58,10 @@ const Navbar = () => {
       >
         <Flex align="center" mr={5}>
           <Heading as="h1" size="lg" letterSpacing={'tighter'} onClick={() => navigate('/')}>
-            Kerbal
+            <HStack>
+              <Icon as={BiAperture} mt='1' boxSize={8}/>
+              <Text>Kerbal</Text>
+            </HStack>
           </Heading>
         </Flex>
 
