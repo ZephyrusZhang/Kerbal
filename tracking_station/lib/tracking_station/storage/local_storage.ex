@@ -236,8 +236,25 @@ defmodule TrackingStation.Storage.LocalStorage do
   """
   def make_overlay(zvol, name) do
     {_, 0} = System.cmd("sudo", ~w(zfs snapshot rpool/running/#{zvol}@frozen))
-    {_, 0} = System.cmd("sudo", ~w(zfs clone rpool/running/#{zvol}@frozen rpool/overlay/#{name}))
-    {_, 0} = System.cmd("sudo", ~w(zfs promote rpool/overlay/#{name}))
+
+    case System.cmd("sudo", ~w(zfs clone rpool/running/#{zvol}@frozen rpool/overlay/#{name})) do
+      {"", 1} ->
+        {_, 0} = System.cmd("sudo", ~w(zfs destroy rpool/running/#{zvol}@frozen))
+        raise "failed to clone the dataset to new location"
+
+      {_, 0} ->
+        nil
+    end
+
+    case System.cmd("sudo", ~w(zfs promote rpool/overlay/#{name})) do
+      {"", 1} ->
+        {_, 0} = System.cmd("sudo", ~w(zfs destroy rpool/running/#{zvol}@frozen))
+        {_, 0} = System.cmd("sudo", ~w(zfs destroy rpool/overlay/#{name}))
+        raise "failed to promote dataset"
+
+      {_, 0} ->
+        nil
+    end
 
     register_image(:overlay, name)
     :ok
