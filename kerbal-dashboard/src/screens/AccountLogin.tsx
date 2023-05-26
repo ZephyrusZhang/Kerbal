@@ -5,7 +5,7 @@ import {
   FormControl, FormErrorMessage, FormLabel, IconButton,
   Input,
   InputGroup,
-  InputLeftElement, InputRightElement, Stack, Switch,
+  InputLeftElement, InputRightElement, LightMode, Stack, Switch,
   Text,
   VStack
 } from '@chakra-ui/react'
@@ -60,99 +60,99 @@ const AccountLogin = () => {
   const handleClickShowPassword = () => setShowPassword(!showPassword)
 
   return (
-    <Box
-      w='100vw'
-      h='100vh'
-      backgroundImage={`url(${require('../assets/images/galaxy.jpg')})`}
-      display='flex'
-      justifyContent='center'
-      alignItems='center'
-    >
+    <LightMode>
       <Box
-        px={8}
-        py={8}
-        bg='white'
-        borderRadius={15}
+        w='100vw'
+        h='100vh'
+        backgroundImage={`url(${require('../assets/images/galaxy.jpg')})`}
         display='flex'
         justifyContent='center'
         alignItems='center'
       >
-        <VStack>
-          <Box
-            w='100%'
-            h='15vh'
-            borderRadius={12}
-            bgGradient='linear(to-tr, #3a74e1, #609fea)'
-            display='flex'
-            justifyContent='center'
-            alignItems='center'
-            mt='-70px'
-            mb='20px'
-          >
-            <Stack alignItems='center'>
-              <Text fontSize='2xl' fontWeight='bold' color='white' mb='10px'>Sign In</Text>
-              <Flex justifyContent='space-between' alignItems='center'>
-                <IconButton aria-label='github' colorScheme='transparent' icon={<ImGithub/>}/>
-                <IconButton aria-label='google' colorScheme='transparent' icon={<ImGoogle/>}/>
-              </Flex>
-            </Stack>
-          </Box>
+        <Box
+          px={8}
+          py={8}
+          bg='white'
+          borderRadius={15}
+          display='flex'
+          justifyContent='center'
+          alignItems='center'
+        >
+          <VStack>
+            <Box
+              w='100%'
+              h='15vh'
+              borderRadius={12}
+              bgGradient='linear(to-tr, #3a74e1, #609fea)'
+              display='flex'
+              justifyContent='center'
+              alignItems='center'
+              mt='-70px'
+              mb='20px'
+            >
+              <Stack alignItems='center'>
+                <Text fontSize='2xl' fontWeight='bold' color='white' mb='10px'>Sign In</Text>
+                <Flex justifyContent='space-between' alignItems='center'>
+                  <IconButton aria-label='github' colorScheme='transparent' icon={<ImGithub/>}/>
+                  <IconButton aria-label='google' colorScheme='transparent' icon={<ImGoogle/>}/>
+                </Flex>
+              </Stack>
+            </Box>
 
-          <Formik initialValues={formInitialValue} onSubmit={handleSubmit} validate={validate}>
-            {({
-                errors,
-                touched,
-                handleSubmit,
-                handleChange,
-                isSubmitting
-              }) => (
-              <Form onSubmit={handleSubmit}>
-                <VStack spacing={7}>
-                  <FormControl isInvalid={!!(errors.email && touched.email)}>
-                    <InputGroup>
-                      <InputLeftElement><HiOutlineMail/></InputLeftElement>
-                      <Input
-                        name='email'
-                        type='email'
-                        w='22vw'
-                        onChange={handleChange}
-                        borderWidth={2}
-                        placeholder='Email'
-                      />
-                    </InputGroup>
-                    <FormErrorMessage>{errors.email}</FormErrorMessage>
-                  </FormControl>
-                  <FormControl isInvalid={!!(errors.password && touched.password)}>
-                    <InputGroup>
-                      <InputLeftElement><FiLock/></InputLeftElement>
-                      <Input
-                        name='password'
-                        type={showPassword ? 'text' : 'password'}
-                        onChange={handleChange} w='22vw'
-                        borderWidth={2}
-                        placeholder='Password'
-                      />
-                      <InputRightElement>
-                        <Button onClick={handleClickShowPassword}>{showPassword ? 'Hide' : 'Show'}</Button>
-                      </InputRightElement>
-                    </InputGroup>
-                    <FormErrorMessage>{errors.password}</FormErrorMessage>
-                  </FormControl>
-                  <Flex alignItems='center'>
-                    <Switch name='rememberMe' onChange={handleChange}/>
-                    <FormLabel color='gray' ml='20px' mb='1'>Remember me</FormLabel>
-                  </Flex>
+            <Formik initialValues={formInitialValue} onSubmit={handleSubmit} validate={validate}>
+              {({
+                  errors,
+                  touched,
+                  handleSubmit,
+                  handleChange,
+                  isSubmitting
+                }) => (
+                <Form onSubmit={handleSubmit}>
+                  <VStack spacing={7}>
+                    <FormControl isInvalid={!!(errors.email && touched.email)}>
+                      <InputGroup>
+                        <InputLeftElement><HiOutlineMail/></InputLeftElement>
+                        <Input
+                          name='email'
+                          type='email'
+                          w='22vw'
+                          onChange={handleChange}
+                          borderWidth={2}
+                          placeholder='Email'
+                        />
+                      </InputGroup>
+                      <FormErrorMessage>{errors.email}</FormErrorMessage>
+                    </FormControl>
+                    <FormControl isInvalid={!!(errors.password && touched.password)}>
+                      <InputGroup>
+                        <InputLeftElement><FiLock/></InputLeftElement>
+                        <Input
+                          name='password'
+                          type={showPassword ? 'text' : 'password'}
+                          onChange={handleChange} w='22vw'
+                          borderWidth={2}
+                          placeholder='Password'
+                        />
+                        <InputRightElement>
+                          <Button onClick={handleClickShowPassword}>{showPassword ? 'Hide' : 'Show'}</Button>
+                        </InputRightElement>
+                      </InputGroup>
+                      <FormErrorMessage>{errors.password}</FormErrorMessage>
+                    </FormControl>
+                    <Flex alignItems='center'>
+                      <Switch name='rememberMe' onChange={handleChange}/>
+                      <FormLabel color='gray' ml='20px' mb='1'>Remember me</FormLabel>
+                    </Flex>
 
-                  <Button type='submit' w='100%' colorScheme='blue' isLoading={isSubmitting}>LOGIN</Button>
-                </VStack>
-              </Form>
-            )}
-          </Formik>
-
-          <Button w='100%' colorScheme='blue' onClick={() => navigate('/account/creation')}>Register</Button>
-        </VStack>
+                    <Button type='submit' w='100%' colorScheme='blue' isLoading={isSubmitting}>LOGIN</Button>
+                  </VStack>
+                </Form>
+              )}
+            </Formik>
+          </VStack>
+        </Box>
       </Box>
-    </Box>
+    </LightMode>
   )
 }
 
