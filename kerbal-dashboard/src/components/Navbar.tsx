@@ -16,6 +16,7 @@ import { IoIosSettings } from 'react-icons/io'
 import ToggleColorModeButton from "./ToggleColorModeButton";
 import { useNavigate } from "react-router-dom";
 import { useKerbalUIController } from "../context";
+import { parsePathSegments } from "../util/page";
 
 const Navbar = () => {
   const navigate = useNavigate()
@@ -27,7 +28,8 @@ const Navbar = () => {
   }
 
   const handleMouseLeave = () => {
-    if (parseInt(localStorage.getItem('selectedSidebarLinkIndex') as string) == 2) {
+    if (parsePathSegments(window.location.pathname)[0] == 'board' ||
+        parsePathSegments(window.location.pathname)[0] == 'remote') {
       setVisible(false)
     }
   }
