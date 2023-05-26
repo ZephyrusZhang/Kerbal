@@ -17,7 +17,7 @@ import ToggleColorModeButton from "./ToggleColorModeButton";
 import { useNavigate } from "react-router-dom";
 import { useKerbalUIController } from "../context";
 import { parsePathSegments } from "../util/page";
-import { BiAperture } from "react-icons/all";
+import { BiAperture } from "react-icons/bi";
 
 const Navbar = () => {
   const navigate = useNavigate()

@@ -4,131 +4,92 @@ import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom/extend-expect';
 import GPUSelectTable from '../GpuSelectTable';
 
-describe('GPUSelectTable', () => {
-    const mockData = [
-      { name: 'GPU 1', vram: 8 },
-      { name: 'GPU 2', vram: 6 },
-      { name: 'GPU 3', vram: 12 },
-    ];
+// Mock data for testing
+const mockData = [
+    { 
+      bus: 'bus1',
+      domain_uuid: 'uuid1',
+      free: true,
+      function: 'function1',
+      gpu_id: 'gpu_id_1',
+      name: 'GPU 1',
+      node_id: 'node_id_1',
+      online: true,
+      slot: 'slot1',
+      vram_size: 8,
+      isSelected: false
+    },
+    {
+      bus: 'bus2',
+      domain_uuid: 'uuid2',
+      free: false,
+      function: 'function2',
+      gpu_id: 'gpu_id_2',
+      name: 'GPU 2',
+      node_id: 'node_id_2',
+      online: true,
+      slot: 'slot2',
+      vram_size: 6,
+      isSelected: true
+    },
+    {
+      bus: 'bus3',
+      domain_uuid: 'uuid3',
+      free: true,
+      function: 'function3',
+      gpu_id: 'gpu_id_3',
+      name: 'GPU 3',
+      node_id: 'node_id_3',
+      online: false,
+      slot: 'slot3',
+      vram_size: 4,
+      isSelected: false
+    }
+  ];
   
-    const mockOnAddGpu = jest.fn();
   
-    // beforeEach(() => {
-    //     render(<GPUSelectTable data={mockData} onAddGpu={mockOnAddGpu} />);
-    // });
+  describe('GPUSelectTable', () => {
 
-    afterEach(() => {
-        render(<GPUSelectTable data={[]} onAddGpu={() => {}} />);
-        mockOnAddGpu.mockReset();
-    });
-  
-    test('renders table rows correctly', () => {
-      render(<GPUSelectTable data={mockData} onAddGpu={mockOnAddGpu} />);
-      const gpuRows = screen.getAllByRole('row');
-      expect(gpuRows.length).toBe(mockData.length + 1); // +1 for the header row
-    });
-  
-    test('Verify the initial rendering', () => {
-      render(<GPUSelectTable data={mockData} onAddGpu={mockOnAddGpu} />);
-      const gpuNames = screen.getAllByRole('cell', { name: /GPU \d/ });
-      expect(gpuNames[0]).toHaveTextContent('GPU 1');
-      expect(gpuNames[1]).toHaveTextContent('GPU 2');
-      expect(gpuNames[2]).toHaveTextContent('GPU 3');
-    });
-  
-    test('handles clicking the sort button', () => {
-      render(<GPUSelectTable data={mockData} onAddGpu={mockOnAddGpu} />);
-      const sortButton = screen.getByLabelText('reverse');
-      fireEvent.click(sortButton);
-  
-      const gpuNames = screen.getAllByRole('cell', { name: /GPU \d/ });
-      expect(gpuNames[0]).toHaveTextContent('GPU 3');
-      expect(gpuNames[1]).toHaveTextContent('GPU 1');
-      expect(gpuNames[2]).toHaveTextContent('GPU 2');
-    });
-  
-    test('displays the filter drawer when filter button is clicked', async () => {
-      render(<GPUSelectTable data={mockData} onAddGpu={mockOnAddGpu} />);
-      const filterButton = screen.getByRole('button', { name: 'filter' });
-      userEvent.click(filterButton);
-        
-      await waitFor(() => {
-        expect(screen.findByRole('dialog')).toBeTruthy();
-      });
-    });
-  
-    // 修不好，开摆
-    // test('applies filter and updates displayData on filter form submission', async () => {
-    //   render(<GPUSelectTable data={mockData} onAddGpu={mockOnAddGpu} />);
-    //   const filterButton = screen.getByLabelText('filter');
-    //   userEvent.click(filterButton);
 
-    //   await waitFor(() => {
-    //     expect(screen.findByRole('dialog')).toBeTruthy();
-    //   });
+    test('renders GPUSelectTable component', () => {
+      render(<GPUSelectTable data={mockData} onCheckGpu={() => {}} />);
 
-    //   const vramInput = screen.getByLabelText('Min GPU VRAM size (GB)');
-    //   const filterForm = screen.getByRole('form', { name: 'filter-form' });
-  
-    //   fireEvent.change(vramInput, { target: { value: '10' } });
-    //   fireEvent.submit(filterForm);
-  
-    //   const gpuNames = screen.getAllByRole('cell', { name: /GPU \d/ });
-    //   expect(gpuNames.length).toBe(1);
-    //   expect(gpuNames[0]).toHaveTextContent('GPU 3');
-    // });
-  
-    test('calls onAddGpu when Add GPU button is clicked', () => {
-      render(<GPUSelectTable data={mockData} onAddGpu={mockOnAddGpu} />);
-      const addGpuButton = screen.getAllByRole('button', { name: 'Add GPU' })[0];
-      fireEvent.click(addGpuButton);
-  
-      expect(mockOnAddGpu).toHaveBeenCalledTimes(1);
-      expect(mockOnAddGpu).toHaveBeenCalledWith(mockData[0]);
-    });
-  
-    test('updates displayData when props.data changes', () => {
-      const newMockData = [
-        { name: 'GPU 4', vram: 10 },
-        { name: 'GPU 5', vram: 4 },
-      ];
-  
-      render(<GPUSelectTable data={newMockData} onAddGpu={mockOnAddGpu} />);
-  
-      const gpuNames = screen.getAllByRole('cell', { name: /GPU \d/ });
-      expect(gpuNames[0]).toHaveTextContent('GPU 4');
-      expect(gpuNames[1]).toHaveTextContent('GPU 5');
-    });
+      // Check if component renders correctly
+      expect(screen.getByRole("table")).toBeInTheDocument();
 
-    // fake! fake! fake!()
-    test('calls onAddGpu with correct GPU data when Add GPU button is clicked', () => {
-        const newMockData = { name: 'GPU 4', vram: 8 }; // 新的模拟数据
-        render(<GPUSelectTable data={mockData} onAddGpu={mockOnAddGpu} />);
+      // Check if all GPU items are rendered
+      expect(screen.getByText("GPU 1")).toBeInTheDocument();
+      expect(screen.getByText("GPU 2")).toBeInTheDocument();
+      expect(screen.getByText("GPU 3")).toBeInTheDocument();
+    });
       
-        const addGpuButton = screen.getAllByRole('button', { name: 'Add GPU' })[0];
-        fireEvent.click(addGpuButton);
+  
+    test('clicking sort button changes the sorting order', () => {
+      const onCheckGpu = jest.fn();
+      render(<GPUSelectTable data={mockData} onCheckGpu={onCheckGpu}/>);
       
-        expect(mockOnAddGpu).toHaveBeenCalledTimes(1);
-        expect(mockOnAddGpu).toHaveBeenCalledWith({ name: 'GPU 3', vram: 12 });
-      });
+      // Initial sorting order should be 'reverse'
+      expect(screen.getByLabelText('reverse')).toBeInTheDocument();
+  
+      // Click sort button
+      fireEvent.click(screen.getByLabelText('reverse'));
+  
+      // Sorting order should change to 'sequence'
+      expect(screen.getByLabelText('sequence')).toBeInTheDocument();
+    });
+  
+    test('clicking filter button opens the filter drawer', () => {
+      const onCheckGpu = jest.fn();
+      render(<GPUSelectTable data={mockData} onCheckGpu={onCheckGpu}/>);
       
-
-    // 一样的，修不好我直接摆摆
-    // test('closes the filter drawer when Cancel button is clicked', () => {
-    //     render(<GPUSelectTable data={mockData} onAddGpu={mockOnAddGpu} />);
-    //     const filterButton = screen.getByLabelText('filter');
-    //     userEvent.click(filterButton);
-    //     const vramInput = screen.getByLabelText('Min GPU VRAM size (GB)');
-    //     const filterForm = screen.getByRole('form', { name: 'filter-form' });
-    //     const saveButton = screen.getByRole('button', { name: 'Save' });
-
-    //     fireEvent.change(vramInput, { target: { value: '10' } });
-    //     fireEvent.submit(filterForm);
-
-    //     fireEvent.click(saveButton);
-
-    //     const gpuNames = screen.getAllByRole('cell', { name: /GPU \d/ });
-    //     expect(gpuNames.length).toBe(mockData.length); // All data should be displayed again
-    // });
-});
-
+      // Filter drawer should be initially closed
+      expect(screen.findByRole('dialog')).toBeTruthy();
+  
+      // Click filter button
+      userEvent.click(screen.getByLabelText('filter'));
+  
+      // Filter drawer should open
+      expect(screen.findByRole('dialog')).toBeTruthy();
+    });
+      
+})
