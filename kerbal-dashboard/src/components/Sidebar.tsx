@@ -16,6 +16,7 @@ import { type IconType } from 'react-icons'
 import MotionBox from './containers/MotionBox'
 import { useKerbalUIController } from "../context";
 import { useLocation, useNavigate } from "react-router-dom";
+import { parsePathSegments } from "../util/page";
 
 interface NavbarButtonProp {
   leftIcon: ReactElement<IconType>
@@ -46,8 +47,7 @@ const Sidebar = () => {
 
   const location = useLocation()
   useEffect(() => {
-    const pathSegments = (window.location.pathname).split('/').filter(segment => segment !== '')
-    console.log(pathSegments)
+    const pathSegments = parsePathSegments(location.pathname)
     if (pathSegments[0] === 'domain') {
       localStorage.setItem('selectedSidebarLinkIndex', '0')
     } else if (pathSegments[0] === 'account') {

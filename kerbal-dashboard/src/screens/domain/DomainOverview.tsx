@@ -32,12 +32,16 @@ const DomainOverview = () => {
   const cancelRef = useRef<HTMLButtonElement>(null)
   const navigate = useNavigate()
 
-  useEffect(() => {
+  const fetchData = () => {
     request.get('/api/cluster/user/domains').then(response => {
       console.log(response)
       setDomains(response.data.result.map((item: RowProps) => ({...item, showPassword: false})))
       setIsLoading(false)
     })
+  }
+
+  useEffect(() => {
+    fetchData()
   }, [])
 
   const toggleShowPassword = (uuid: string) => {
@@ -91,7 +95,13 @@ const DomainOverview = () => {
       <Flex>
         <Button colorScheme='messenger' mb='20px' onClick={() => navigate('/domain/create')}>Create</Button>
         <Spacer/>
-        <IconButton colorScheme='gray' variant='ghost' aria-label='refresh' icon={<FiRefreshCw/>}/>
+        <IconButton
+          colorScheme='gray'
+          variant='ghost'
+          aria-label='refresh'
+          icon={<FiRefreshCw/>}
+          onClick={fetchData}
+        />
       </Flex>
       <Skeleton isLoaded={!isLoading}>
         <KerbalBox p='50px'>

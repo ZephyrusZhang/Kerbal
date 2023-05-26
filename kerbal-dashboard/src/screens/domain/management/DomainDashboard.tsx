@@ -34,19 +34,20 @@ import {
   AiOutlinePauseCircle,
   BsPlay, FaMemory,
   RiCpuLine, RiScreenshot2Fill, TiClipboard,
-  VscDebugRestart
+  VscDebugRestart, VscVm
 } from "react-icons/all";
 import request from "../../../util/request";
 import { DomainProps } from "../../../types";
 import { responseToast, toast } from "../../../util/toast";
 import { snapshotNameRegex } from "../../../const";
+import { useNavigate } from "react-router-dom";
 
 interface Props {
   uuid: string
 }
 
 const DomainDashboard = ({uuid}: Props) => {
-  const [domainProperties, setDomainProperties] = useState<DomainProps>({
+  const [domain, setDomain] = useState<DomainProps>({
     domain_id: 0,
     domain_uuid: '',
     port: 0,
@@ -63,12 +64,13 @@ const DomainDashboard = ({uuid}: Props) => {
   const [isLoading, setIsLoading] = useState(true)
   const {isOpen: isModalOpen, onOpen: onOpenModal, onClose: onCloseModal} = useDisclosure()
   const [snapshotName, setSnapshotName] = useState('')
+  const navigate = useNavigate()
 
   useEffect(() => {
     request.get(
       `/api/cluster/domain/${uuid}`
     ).then((response) => {
-      setDomainProperties(response.data.result)
+      setDomain(response.data.result)
       setIsLoading(false)
     })
   }, [uuid])
@@ -118,7 +120,7 @@ const DomainDashboard = ({uuid}: Props) => {
     <Skeleton isLoaded={!isLoading}>
       <HStack spacing={5} align='flex-start'>
         <KerbalBox as={VStack} minW='25vw' maxW='30vw' p='10px'>
-          <DomainStatusHead w='80%' name={uuid} status={domainProperties.status}/>
+          <DomainStatusHead w='80%' name={uuid} status={domain.status}/>
           <Card w='90%' bgColor='transparent'>
             <CardBody>
               <Stack divider={<StackDivider/>} spacing='4'>
@@ -136,7 +138,7 @@ const DomainDashboard = ({uuid}: Props) => {
                   </Heading>
                   <HStack mt='5'>
                     <Text fontSize='sm'>
-                      spice://10.16.97.70:{domainProperties?.port}
+                      spice://10.16.97.70:{domain?.port}
                     </Text>
                     <Spacer/>
                     <IconButton
@@ -144,7 +146,7 @@ const DomainDashboard = ({uuid}: Props) => {
                       size='2xs'
                       variant='ghost'
                       icon={<TiClipboard/>}
-                      onClick={() => handleCopySpiceAddress(`spice://10.16.97.70:${domainProperties?.port}`)}
+                      onClick={() => handleCopySpiceAddress(`spice://10.16.97.70:${domain?.port}`)}
                     />
                   </HStack>
                 </Box>
@@ -154,7 +156,7 @@ const DomainDashboard = ({uuid}: Props) => {
                   </Heading>
                   <HStack mt='5'>
                     <Text>
-                      {showPassword ? domainProperties.password : '*'.repeat(domainProperties.password!.length)}
+                      {showPassword ? domain.password : '*'.repeat(domain.password!.length)}
                     </Text>
                     <Spacer/>
                     <IconButton
@@ -171,7 +173,7 @@ const DomainDashboard = ({uuid}: Props) => {
                     Image
                   </Heading>
                   <Text pt='2' fontSize='sm'>
-                    {domainProperties.image_name}
+                    {domain.image_name}
                   </Text>
                 </Box>
               </Stack>
@@ -223,6 +225,19 @@ const DomainDashboard = ({uuid}: Props) => {
                     onClick={onOpenModal}
                   >
                     Take Snapshot
+                  </Button>
+                </Box>
+                <Box>
+                  <Heading size='xs' textTransform='uppercase'>
+                    Remote
+                  </Heading>
+                  <Button
+                    mt='3'
+                    leftIcon={<VscVm/>}
+                    colorScheme='telegram'
+                    onClick={() => navigate(`/remote?host=localhost&port=${domain.port}&pwd=${domain.password}`)}
+                  >
+                    Connect to GUI
                   </Button>
                 </Box>
               </Stack>
