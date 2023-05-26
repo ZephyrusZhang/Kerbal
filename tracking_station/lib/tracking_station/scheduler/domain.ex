@@ -17,6 +17,8 @@ defmodule TrackingStation.Scheduler.Domain do
   alias TrackingStation.Scheduler.LibvirtConfig
   alias TrackingStation.Scheduler.TaskSupervisor
 
+  @poll_interval 30_000
+
   ### ----- client api -----
   def start_link({spec, user_id, domain_uuid}) do
     case GenServer.start_link(__MODULE__, {spec, user_id, domain_uuid}) do
@@ -79,8 +81,21 @@ defmodule TrackingStation.Scheduler.Domain do
 
   def get_info(domain_uuid, user_id) do
     case find_pid(domain_uuid, user_id) do
-      {:ok, pid} ->
-        {:ok, GenServer.call(pid, :info)}
+      {:ok, _pid} ->
+        [{_, res}] = :ets.lookup(:domain_res, domain_uuid)
+
+        res =
+          if res.status == :running do
+            Map.merge(res, %{
+              interfaces: get_ip(res.domain_id),
+              ram_stat: get_ram_stat(res.domain_id),
+              gpu_stat: get_gpu_stat(res.domain_id)
+            })
+          else
+            res
+          end
+
+        {:ok, res}
 
       {:error, reason} ->
         {:error, reason}
@@ -104,17 +119,20 @@ defmodule TrackingStation.Scheduler.Domain do
     case :ets.lookup(:domain_res, domain_uuid) do
       [] ->
         {dataset, name} = LocalStorage.path_from_guid(image_id)
-        {port, current_gpus_info} = check_and_allocate(spec, user_id, domain_uuid)
 
-        Task.Supervisor.async_nolink(
-          TrackingStation.Storage.LocalTaskSupervisor,
-          LocalStorage,
-          :prepare_image,
-          [
-            dataset,
-            name
-          ]
-        )
+        {port, current_node_info, current_gpus_info} =
+          check_and_allocate(spec, user_id, domain_uuid)
+
+        transfer_task =
+          Task.Supervisor.async_nolink(
+            TrackingStation.Storage.LocalTaskSupervisor,
+            LocalStorage,
+            :prepare_image,
+            [
+              dataset,
+              name
+            ]
+          )
 
         true =
           :ets.insert_new(
@@ -128,7 +146,9 @@ defmodule TrackingStation.Scheduler.Domain do
                status: :creating,
                password: "",
                spec: Map.replace!(spec, :gpus, current_gpus_info),
-               port: port
+               port: port,
+               host_ipv4_addr: node_info(current_node_info, :ipv4_addr),
+               host_ipv6_addr: node_info(current_node_info, :ipv6_addr)
              }}
           )
 
@@ -136,7 +156,8 @@ defmodule TrackingStation.Scheduler.Domain do
          %{
            domain_uuid: domain_uuid,
            domain_id: nil,
-           status: :creating
+           status: :creating,
+           transfer_task_ref: transfer_task.ref
          }}
 
       [{_, res}] ->
@@ -145,23 +166,34 @@ defmodule TrackingStation.Scheduler.Domain do
         if res.status == :creating do
           {dataset, name} = LocalStorage.path_from_guid(image_id)
 
-          Task.Supervisor.async_nolink(
-            TrackingStation.Storage.LocalTaskSupervisor,
-            LocalStorage,
-            :prepare_image,
-            [
-              dataset,
-              name
-            ]
-          )
-        end
+          transfer_task =
+            Task.Supervisor.async_nolink(
+              TrackingStation.Storage.LocalTaskSupervisor,
+              LocalStorage,
+              :prepare_image,
+              [
+                dataset,
+                name
+              ]
+            )
 
-        {:ok,
-         %{
-           domain_uuid: domain_uuid,
-           domain_id: res.domain_id,
-           status: res.status
-         }}
+          Process.send_after(self(), :poll, 30_000)
+
+          {:ok,
+           %{
+             domain_uuid: domain_uuid,
+             domain_id: res.domain_id,
+             status: res.status,
+             transfer_task_ref: transfer_task.ref
+           }}
+        else
+          {:ok,
+           %{
+             domain_uuid: domain_uuid,
+             domain_id: res.domain_id,
+             status: res.status
+           }}
+        end
     end
   end
 
@@ -219,11 +251,11 @@ defmodule TrackingStation.Scheduler.Domain do
           )
         )
 
-        current_gpus_info
+        {current_node_info, current_gpus_info}
       end)
 
     case allocate_operation do
-      {:atomic, current_gpus_info} ->
+      {:atomic, {current_node_info, current_gpus_info}} ->
         current_gpus_info =
           current_gpus_info
           |> Enum.map(
@@ -232,7 +264,7 @@ defmodule TrackingStation.Scheduler.Domain do
               |> Map.take([:gpu_id, :name, :vram_size, :bus, :slot, :function]))
           )
 
-        {port, current_gpus_info}
+        {port, current_node_info, current_gpus_info}
 
       error ->
         # remember to free the spice port we just allocated
@@ -354,64 +386,31 @@ defmodule TrackingStation.Scheduler.Domain do
 
   def get_gpu_stat(domain_id) do
     execute_command(domain_id, "nvidia-smi", [
-      "--query-gpu=index,name,driver_version,temperature.gpu,utilization.gpu,utilization.memory",
-      "--format=csv"
+      "--query-gpu=index,name,driver_version,temperature.gpu,utilization.gpu,memory.total,memory.used",
+      "--format=csv,nounits"
     ])
     |> Task.await()
     |> String.trim()
     |> CSV.parse_string()
-    |> Enum.map(fn [index, name, driver_version, temperature, gpu_usage, mem_usage] ->
+    # nvidia-smi uses a non-standard csv that has a space character after each comma
+    |> Enum.map(fn line ->
+      Enum.map(line, &String.trim/1)
+    end)
+    |> Enum.map(fn [index, name, driver_version, temperature, gpu_usage, vram_size, used_vram] ->
       %{
         index: index,
         name: name,
         driver_version: driver_version,
-        temperature: String.to_float(temperature),
-        gpu_usage: String.to_float(gpu_usage),
-        mem_usage: String.to_float(mem_usage)
+        temperature: String.to_integer(temperature),
+        # gpu_usage and mem usage are "num %"
+        gpu_usage: String.to_integer(gpu_usage) / 100.0,
+        vram_size: vram_size |> String.to_integer(),
+        vram_used: used_vram |> String.to_integer()
       }
     end)
   end
 
-  defp poll_domain_info(%{domain_id: domain_id, status: :creating} = state) do
-    case Libvirt.poll_domain_stats(domain_id) do
-      {:ok, stats} ->
-        IO.inspect(stats)
-        Process.send_after(self(), :poll, :timer.seconds(10))
-        {:noreply, Map.replace!(state, :status, :running)}
-
-      {:error, :no_domain} ->
-        # the domain is down, reclaim it's resources
-        IO.puts("The vm has been shutdown")
-        {:stop, :normal, state}
-
-      {:error, reason} ->
-        # abnormal exit
-        IO.inspect(reason)
-        {:stop, :normal, state}
-    end
-  end
-
-  defp poll_domain_info(%{domain_id: domain_id, status: :running} = state) do
-    case Libvirt.poll_domain_stats(domain_id) do
-      {:ok, stats} ->
-        IO.inspect(stats)
-        Process.send_after(self(), :poll, :timer.minutes(3))
-        {:noreply, state}
-
-      {:error, :no_domain} ->
-        # the domain is down, reclaim it's resources
-        IO.puts("The vm has been shutdown")
-        {:stop, :normal, state}
-
-      {:error, reason} ->
-        # abnormal exit
-        IO.inspect(reason)
-        {:stop, :normal, state}
-    end
-  end
-
   ### ----- handle_call -----
-
   @impl true
   def handle_call({:power_control, operation}, _from, %{domain_id: domain_id} = state) do
     apply(Libvirt, operation, domain_id)
@@ -441,7 +440,11 @@ defmodule TrackingStation.Scheduler.Domain do
   ### ----- handle_info -----
 
   @impl true
-  def handle_info({ref, :ok}, %{domain_uuid: domain_uuid} = state) do
+  def handle_info(
+        {ref, :ok},
+        %{domain_uuid: domain_uuid, transfer_task_ref: transfer_task_ref} = state
+      )
+      when transfer_task_ref == ref do
     # ignore DOWN message
     Process.demonitor(ref, [:flush])
     [{_, res}] = :ets.lookup(:domain_res, domain_uuid)
@@ -491,7 +494,9 @@ defmodule TrackingStation.Scheduler.Domain do
            }}
         )
 
-        {:noreply, %{state | status: :booting}}
+        Process.send_after(self(), :poll, 30_000)
+
+        {:noreply, %{state | status: :booting, domain_id: domain_id}}
 
       {:error, reason} ->
         # handle side-effects
@@ -502,15 +507,100 @@ defmodule TrackingStation.Scheduler.Domain do
   end
 
   @impl true
-  def handle_info(:poll, state) do
-    poll_domain_info(state)
+  def handle_info(:poll, %{domain_id: domain_id, status: :booting} = state) do
+    if Map.has_key?(state, :poll_task) do
+      Logger.warning("poll task timeout")
+      Task.shutdown(state.poll_task, :brutal_kill)
+    end
+
+    poll_task =
+      Task.Supervisor.async_nolink(TaskSupervisor, __MODULE__, :get_ram_stat, [domain_id])
+
+    Process.send_after(self(), :poll, @poll_interval)
+    {:noreply, Map.put(state, :poll_task, poll_task)}
   end
 
-  # The task failed
+  def handle_info(:poll, %{domain_id: domain_id, status: :running} = state) do
+    if Map.has_key?(state, :poll_task) do
+      Logger.warning("poll task timeout")
+      Task.shutdown(state.poll_task, :brutal_kill)
+    end
+
+    poll_task =
+      Task.Supervisor.async_nolink(TaskSupervisor, fn ->
+        %{
+          interfaces: get_ip(domain_id),
+          ram_stat: get_ram_stat(domain_id),
+          gpu_stat: get_gpu_stat(domain_id)
+        }
+      end)
+
+    Process.send_after(self(), :poll, @poll_interval)
+    {:noreply, Map.put(state, :poll_task, poll_task)}
+  end
+
+  # The transfer task failed
   @impl true
-  def handle_info({:DOWN, _ref, :process, _pid, reason}, state) do
+  def handle_info(
+        {:DOWN, ref, :process, _pid, reason},
+        %{transfer_task_ref: transfer_task_ref} = state
+      )
+      when ref == transfer_task_ref do
     Logger.warning("failed to transfer image: #{inspect(reason)}")
     # Log and possibly restart the task...
     {:stop, :no_image, state}
+  end
+
+  # The poll complete
+  @impl true
+  def handle_info(
+        {ref, _result},
+        %{domain_uuid: domain_uuid, status: :booting, poll_task: poll_task} = state
+      )
+      when ref == poll_task.ref do
+    Process.demonitor(ref, [:flush])
+    [{_, res}] = :ets.lookup(:domain_res, domain_uuid)
+    :ets.insert(:domain_res, {domain_uuid, %{res | status: :running}})
+
+    state = state |> Map.delete(:poll_task) |> Map.put(:status, :running)
+    {:noreply, state}
+  end
+
+  # The poll complete
+  @impl true
+  def handle_info(
+        {ref, result},
+        %{status: :running, poll_task: poll_task} = state
+      )
+      when ref == poll_task.ref do
+    Process.demonitor(ref, [:flush])
+    # do nothing for now
+    # TODO notify user when gpu_usage is low
+    Logger.info("poll result #{inspect(result)}")
+    state = state |> Map.delete(:poll_task)
+    {:noreply, state}
+  end
+
+  # The poll failed
+  @impl true
+  def handle_info(
+        {:DOWN, ref, :process, _pid, _reason},
+        %{status: :booting, poll_task: poll_task} = state
+      )
+      when ref == poll_task.ref do
+    # do nothing, this vm is still booting
+    {:noreply, Map.delete(state, :poll_task)}
+  end
+
+  # The poll failed
+  @impl true
+  def handle_info(
+        {:DOWN, ref, :process, _pid, _reason},
+        %{status: :running, poll_task: poll_task} = state
+      )
+      when ref == poll_task.ref do
+    Logger.warning("failed to poll a vm that is running")
+    # do nothing for now
+    {:noreply, Map.delete(state, :poll_task)}
   end
 end
