@@ -1,6 +1,9 @@
+## Setup
 
-This project was bootstrapped with
-[Create React App](https://github.com/facebook/create-react-app).
+- `npm install` to install all dependencies
+- Setup [`websockify`](https://github.com/novnc/websockify), which is required to support web spice gui client.
+
+
 
 ## Available Scripts
 

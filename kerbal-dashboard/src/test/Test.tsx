@@ -4,7 +4,7 @@ import request from "../util/request";
 
 const Test = () => {
   const handleClick = () => {
-    request.get('/api/cluster')
+    request.get('/api/cluster/user/domains')
       .then(response => {
         console.log(response)
       })

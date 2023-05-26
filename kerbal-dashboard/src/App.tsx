@@ -2,7 +2,7 @@ import * as React from 'react'
 import {
   ChakraProvider, theme
 } from '@chakra-ui/react'
-import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import AccountLogin from './screens/AccountLogin'
 import Layout from './layouts/Layout'
 import Test from './test/Test'
@@ -14,6 +14,7 @@ import DomainManagement from "./screens/domain/management";
 import { useEffect } from "react";
 import { isToRenew, renew } from "./util/jwt";
 import Visualization from "./screens/data-visualization/Visualization";
+import WebSpiceClient from "./screens/domain/WebSpiceClient";
 
 export const App = () => {
   useEffect(() => {
@@ -38,6 +39,7 @@ export const App = () => {
             <Route path='/domain/create' element={<DomainCreation/>}/>
             <Route path='/account' element={<AccountSetting/>}/>
             <Route path='/board' element={<Visualization/>}/>
+            <Route path='/remote' element={<WebSpiceClient/>}/>
             <Route path='/' element={<Navigate to='domain' replace/>}/>
           </Route>
         </Route>
