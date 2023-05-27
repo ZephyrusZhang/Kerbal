@@ -76,6 +76,12 @@ const mockData = [
   
       // Sorting order should change to 'sequence'
       expect(screen.getByLabelText('sequence')).toBeInTheDocument();
+
+      // Click sort button again
+      fireEvent.click(screen.getByLabelText('sequence'));
+
+      // Sorting order should change back to 'reverse'
+      expect(screen.getByLabelText('reverse')).toBeInTheDocument();
     });
   
     test('clicking filter button opens the filter drawer', () => {
@@ -90,6 +96,38 @@ const mockData = [
   
       // Filter drawer should open
       expect(screen.findByRole('dialog')).toBeTruthy();
+    });
+
+    test('applying filters updates the displayed data', async () => {
+      jest.spyOn(console, 'warn').mockImplementation((message) => {
+        if (!message.includes('nwsapi')) {
+          console.warn(message);
+        }
+      });
+      
+      const onCheckGpu = jest.fn();
+      render(<GPUSelectTable data={mockData} onCheckGpu={onCheckGpu}/>);
+    
+      // Click filter button to open the filter drawer
+      userEvent.click(screen.getByLabelText('filter'));
+      // Set filter values
+      userEvent.type(screen.getByText(/VRAM\(GB\)/), '6');
+      userEvent.click(screen.getByText(/GPU 2/));
+    
+      // Submit the filter form
+      // userEvent.click(screen.getByRole('button', { name: /Save/i }));;
+    
+      // Wait for the data to be updated
+      
+      await waitFor(() => {
+        expect(screen.queryByText('GPU 1')).not.toBeInTheDocument(); // Should not be present
+        expect(screen.queryByText('GPU 2')).not.toBeInTheDocument();
+        expect(screen.queryByText('GPU 3')).not.toBeInTheDocument(); // Should not be present
+        expect(screen.findByRole('dialog')).toBeTruthy();
+      });
+    
+      // Close the filter drawer
+      // userEvent.click(screen.getByText(/Close/));
     });
       
 })
