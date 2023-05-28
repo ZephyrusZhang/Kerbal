@@ -13,17 +13,8 @@ defmodule KerbalWeb.DomainController do
     String.to_integer(x)
   end
 
-  def list(conn, _params) do
-    user_id = conn.assigns.current_user.id
-
-    domains = Scheduler.list_user_domains(user_id)
-    json(conn, %{status: :ok, result: domains})
-  end
-
-  def query(conn, %{"domain_uuid" => domain_uuid}) do
-    user_id = conn.assigns.current_user.id
-
-    case Domain.get_info(domain_uuid, user_id) do
+  defp domain_operation_result(conn, result) do
+    case result do
       {:ok, info} ->
         json(conn, %{status: :ok, result: info})
 
@@ -36,6 +27,19 @@ defmodule KerbalWeb.DomainController do
       _ ->
         json(conn, %{status: :err, reason: "unknown error"})
     end
+  end
+
+  def list(conn, _params) do
+    user_id = conn.assigns.current_user.id
+
+    domains = Scheduler.list_user_domains(user_id)
+    json(conn, %{status: :ok, result: domains})
+  end
+
+  def query(conn, %{"domain_uuid" => domain_uuid}) do
+    user_id = conn.assigns.current_user.id
+
+    domain_operation_result(conn, Domain.get_info(domain_uuid, user_id))
   end
 
   def create(conn, %{
@@ -79,36 +83,18 @@ defmodule KerbalWeb.DomainController do
   def delete(conn, %{"domain_uuid" => domain_uuid}) do
     user_id = conn.assigns.current_user.id
 
-    case Domain.destroy(domain_uuid, user_id) do
-      :ok ->
-        json(conn, %{status: :ok})
-
-      {:error, :not_exist} ->
-        json(conn, %{status: :err, reason: :not_exist})
-
-      {:error, :permission_denied} ->
-        json(conn, %{status: :err, reason: :permission_denied})
-
-      _ ->
-        json(conn, %{status: :err, reason: "unknown error"})
-    end
+    domain_operation_result(conn, Domain.destroy(domain_uuid, user_id))
   end
 
   def snapshot(conn, %{"domain_uuid" => domain_uuid, "name" => name}) do
     user_id = conn.assigns.current_user.id
 
-    case Domain.snapshot(domain_uuid, user_id, name) do
-      :ok ->
-        json(conn, %{status: :ok})
+    domain_operation_result(conn, Domain.snapshot(domain_uuid, user_id, name))
+  end
 
-      {:error, :not_exist} ->
-        json(conn, %{status: :err, reason: :not_exist})
+  def shutdown(conn, %{"domain_uuid" => domain_uuid}) do
+    user_id = conn.assigns.current_user.user_id
 
-      {:error, :permission_denied} ->
-        json(conn, %{status: :err, reason: :permission_denied})
-
-      _ ->
-        json(conn, %{status: :err, reason: "unknown error"})
-    end
+    domain_operation_result(conn, Domain.shutdown(domain_uuid, user_id))
   end
 end

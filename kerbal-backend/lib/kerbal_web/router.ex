@@ -35,6 +35,9 @@ defmodule KerbalWeb.Router do
 
     get "/cluster/domain/:domain_uuid", DomainController, :query
     post "/cluster/domain", DomainController, :create
+    post "/cluster/domain/:domain_uuid/shutdown", DomainController, :shutdown
+    post "/cluster/domain/:domain_uuid/reset", DomainController, :reset
+    post "/cluster/domain/:domain_uuid/reboot", DomainController, :reboot
     delete "/cluster/domain/:domain_uuid", DomainController, :delete
     # create a snapshot of this domain, pass the domain_uuid
     put "/cluster/domain/:domain_uuid", DomainController, :snapshot
