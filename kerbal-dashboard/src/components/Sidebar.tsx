@@ -11,7 +11,9 @@ import {
   Icon, Spacer
 } from '@chakra-ui/react'
 import { MdDeveloperBoard } from 'react-icons/md'
-import { BiAperture, FiLogOut, VscAccount } from 'react-icons/all'
+import { BiAperture } from 'react-icons/bi'
+import { FiLogOut } from 'react-icons/fi'
+import { VscAccount } from 'react-icons/vsc'
 import { type IconType } from 'react-icons'
 import MotionBox from './containers/MotionBox'
 import { useKerbalUIController } from "../context";
