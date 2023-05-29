@@ -92,9 +92,23 @@ defmodule KerbalWeb.DomainController do
     domain_operation_result(conn, Domain.snapshot(domain_uuid, user_id, name))
   end
 
+  def start(conn, %{"domain_uuid" => domain_uuid}) do
+    user_id = conn.assigns.current_user.user_id
+    domain_operation_result(conn, Domain.power_control(domain_uuid, user_id, :start))
+  end
+
   def shutdown(conn, %{"domain_uuid" => domain_uuid}) do
     user_id = conn.assigns.current_user.user_id
+    domain_operation_result(conn, Domain.power_control(domain_uuid, user_id, :shutdown))
+  end
 
-    domain_operation_result(conn, Domain.shutdown(domain_uuid, user_id))
+  def reset(conn, %{"domain_uuid" => domain_uuid}) do
+    user_id = conn.assigns.current_user.user_id
+    domain_operation_result(conn, Domain.power_control(domain_uuid, user_id, :reset))
+  end
+
+  def reboot(conn, %{"domain_uuid" => domain_uuid}) do
+    user_id = conn.assigns.current_user.user_id
+    domain_operation_result(conn, Domain.power_control(domain_uuid, user_id, :reboot))
   end
 end
