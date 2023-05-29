@@ -3,6 +3,8 @@ defmodule TrackingStation.Scheduler.Domain do
   TrackingStation.Scheduler.Domain manages
   the life time of the domain, it keeps monitoring the domain
   and handles requests related to this domain (e.g. shutdown the domain)
+  the lifetime a domain
+  creating -> booting -> running -> destroying
   """
   use GenServer, restart: :transient
   require Logger
@@ -87,7 +89,7 @@ defmodule TrackingStation.Scheduler.Domain do
         res =
           if res.status == :running do
             Map.merge(res, %{
-              interfaces: get_ip(res.domain_id),
+              interfaces: get_network_info(res.domain_id),
               ram_stat: get_ram_stat(res.domain_id),
               gpu_stat: get_gpu_stat(res.domain_id)
             })
@@ -378,7 +380,15 @@ defmodule TrackingStation.Scheduler.Domain do
     end)
   end
 
-  def get_ip(domain_id) do
+  def get_ip_addr(domain_id) do
+    execute_command(domain_id, "ip", ~w(--json route show default))
+    |> Task.await()
+    |> Jason.decode!()
+    |> Enum.fetch!(0)
+    |> Map.fetch!("prefsrc")
+  end
+
+  def get_network_info(domain_id) do
     execute_command(domain_id, "ip", ["--json", "-br", "addr"])
     |> Task.await()
     |> Jason.decode!()
@@ -514,7 +524,7 @@ defmodule TrackingStation.Scheduler.Domain do
     end
 
     poll_task =
-      Task.Supervisor.async_nolink(TaskSupervisor, __MODULE__, :get_ram_stat, [domain_id])
+      Task.Supervisor.async_nolink(TaskSupervisor, __MODULE__, :get_ip_addr, [domain_id])
 
     Process.send_after(self(), :poll, @poll_interval)
     {:noreply, Map.put(state, :poll_task, poll_task)}
@@ -529,7 +539,7 @@ defmodule TrackingStation.Scheduler.Domain do
     poll_task =
       Task.Supervisor.async_nolink(TaskSupervisor, fn ->
         %{
-          interfaces: get_ip(domain_id),
+          interfaces: get_network_info(domain_id),
           ram_stat: get_ram_stat(domain_id),
           gpu_stat: get_gpu_stat(domain_id)
         }

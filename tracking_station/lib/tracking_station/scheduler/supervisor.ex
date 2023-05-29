@@ -23,6 +23,14 @@ defmodule TrackingStation.Scheduler.Supervisor do
       write_concurrency: :auto
     ])
 
+    :ets.new(:domain_port_forwarding, [
+      :set,
+      :public,
+      :named_table,
+      read_concurrency: true,
+      write_concurrency: :auto
+    ])
+
     Supervisor.init(children, strategy: :one_for_one)
   end
 end
