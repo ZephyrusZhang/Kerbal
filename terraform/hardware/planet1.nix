@@ -62,8 +62,17 @@
   networking = {
     hostId = "a489f92d";
     hostName = "planet1";
-    useDHCP = lib.mkDefault true;
+    useDHCP = lib.mkDefault false;
+    interfaces.enp5s0.useDHCP = true;
+    bridges = {
+      virbr9 = {
+        interfaces = [
+          "enp5s0"
+        ];
+      };
+    };
   };
+  virtualisation.libvirtd.allowedBridges = [ "virbr0" "virbr9" ];
   # networking.interfaces.enp5s0.useDHCP = lib.mkDefault true;
   # networking.interfaces.wlp4s0.useDHCP = lib.mkDefault true;
 
