@@ -5,6 +5,7 @@ defmodule KerbalWeb.UserRegistrationController do
   alias KerbalWeb.UserAuth
 
   # register user and send confirmation email
+  # user_params = %{"email" => _, "password" => _, "is_admin" => _}
   def create(conn, %{"user_params" => user_params}) do
     case Accounts.register_user(user_params) do
       {:ok, user} ->
