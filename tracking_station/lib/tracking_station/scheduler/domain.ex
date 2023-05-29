@@ -57,13 +57,13 @@ defmodule TrackingStation.Scheduler.Domain do
 
   @doc """
   Control the power of this domain,
-  operation can be :shutdown, :reset or :reboot
+  operation can be :start, :shutdown, :reset or :reboot
   """
   def power_control(domain_uuid, user_id, operation) do
     case find_pid(domain_uuid, user_id) do
       {:ok, pid} ->
         GenServer.call(pid, {:power_control, operation}, 30000)
-        :ok
+        {:ok, :done}
 
       {:error, reason} ->
         {:error, reason}
@@ -88,6 +88,7 @@ defmodule TrackingStation.Scheduler.Domain do
 
         res =
           if res.status == :running do
+            # TODO don't query this by default
             Map.merge(res, %{
               interfaces: get_network_info(res.domain_id),
               ram_stat: get_ram_stat(res.domain_id),
@@ -141,6 +142,7 @@ defmodule TrackingStation.Scheduler.Domain do
             :domain_res,
             {domain_uuid,
              %{
+               domain_uuid: domain_uuid,
                domain_id: nil,
                image_dataset: dataset,
                image_name: name,

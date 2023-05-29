@@ -44,6 +44,9 @@ defmodule TrackingStation.Libvirt do
 
   def init(), do: Native.reset(@libvirt_url)
 
+  def start(domain_id) do
+  {"", 0} = System.cmd("virsh", ~w(-c @libvirt_url start #{domain_id}))
+  end
   def reboot(domain_id) do
     {"", 0} = System.cmd("virsh", ["-c", @libvirt_url, "reboot", "#{domain_id}"])
   end
