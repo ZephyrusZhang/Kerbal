@@ -4,7 +4,7 @@ import Config
 config :kerbal, Kerbal.Repo,
   username: "postgres",
   password: "postgres",
-  hostname: "planet1",
+  hostname: "localhost",
   database: "kerbal_dev",
   stacktrace: true,
   show_sensitive_data_on_connection_error: true,
