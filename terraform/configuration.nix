@@ -156,9 +156,9 @@
   networking = {
     firewall.enable = false;
     hosts = {
-      "10.16.97.70" = [ "planet1" ];
-      "10.16.97.116" = [ "planet2" ];
-      "10.16.97.147" = [ "planet3" ];
+      "10.16.112.16" = [ "planet1" ];
+      "10.16.112.202" = [ "planet2" ];
+      "10.16.110.183" = [ "planet3" ];
     };
   };
 

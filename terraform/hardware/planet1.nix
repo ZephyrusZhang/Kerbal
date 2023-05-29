@@ -62,13 +62,27 @@
   networking = {
     hostId = "a489f92d";
     hostName = "planet1";
-    useDHCP = lib.mkDefault false;
-    interfaces.enp5s0.useDHCP = true;
-    bridges = {
-      virbr9 = {
-        interfaces = [
-          "enp5s0"
-        ];
+    useDHCP = false;
+  };
+  systemd.network = {
+    enable = true;
+    netdevs = {
+      "10-virbr9" = {
+        netdevConfig = {
+          Kind = "bridge";
+          Name = "virbr9";
+        };
+      };
+    }; 
+    networks = {
+      "20-enp4s0" = {
+        matchConfig.Name = "enp4s0";
+        networkConfig.Bridge = "virbr9";
+        linkConfig.RequiredForOnline = "enslaved";
+      };
+      "30-virbr9" = {
+        matchConfig.Name = "virbr9";
+        networkConfig.DHCP = "yes";
       };
     };
   };

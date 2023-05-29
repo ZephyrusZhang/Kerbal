@@ -53,8 +53,31 @@
   networking = {
     hostId = "8ba03bf4";
     hostName = "planet3";
-    useDHCP = lib.mkDefault true;
+    useDHCP = lib.mkDefault false;
   };
+  systemd.network = {
+    enable = true;
+    netdevs = {
+      "10-virbr9" = {
+        netdevConfig = {
+          Kind = "bridge";
+          Name = "virbr9";
+        };
+      };
+    }; 
+    networks = {
+      "20-enp5s0" = {
+        matchConfig.Name = "enp5s0";
+        networkConfig.Bridge = "virbr9";
+        linkConfig.RequiredForOnline = "enslaved";
+      };
+      "30-virbr9" = {
+        matchConfig.Name = "virbr9";
+        networkConfig.DHCP = "yes";
+      };
+    };
+  };
+  virtualisation.libvirtd.allowedBridges = [ "virbr0" "virbr9" ];
   # networking.interfaces.enp5s0.useDHCP = lib.mkDefault true;
   # networking.interfaces.wlp4s0.useDHCP = lib.mkDefault true;
 
