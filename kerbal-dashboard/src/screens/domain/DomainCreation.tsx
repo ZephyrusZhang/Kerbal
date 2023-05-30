@@ -47,7 +47,8 @@ const DomainCreation = () => {
   const [nodeOption, setNodeOption] = useState([])
   const [nodes, setNodes] = useState<Array<NodeProps>>([])
   const [gpus, setGpus] = useState<Array<GpuProps & { isSelected?: boolean }>>([])
-  const [tabIndex, setTabIndex] = useState(0)
+  const [imageTabIndex, setImageTabIndex] = useState(0)
+  const [domainTypeTabIndex, setDomainTypeTabIndex] = useState(0)
   const navigate = useNavigate()
   const boxColor = useColorModeValue('#ffffff', '#414040')
 
@@ -115,7 +116,7 @@ const DomainCreation = () => {
       gpus: gpus
         .filter(item => item.isSelected)
         .map(item => ({gpu_id: item.gpu_id})),
-      image_id: tabIndex === 0 ? values.public_image_id : values.custom_image_id,
+      image_id: imageTabIndex === 0 ? values.public_image_id : values.custom_image_id,
       node_id: values.node_id
     }
     console.log(body)
@@ -146,9 +147,9 @@ const DomainCreation = () => {
           return (
             <Form>
               <Flex w='90%' bg={boxColor} p='10px' borderRadius='5px'>
-                <Text w='25%' as='b' align='center'>Image</Text>
+                <Text w='25%' mt='10px' as='b' align='center'>Image</Text>
                 <FormControl>
-                  <Tabs w='80%' onChange={setTabIndex}>
+                  <Tabs w='80%' onChange={setImageTabIndex}>
                     <TabList>
                       <Tab>Public Image</Tab>
                       <Tab>Custom Image</Tab>
@@ -181,8 +182,15 @@ const DomainCreation = () => {
               </Flex>
 
               <Flex w='90%' bg={boxColor} mt='20px' p='10px' borderRadius='5px'>
-                <Text w='20%' as='b' align='center'>Configuration</Text>
-                <VStack w='80%'>
+                <Text w='20%' as='b' mt='10px' align='center'>Configuration</Text>
+                <VStack w='80%' align='flex-start'>
+                  <Tabs onChange={setDomainTypeTabIndex}>
+                    <TabList>
+                      <Tab>CPU</Tab>
+                      <Tab>GPU</Tab>
+                    </TabList>
+                  </Tabs>
+
                   <FormControl display='flex'>
                     <FormLabel w='25%'>Number of cores</FormLabel>
                     <Field
@@ -212,13 +220,14 @@ const DomainCreation = () => {
                       onChange={handleNodeChange}
                     />
                   </FormControl>
-                  <FormControl display='flex'>
-                    <FormLabel w='25%'>GPU</FormLabel>
-                    <GpuSelectTable
-                      data={gpus}
-                      onCheckGpu={handleSelectGpu}
-                    />
-                  </FormControl>
+                  {domainTypeTabIndex == 1 &&
+                    <FormControl display='flex'>
+                      <FormLabel w='25%'>GPU</FormLabel>
+                      <GpuSelectTable
+                        data={gpus}
+                        onCheckGpu={handleSelectGpu}
+                      />
+                    </FormControl>}
                 </VStack>
               </Flex>
 
