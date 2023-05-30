@@ -112,12 +112,7 @@
                     document.getElementById('spice-area').removeEventListener('drop', SpiceHtml5.handle_file_drop, false);
                 }
                 console.log("<< disconnect");
-
-                localStorage.removeItem('host')
-                localStorage.removeItem('port')
-                localStorage.removeItem('pwd')
-
-                window.location.assign('/')
+                window.parent.postMessage({type: 'disconnect'})
             }
 
             function agent_connected(sc)
