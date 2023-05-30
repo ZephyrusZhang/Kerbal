@@ -122,7 +122,7 @@ defmodule TrackingStation.Scheduler.Domain do
 
   defp read_info_from_ets(node, domain_uuid) do
     task =
-      Task.Supervisor.async(TaskSupervisor, fn ->
+      Task.Supervisor.async({TaskSupervisor, node}, fn ->
         read_info_from_ets(
           node,
           domain_uuid
