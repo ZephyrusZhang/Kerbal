@@ -74,7 +74,6 @@ defmodule TrackingStation.Libvirt do
     #   cpu_stats
     cpu_stats
     |> String.split()
-    |> IO.inspect()
     |> Enum.find(nil, fn stat -> String.starts_with?(stat, "cpu.time") end)
     |> String.split("=", trim: true)
     |> Enum.fetch!(1)
