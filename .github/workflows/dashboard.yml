@@ -1,0 +1,30 @@
+name: linux
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  secret: Release
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup
+        run: sudo apt install npm
+
+      - name: Build
+        run: |
+          cd kerbal-dashboard
+          npm i
+
+      - name: Test
+        run: |
+          cd kerbal-dashboard
+          npm run testall
