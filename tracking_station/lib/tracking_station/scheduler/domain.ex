@@ -667,11 +667,15 @@ defmodule TrackingStation.Scheduler.Domain do
   @impl true
   def handle_info(
         {:DOWN, ref, :process, _pid, _reason},
-        %{status: :running, poll_task: poll_task} = state
+        %{domain_uuid: domain_uuid, status: :running, poll_task: poll_task} = state
       )
       when ref == poll_task.ref do
-    Logger.warning("failed to poll a vm that is running")
-    # do nothing for now
-    {:noreply, Map.delete(state, :poll_task)}
+    Logger.warning("failed to poll a vm that is running reset to booting")
+
+    [{_, res}] = :ets.lookup(:domain_res, domain_uuid)
+    :ets.insert(:domain_res, {domain_uuid, %{res | status: :booting}})
+
+    state = state |> Map.delete(:poll_task) |> Map.put(:status, :booting)
+    {:noreply, state}
   end
 end
