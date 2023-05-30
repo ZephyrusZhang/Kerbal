@@ -45,8 +45,9 @@ defmodule TrackingStation.Libvirt do
   def init(), do: Native.reset(@libvirt_url)
 
   def start(domain_id) do
-  {"", 0} = System.cmd("virsh", ~w(-c @libvirt_url start #{domain_id}))
+    {"", 0} = System.cmd("virsh", ~w(-c #{@libvirt_url} start #{domain_id}))
   end
+
   def reboot(domain_id) do
     {"", 0} = System.cmd("virsh", ["-c", @libvirt_url, "reboot", "#{domain_id}"])
   end
@@ -57,6 +58,27 @@ defmodule TrackingStation.Libvirt do
 
   def shutdown(domain_id) do
     {"", 0} = System.cmd("virsh", ["-c", @libvirt_url, "shutdown", "#{domain_id}"])
+  end
+
+  def get_cpu_time(domain_id) do
+    {cpu_stats, 0} = System.cmd("virsh", ~w(-c #{@libvirt_url} domstats --cpu-total #{domain_id}))
+
+    # Exmaple:
+    # Domain: ''
+    #   cpu.time=41868102000
+    #   cpu.user=38165256000
+    #   cpu.system=3702846000
+    #   cpu.cache.monitor.count=0
+    #   cpu.haltpoll.success.time=330737519
+    #   cpu.haltpoll.fail.time=320068978
+    #   cpu_stats
+    cpu_stats
+    |> String.split()
+    |> IO.inspect()
+    |> Enum.find(nil, fn stat -> String.starts_with?(stat, "cpu.time") end)
+    |> String.split("=", trim: true)
+    |> Enum.fetch!(1)
+    |> String.to_integer()
   end
 
   def valid_gpu_resource(gpu_ids) do
