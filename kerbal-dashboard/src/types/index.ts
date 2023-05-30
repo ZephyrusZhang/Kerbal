@@ -15,12 +15,15 @@ export interface GpuProps {
 }
 
 export interface DomainProps {
+  cpu_stat: number,
   domain_id?: number,
   domain_uuid?: string,
+  host_ipv4_addr?: string,
   image_dataset?: ImageDataset,
   image_name?: string,
   password?: string,
   port?: number,
+  ram_stat: RamStatProp,
   running_disk_id?: string,
   spec?: DomainSpec,
   status: DomainStatus
@@ -31,6 +34,16 @@ export interface DomainSpec {
   gpus?: Array<GpuProps>,
   image_id?: string,
   ram_size?: number
+}
+
+export interface RamStatProp {
+  available: number,
+  buffers?: number,
+  cache?: number,
+  free?: number,
+  shared?: number,
+  total: number,
+  used: number
 }
 
 export interface ImageProps {

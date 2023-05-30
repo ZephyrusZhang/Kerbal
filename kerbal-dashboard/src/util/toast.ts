@@ -1,4 +1,4 @@
-import { createStandaloneToast } from "@chakra-ui/react";
+import { AlertStatus, createStandaloneToast } from "@chakra-ui/react";
 
 const {ToastContainer, toast} = createStandaloneToast()
 
@@ -25,7 +25,7 @@ const responseToast = (status: 'ok' | 'err', okmsg = 'success', errmsg = 'error'
   })
 }
 
-export const showToast = (msg: string, typ: string) => {
+export const showToast = (msg: string, typ: AlertStatus) => {
   toast({
     position: 'top',
     status: function () { // stupid js need this to assure the return data?
