@@ -486,7 +486,7 @@ defmodule TrackingStation.Scheduler.Domain do
   ### ----- handle_call -----
   @impl true
   def handle_call({:power_control, operation}, _from, %{domain_id: domain_id} = state) do
-    apply(Libvirt, operation, domain_id)
+    apply(Libvirt, operation, [domain_id])
     {:reply, :ok, state}
   end
 
