@@ -1,6 +1,6 @@
 import React from 'react';
 import { Field, Form, Formik } from "formik";
-import { Button, FormControl, FormErrorMessage, FormLabel, Input, VStack } from "@chakra-ui/react";
+import { Button, FormControl, FormErrorMessage, FormLabel, Input, Switch, VStack } from "@chakra-ui/react";
 import { validateEmail, validatePassword } from "../../util/validate";
 import request from "../../util/request";
 import { useNavigate } from "react-router-dom";
@@ -9,7 +9,8 @@ interface FormProps {
   username: string,
   email: string,
   password: string,
-  passwordConfirmation: string
+  passwordConfirmation: string,
+  isAdmin: boolean
 }
 
 const Admin = () => {
@@ -17,7 +18,8 @@ const Admin = () => {
     username: '',
     email: '',
     password: '',
-    passwordConfirmation: ''
+    passwordConfirmation: '',
+    isAdmin: false
   }
   const navigate = useNavigate()
 
@@ -29,13 +31,15 @@ const Admin = () => {
   }
 
   const handleSubmit = async (values: FormProps) => {
+    console.log(values)
     request.post(
       '/api/users/register',
       JSON.stringify({
         user_params: {
           'username': values.username,
           'email': values.email,
-          'password': values.password
+          'password': values.password,
+          'is_admin': values.isAdmin
         }
       }),
       {withCredentials: true}
@@ -47,7 +51,11 @@ const Admin = () => {
 
   return (
     <Formik initialValues={initialValues} onSubmit={handleSubmit} validate={validate}>
-      {({errors, touched, handleSubmit}) => (
+      {({values,
+          errors,
+          touched,
+          handleSubmit
+      }) => (
         <Form onSubmit={handleSubmit}>
           <VStack align='flex-start'>
             <FormControl>
@@ -68,6 +76,10 @@ const Admin = () => {
               <FormLabel>Password Confirmation</FormLabel>
               <Field as={Input} name='passwordConfirmation' type='password'/>
               <FormErrorMessage>{errors.passwordConfirmation}</FormErrorMessage>
+            </FormControl>
+            <FormControl>
+              <FormLabel>Administrator</FormLabel>
+              <Field as={Switch} name='isAdmin' isChecked={values.isAdmin}/>
             </FormControl>
             <Button type='submit'>Create</Button>
           </VStack>
