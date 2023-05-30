@@ -37,10 +37,11 @@ import {
   VscDebugRestart, VscVm
 } from "react-icons/all";
 import request from "../../../util/request";
-import { DomainProps } from "../../../types";
-import { responseToast, toast } from "../../../util/toast";
+import { DomainProps, RamStatProp } from "../../../types";
+import { responseToast, showToast, toast } from "../../../util/toast";
 import { snapshotNameRegex } from "../../../const";
 import { useNavigate } from "react-router-dom";
+import { sendOperation } from "../../../util/domain";
 
 interface Props {
   uuid: string
@@ -48,6 +49,7 @@ interface Props {
 
 const DomainDashboard = ({uuid}: Props) => {
   const [domain, setDomain] = useState<DomainProps>({
+    cpu_stat: 0,
     domain_id: 0,
     domain_uuid: '',
     port: 0,
@@ -58,7 +60,8 @@ const DomainDashboard = ({uuid}: Props) => {
       ram_size: 0
     },
     status: 'terminated',
-    password: ''
+    password: '',
+    ram_stat: {used: 0, total: 1} as RamStatProp
   })
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
@@ -67,12 +70,17 @@ const DomainDashboard = ({uuid}: Props) => {
   const navigate = useNavigate()
 
   useEffect(() => {
-    request.get(
-      `/api/cluster/domain/${uuid}`
-    ).then((response) => {
-      setDomain(response.data.result)
-      setIsLoading(false)
-    })
+    const intervalId = setInterval(() => {
+      request.get(
+        `/api/cluster/domain/${uuid}`
+      ).then((response) => {
+        console.log(response)
+        setDomain(response.data.result)
+        setIsLoading(false)
+      })
+    }, 1000)
+
+    return () => clearInterval(intervalId)
   }, [uuid])
 
   const closeModal = () => {
@@ -116,6 +124,18 @@ const DomainDashboard = ({uuid}: Props) => {
     })
   }
 
+  const handleConnectToGui = () => {
+    request.get(`/websock/connect?host=${domain.host_ipv4_addr}&port=${domain.port}`)
+      .then(response => {
+      if (response.data.status === 'ok') {
+        console.log(response)
+        navigate(`/remote?host=localhost&port=${response.data.result.port}&pwd=${domain.password}`)
+      } else {
+        showToast(`Fail to connect: ${response.data.reason}`, 'error')
+      }
+    })
+  }
+
   return (
     <Skeleton isLoaded={!isLoading}>
       <HStack spacing={5} align='flex-start'>
@@ -138,7 +158,7 @@ const DomainDashboard = ({uuid}: Props) => {
                   </Heading>
                   <HStack mt='5'>
                     <Text fontSize='sm'>
-                      spice://10.16.97.70:{domain?.port}
+                      spice://{domain?.host_ipv4_addr}:{domain?.port}
                     </Text>
                     <Spacer/>
                     <IconButton
@@ -146,7 +166,7 @@ const DomainDashboard = ({uuid}: Props) => {
                       size='2xs'
                       variant='ghost'
                       icon={<TiClipboard/>}
-                      onClick={() => handleCopySpiceAddress(`spice://10.16.97.70:${domain?.port}`)}
+                      onClick={() => handleCopySpiceAddress(`spice://${domain?.host_ipv4_addr}:${domain?.port}`)}
                     />
                   </HStack>
                 </Box>
@@ -179,11 +199,15 @@ const DomainDashboard = ({uuid}: Props) => {
               </Stack>
             </CardBody>
           </Card>
-          <HStack spacing={5} pb='20px'>
-            <Button w='50%' leftIcon={<BsPlay/>} colorScheme='whatsapp'>Start</Button>
-            <Button w='50%' leftIcon={<VscDebugRestart/>} colorScheme='orange'>Restart</Button>
-            <Button w='50%' leftIcon={<AiOutlinePauseCircle/>} colorScheme='red'>Stop</Button>
-          </HStack>
+          <Button
+            w='80%'
+            p='20px'
+            leftIcon={<VscDebugRestart/>}
+            colorScheme='green'
+            onClick={() => sendOperation('reboot', domain.domain_uuid as string)}
+          >
+            Restart
+          </Button>
         </KerbalBox>
         <VStack spacing={5}>
           <HStack spacing={5}>
@@ -193,8 +217,10 @@ const DomainDashboard = ({uuid}: Props) => {
                 <Text fontSize='2xl' as='b'>CPU Utility</Text>
               </CardHeader>
               <CardBody>
-                <CircularProgress value={40} size='200px' thickness='6px'>
-                  <CircularProgressLabel>40%</CircularProgressLabel>
+                <CircularProgress value={Math.floor(domain.cpu_stat as number * 100)} size='200px' thickness='6px'>
+                  <CircularProgressLabel fontSize='3xl'>
+                    {Math.floor(domain.cpu_stat as number * 100)}%
+                  </CircularProgressLabel>
                 </CircularProgress>
               </CardBody>
             </Card>
@@ -204,8 +230,15 @@ const DomainDashboard = ({uuid}: Props) => {
                 <Text fontSize='2xl' as='b'>Memory Utility</Text>
               </CardHeader>
               <CardBody>
-                <CircularProgress value={25} size='200px' thickness='6px'>
-                  <CircularProgressLabel>1145MB</CircularProgressLabel>
+                <CircularProgress
+                  value={(domain.ram_stat.used / domain.ram_stat.total) as number * 100}
+                  size='200px'
+                  thickness='6px'
+                >
+                  <CircularProgressLabel fontSize='3xl'>
+                    {Math.floor(domain.ram_stat.used / (1024 ** 2))}MB <br/>
+                    Used
+                  </CircularProgressLabel>
                 </CircularProgress>
               </CardBody>
             </Card>
@@ -235,7 +268,7 @@ const DomainDashboard = ({uuid}: Props) => {
                     mt='3'
                     leftIcon={<VscVm/>}
                     colorScheme='telegram'
-                    onClick={() => navigate(`/remote?host=localhost&port=${domain.port}&pwd=${domain.password}`)}
+                    onClick={handleConnectToGui}
                   >
                     Connect to GUI
                   </Button>

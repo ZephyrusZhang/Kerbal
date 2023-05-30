@@ -21,6 +21,7 @@ import { DomainProps } from "../../types";
 import { DeleteIcon } from "@chakra-ui/icons";
 import { responseToast } from "../../util/toast";
 import { refresh } from "../../util/page";
+import { sendOperation } from "../../util/domain";
 
 type RowProps = DomainProps & { showPassword: boolean }
 
@@ -118,7 +119,7 @@ const DomainOverview = () => {
                     <Tr>
                       <Th>ID</Th>
                       <Th>Image</Th>
-                      <Th>Port</Th>
+                      <Th>IP</Th>
                       <Th>Password</Th>
                       <Th>Status</Th>
                       <Th>Operation</Th>
@@ -137,7 +138,7 @@ const DomainOverview = () => {
                           </Link>
                         </Td>
                         <Td>{value.image_name}</Td>
-                        <Td>{value.port}</Td>
+                        <Td>{value.host_ipv4_addr}:{value.port}</Td>
                         <Td>
                           <HStack>
                             <Text>
@@ -155,8 +156,13 @@ const DomainOverview = () => {
                         <Td>{value.status}</Td>
                         <Td>
                           <HStack spacing='2'>
-                            <Button colorScheme='whatsapp' size='xs'>Start</Button>
-                            <Button colorScheme='orange' size='xs'>Stop</Button>
+                            <Button
+                              colorScheme='green'
+                              size='xs'
+                              onClick={() => sendOperation('reboot', value.domain_uuid as string)}
+                            >
+                              Restart
+                            </Button>
                             <IconButton
                               colorScheme='red'
                               aria-label='deleter'
