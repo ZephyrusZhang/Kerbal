@@ -1,5 +1,19 @@
 defmodule Mix.Tasks.Kerbal.Useradd do
+  @moduledoc """
+  Create a user directly in the database
+
+  Usage:
+
+  ```
+    mix kerbal.useradd <email> <password> <is_admin>
+  ```
+
+  is_admin should be set to either true or 1
+  in order to create an admin user
+  """
   @shortdoc "Create a user directly in the database"
+  @requirements ["app.start"]
+
   use Mix.Task
 
   @impl Mix.Task
@@ -17,7 +31,7 @@ defmodule Mix.Tasks.Kerbal.Useradd do
     user_params = %{"email" => email, "password" => password, "is_admin" => is_admin}
     message = "Creating a user with the following settings: #{inspect(user_params)}\nProceed?"
 
-    if Mix.Shell.yes?(message) do
+    if Mix.shell().yes?(message) do
       Kerbal.Accounts.force_register_user(user_params)
     end
   end
