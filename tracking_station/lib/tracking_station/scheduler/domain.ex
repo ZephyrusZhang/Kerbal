@@ -81,24 +81,38 @@ defmodule TrackingStation.Scheduler.Domain do
     end
   end
 
+  defp read_info_from_ets(node, domain_uuid) when node == node() do
+    [{_, res}] = :ets.lookup(:domain_res, domain_uuid)
+
+    res =
+      if res.status == :running do
+        # TODO don't query this by default
+        Map.merge(res, %{
+          interfaces: get_network_info(res.domain_id),
+          ram_stat: get_ram_stat(res.domain_id),
+          gpu_stat: get_gpu_stat(res.domain_id)
+        })
+      else
+        res
+      end
+
+    {:ok, res}
+  end
+
+  defp read_info_from_ets(node, domain_uuid) do
+    task =
+      Task.Supervisor.async(TaskSupervisor, __MODULE__, :read_info_from_ets, [
+        node,
+        domain_uuid
+      ])
+
+    Task.await(task)
+  end
+
   def get_info(domain_uuid, user_id) do
     case find_pid(domain_uuid, user_id) do
-      {:ok, _pid} ->
-        [{_, res}] = :ets.lookup(:domain_res, domain_uuid)
-
-        res =
-          if res.status == :running do
-            # TODO don't query this by default
-            Map.merge(res, %{
-              interfaces: get_network_info(res.domain_id),
-              ram_stat: get_ram_stat(res.domain_id),
-              gpu_stat: get_gpu_stat(res.domain_id)
-            })
-          else
-            res
-          end
-
-        {:ok, res}
+      {:ok, pid} ->
+        read_info_from_ets(node(pid), domain_uuid)
 
       {:error, reason} ->
         {:error, reason}
