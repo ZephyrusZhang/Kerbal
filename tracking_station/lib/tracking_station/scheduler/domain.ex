@@ -74,7 +74,7 @@ defmodule TrackingStation.Scheduler.Domain do
     case find_pid(domain_uuid, user_id) do
       {:ok, pid} ->
         GenServer.call(pid, :destroy, 30000)
-        :ok
+        {:ok, :destroyed}
 
       {:error, reason} ->
         {:error, reason}
