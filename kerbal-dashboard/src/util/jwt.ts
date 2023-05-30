@@ -24,6 +24,7 @@ export const renew = () => {
 export const isAdmin = () => {
   if (localStorage.getItem('token')) {
     const payload = JSON.parse(decode((localStorage.getItem('token') as string).split('.')[1]))
-    return payload['role'] == 'admin'
+    console.log(payload['is_admin'] as boolean)
+    return payload['is_admin'] as boolean
   }
 }
