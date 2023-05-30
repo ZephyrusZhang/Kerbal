@@ -81,17 +81,38 @@ defmodule TrackingStation.Scheduler.Domain do
     end
   end
 
+  defp get_extra_info(domain_id) do
+    Task.await_many([
+      get_network_info(domain_id),
+      get_ram_stat(domain_id),
+      get_gpu_stat(domain_id),
+      get_cpu_stat(domain_id)
+    ])
+    |> then(fn [interfaces, ram_stat, gpu_stat, cpu_stat] ->
+      %{
+        interfaces: interfaces,
+        ram_stat: ram_stat,
+        gpu_stat: gpu_stat,
+        cpu_stat: cpu_stat
+      }
+    end)
+  end
+
   defp read_info_from_ets(node, domain_uuid) when node == node() do
     [{_, res}] = :ets.lookup(:domain_res, domain_uuid)
 
     res =
       if res.status == :running do
         # TODO don't query this by default
-        Map.merge(res, %{
-          interfaces: get_network_info(res.domain_id),
-          ram_stat: get_ram_stat(res.domain_id),
-          gpu_stat: get_gpu_stat(res.domain_id)
-        })
+        extra_info =
+          get_extra_info(res.domain_id)
+          |> Map.update!(:cpu_stat, fn cpu_util ->
+            (cpu_util / res.spec.cpu_count)
+            |> min(1.0)
+            |> max(0.0)
+          end)
+
+        Map.merge(res, extra_info)
       else
         res
       end
@@ -101,10 +122,12 @@ defmodule TrackingStation.Scheduler.Domain do
 
   defp read_info_from_ets(node, domain_uuid) do
     task =
-      Task.Supervisor.async(TaskSupervisor, __MODULE__, :read_info_from_ets, [
-        node,
-        domain_uuid
-      ])
+      Task.Supervisor.async(TaskSupervisor, fn ->
+        read_info_from_ets(
+          node,
+          domain_uuid
+        )
+      end)
 
     Task.await(task)
   end
@@ -351,7 +374,7 @@ defmodule TrackingStation.Scheduler.Domain do
     release_resources(domain_uuid, res)
   end
 
-  def execute_command(domain_id, cmd, args, interval \\ 100) do
+  def execute_command(domain_id, cmd, args, parser \\ fn x -> x end, interval \\ 100) do
     Task.Supervisor.async(TaskSupervisor, fn ->
       pid = Libvirt.guest_exec(domain_id, cmd, args)
 
@@ -369,70 +392,94 @@ defmodule TrackingStation.Scheduler.Domain do
           end
         end)
 
-      output
+      output |> parser.()
     end)
   end
 
   def get_ram_stat(domain_id) do
-    execute_command(domain_id, "free", ["-bw"])
-    |> Task.await()
-    |> String.split("\n", trim: true)
-    # fetch the Mem: line,
-    |> Enum.fetch!(1)
-    |> String.split()
-    # drop the Mem: header
-    |> Enum.drop(1)
-    |> Enum.map(&String.to_integer/1)
-    |> then(fn [total, used, free, shared, buffers, cache, available] ->
-      %{
-        total: total,
-        used: used,
-        free: free,
-        shared: shared,
-        buffers: buffers,
-        cache: cache,
-        available: available
-      }
-    end)
+    parser = fn output ->
+      output
+      |> String.split("\n", trim: true)
+      # fetch the Mem: line,
+      |> Enum.fetch!(1)
+      |> String.split()
+      # drop the Mem: header
+      |> Enum.drop(1)
+      |> Enum.map(&String.to_integer/1)
+      |> then(fn [total, used, free, shared, buffers, cache, available] ->
+        %{
+          total: total,
+          used: used,
+          free: free,
+          shared: shared,
+          buffers: buffers,
+          cache: cache,
+          available: available
+        }
+      end)
+    end
+
+    execute_command(domain_id, "free", ["-bw"], parser)
   end
 
   def get_ip_addr(domain_id) do
-    execute_command(domain_id, "ip", ~w(--json route show default))
-    |> Task.await()
-    |> Jason.decode!()
-    |> Enum.fetch!(0)
-    |> Map.fetch!("prefsrc")
+    parser = fn output ->
+      output
+      |> Jason.decode!()
+      |> Enum.fetch!(0)
+      |> Map.fetch!("prefsrc")
+    end
+
+    execute_command(domain_id, "ip", ~w(--json route show default), parser)
   end
 
   def get_network_info(domain_id) do
-    execute_command(domain_id, "ip", ["--json", "-br", "addr"])
-    |> Task.await()
-    |> Jason.decode!()
+    execute_command(domain_id, "ip", ["--json", "-br", "addr"], &Jason.decode!/1)
   end
 
   def get_gpu_stat(domain_id) do
-    execute_command(domain_id, "nvidia-smi", [
-      "--query-gpu=index,name,driver_version,temperature.gpu,utilization.gpu,memory.total,memory.used",
-      "--format=csv,nounits"
-    ])
-    |> Task.await()
-    |> String.trim()
-    |> CSV.parse_string()
-    # nvidia-smi uses a non-standard csv that has a space character after each comma
-    |> Enum.map(fn line ->
-      Enum.map(line, &String.trim/1)
-    end)
-    |> Enum.map(fn [index, name, driver_version, temperature, gpu_usage, vram_size, used_vram] ->
-      %{
-        index: index,
-        name: name,
-        driver_version: driver_version,
-        temperature: String.to_integer(temperature),
-        # gpu_usage and mem usage are "num %"
-        gpu_usage: String.to_integer(gpu_usage) / 100.0,
-        vram_size: vram_size |> String.to_integer(),
-        vram_used: used_vram |> String.to_integer()
-      }
+    parser = fn output ->
+      output
+      |> String.trim()
+      |> CSV.parse_string()
+      # nvidia-smi uses a non-standard csv that has a space character after each comma
+      |> Enum.map(fn line ->
+        Enum.map(line, &String.trim/1)
+      end)
+      |> Enum.map(fn [index, name, driver_version, temperature, gpu_usage, vram_size, used_vram] ->
+        %{
+          index: index,
+          name: name,
+          driver_version: driver_version,
+          temperature: String.to_integer(temperature),
+          # gpu_usage and mem usage are "num %"
+          gpu_usage: String.to_integer(gpu_usage) / 100.0,
+          vram_size: vram_size |> String.to_integer(),
+          vram_used: used_vram |> String.to_integer()
+        }
+      end)
+    end
+
+    execute_command(
+      domain_id,
+      "nvidia-smi",
+      [
+        "--query-gpu=index,name,driver_version,temperature.gpu,utilization.gpu,memory.total,memory.used",
+        "--format=csv,nounits"
+      ],
+      parser
+    )
+  end
+
+  def get_cpu_stat(domain_id, interval \\ 100) do
+    Task.Supervisor.async(TaskSupervisor, fn ->
+      first_measure = Libvirt.get_cpu_time(domain_id)
+      now = Time.utc_now()
+      Process.sleep(interval)
+      second_measure = Libvirt.get_cpu_time(domain_id)
+      duration = Time.diff(Time.utc_now(), now, :nanosecond)
+
+      (second_measure - first_measure) / duration
     end)
   end
 
@@ -540,7 +587,9 @@ defmodule TrackingStation.Scheduler.Domain do
     end
 
     poll_task =
-      Task.Supervisor.async_nolink(TaskSupervisor, __MODULE__, :get_ip_addr, [domain_id])
+      Task.Supervisor.async_nolink(TaskSupervisor, fn ->
+        get_ip_addr(domain_id) |> Task.await()
+      end)
 
     Process.send_after(self(), :poll, @poll_interval)
     {:noreply, Map.put(state, :poll_task, poll_task)}
@@ -554,11 +603,7 @@ defmodule TrackingStation.Scheduler.Domain do
 
     poll_task =
       Task.Supervisor.async_nolink(TaskSupervisor, fn ->
-        %{
-          interfaces: get_network_info(domain_id),
-          ram_stat: get_ram_stat(domain_id),
-          gpu_stat: get_gpu_stat(domain_id)
-        }
+        get_extra_info(domain_id)
       end)
 
     Process.send_after(self(), :poll, @poll_interval)
