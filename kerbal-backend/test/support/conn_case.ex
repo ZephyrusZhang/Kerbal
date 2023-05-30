@@ -56,7 +56,7 @@ defmodule KerbalWeb.ConnCase do
   It returns an updated `conn`.
   """
   def log_in_user(conn, user) do
-    extra_claims = %{user_id: user.id, role: "admin"}
+    extra_claims = %{user_id: user.id, is_admin: true}
     token = KerbalWeb.JWTToken.generate_and_sign!(extra_claims)
 
     conn

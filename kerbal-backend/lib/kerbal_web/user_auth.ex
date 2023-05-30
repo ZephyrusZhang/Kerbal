@@ -24,8 +24,8 @@ defmodule KerbalWeb.UserAuth do
   disconnected on log out. The line can be safely removed
   if you are not using LiveView.
   """
-  def log_in_user(conn, user_id) do
-    extra_claims = %{user_id: user_id, role: "admin"}
+  def log_in_user(conn, user) do
+    extra_claims = %{user_id: user.id, is_admin: user.is_admin}
     token = KerbalWeb.JWTToken.generate_and_sign!(extra_claims)
     conn |> json(%{status: "ok", token: token})
   end
@@ -46,7 +46,7 @@ defmodule KerbalWeb.UserAuth do
   #     end
   #
   defp renew_session(conn) do
-    conn |> log_in_user(conn.assigns.current_user.id)
+    conn |> log_in_user(conn.assigns.current_user)
   end
 
   @doc """
