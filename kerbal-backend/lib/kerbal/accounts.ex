@@ -81,6 +81,16 @@ defmodule Kerbal.Accounts do
   end
 
   @doc """
+  register the user and confirm it right away
+  """
+  def force_register_user(attrs) do
+    %User{}
+    |> User.registration_changeset(attrs)
+    |> User.confirm_changeset()
+    |> Repo.insert()
+  end
+
+  @doc """
   Returns an `%Ecto.Changeset{}` for tracking user changes.
 
   ## Examples
