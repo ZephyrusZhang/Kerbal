@@ -32,7 +32,13 @@ defmodule Mix.Tasks.Kerbal.Useradd do
     message = "Creating a user with the following settings: #{inspect(user_params)}\nProceed?"
 
     if Mix.shell().yes?(message) do
-      Kerbal.Accounts.force_register_user(user_params)
+      case Kerbal.Accounts.force_register_user(user_params) do
+        {:ok, _user} ->
+          Mix.shell().info("Done.")
+
+        {:error, changeset} ->
+          Mix.shell().error("Failed with: #{inspect(changeset, pretty: true)}")
+      end
     end
   end
 end
