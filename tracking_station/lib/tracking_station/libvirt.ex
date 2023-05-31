@@ -33,7 +33,15 @@ defmodule TrackingStation.Libvirt do
 
   def create_vm_from_xml(xml_config), do: Native.create_vm_from_xml(@libvirt_url, xml_config)
 
-  def destroy_domain(domain_id), do: Native.destroy_domain(@libvirt_url, domain_id)
+  # def destroy_domain(domain_id), do: Native.destroy_domain(@libvirt_url, domain_id)
+  def destroy_domain(domain_id) do
+    {_msg, exitcode} = System.cmd("virsh", ~w(-c #{@libvirt_url} destroy #{domain_id}))
+
+    case exitcode do
+      0 -> :ok
+      1 -> {:error, :no_domain}
+    end
+  end
 
   def start_network(name), do: Native.start_network(@libvirt_url, name)
 
