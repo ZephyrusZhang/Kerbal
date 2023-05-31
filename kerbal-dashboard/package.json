@@ -28,7 +28,7 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test --coverage",
-    "testall": "react-scripts test --all=true --forceExit=true --watchAll=false",
+    "testall": "react-scripts test --all=true --forceExit=true --watchAll=false --coverage=true --detectOpenHandles",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
