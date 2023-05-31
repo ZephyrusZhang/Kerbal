@@ -10,6 +10,10 @@
       pkgs = import nixpkgs {
         inherit system;
       };
+      python-env = pkgs.python39.withPackages (ps: with ps; [
+        websockify
+        flask
+      ]);
       backend-env = pkgs.mkShell {
         nativeBuildInputs = [ pkgs.rustPlatform.bindgenHook ];
         buildInputs = with pkgs; [
@@ -28,6 +32,8 @@
 
           elixir_ls
           rust-analyzer
+          # for python
+          python-env
         ];
       };
 
