@@ -20,6 +20,34 @@
 
 ![image-20230531163552406](https://github.com/VSEJGFB/Cnblogs-Theme-SimpleMemory/assets/29839623/5cb39a5a-1f8f-4da5-ad30-c040ac5b1881)
 
+### 1.2 Documentation (2 points)
+
+##### Documentation for end users (1 point)
+
+
+##### Documentation for developers (1 point)
+
+We generated a .html documentation for developers:
+
+<img src="https://github.com/VSEJGFB/Cnblogs-Theme-SimpleMemory/assets/29839623/dbf8e22b-d3d5-40cb-9640-866e5876d4fe" alt="image" style="zoom:80%;" />
+
+
+
+screenshots:
+
+![image](https://github.com/VSEJGFB/Cnblogs-Theme-SimpleMemory/assets/29839623/5a67a9a4-04df-4f3b-8507-8186f72a46f5)
+
+<img src="https://github.com/VSEJGFB/Cnblogs-Theme-SimpleMemory/assets/29839623/490eb916-ca86-4848-8c6a-e733ecdfc00f" alt="image" style="zoom:80%;" />
+
+Describe:
+
+ For every module in the project, the develop documentation contains:
+
+- A summary of the module, typically sourced from the module's `@moduledoc` attribute.
+
+- A list of all functions, macros, and types defined in the module. This list includes a brief summary of each item, typically sourced from the item's `@doc` or `@typedoc` attribute.
+
+- Detailed documentation for each function, macro, and type. This documentation includes the item's full doc attribute, along with any relevant metadata (such as the function's parameters and return type).
 
 
 ### 1.3 Tests (2 points)
