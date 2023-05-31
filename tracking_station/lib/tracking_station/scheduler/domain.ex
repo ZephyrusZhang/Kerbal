@@ -647,7 +647,6 @@ defmodule TrackingStation.Scheduler.Domain do
     Process.demonitor(ref, [:flush])
     # do nothing for now
     # TODO notify user when gpu_usage is low
-    Logger.info("poll result #{inspect(result)}")
     state = state |> Map.delete(:poll_task)
     {:noreply, state}
   end
@@ -656,26 +655,39 @@ defmodule TrackingStation.Scheduler.Domain do
   @impl true
   def handle_info(
         {:DOWN, ref, :process, _pid, _reason},
-        %{status: :booting, poll_task: poll_task} = state
+        %{domain_id: domain_id, status: :booting, poll_task: poll_task} = state
       )
       when ref == poll_task.ref do
-    # do nothing, this vm is still booting
-    {:noreply, Map.delete(state, :poll_task)}
+    if Libvirt.is_alive?(domain_id) do
+      # do nothing, this vm is still booting
+      {:noreply, Map.delete(state, :poll_task)}
+    else
+      {:stop, :normal, state}
+    end
   end
 
   # The poll failed
   @impl true
   def handle_info(
         {:DOWN, ref, :process, _pid, _reason},
-        %{domain_uuid: domain_uuid, status: :running, poll_task: poll_task} = state
+        %{
+          domain_id: domain_id,
+          domain_uuid: domain_uuid,
+          status: :running,
+          poll_task: poll_task
+        } = state
       )
       when ref == poll_task.ref do
     Logger.warning("failed to poll a vm that is running reset to booting")
 
-    [{_, res}] = :ets.lookup(:domain_res, domain_uuid)
-    :ets.insert(:domain_res, {domain_uuid, %{res | status: :booting}})
+    if Libvirt.is_alive?(domain_id) do
+      [{_, res}] = :ets.lookup(:domain_res, domain_uuid)
+      :ets.insert(:domain_res, {domain_uuid, %{res | status: :booting}})
 
-    state = state |> Map.delete(:poll_task) |> Map.put(:status, :booting)
-    {:noreply, state}
+      state = state |> Map.delete(:poll_task) |> Map.put(:status, :booting)
+      {:noreply, state}
+    else
+      {:stop, :normal, state}
+    end
   end
 end
