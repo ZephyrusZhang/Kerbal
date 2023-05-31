@@ -3,7 +3,6 @@ import { render, fireEvent, screen } from '@testing-library/react'
 import { MemoryRouter, useLocation, useNavigate } from 'react-router-dom';
 import '@testing-library/jest-dom/extend-expect';
 import Sidebar from '../Sidebar'
-import userEvent  from '@testing-library/user-event';
 
 jest.mock('react-router-dom', () => {
     const originalModule = jest.requireActual('react-router-dom');
@@ -105,6 +104,5 @@ jest.mock('react-router-dom', () => {
         fireEvent.click(logoutButton);
       
         expect(mockUseNavigate).toHaveBeenCalled();
-        // Add your assertions here
     });
   });
