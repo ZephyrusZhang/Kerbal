@@ -42,6 +42,7 @@ import { responseToast, showToast, toast } from "../../../util/toast";
 import { snapshotNameRegex } from "../../../const";
 import { useNavigate } from "react-router-dom";
 import { sendOperation } from "../../../util/domain";
+import { copyToClipboard } from "../../../util/page";
 
 interface Props {
   uuid: string
@@ -113,15 +114,7 @@ const DomainDashboard = ({uuid}: Props) => {
   }
 
   const handleCopySpiceAddress = (address: string) => {
-    navigator.clipboard.writeText(address).then(() => {
-      toast({
-        title: 'Address Copied Successfully',
-        status: 'success',
-        duration: 2000,
-        position: 'top',
-        isClosable: true
-      })
-    })
+    copyToClipboard(address)
   }
 
   const handleConnectToGui = () => {
