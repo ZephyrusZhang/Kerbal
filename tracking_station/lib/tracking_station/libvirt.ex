@@ -151,7 +151,7 @@ defmodule TrackingStation.Libvirt do
         |> get_in(["return", "pid"])
 
         case Jason.decode(response) do
-          {:ok, %{"return" => %{"pid" => pid}}} -> pid
+          {:ok, %{"return" => %{"pid" => pid}}} -> {:ok, pid}
           {:ok, _} -> {:error, response}
           {:error, json_err} -> {:error, json_err}
         end
