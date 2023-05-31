@@ -88,6 +88,12 @@ defmodule TrackingStation.Scheduler.Domain do
       get_gpu_stat(domain_id),
       get_cpu_stat(domain_id)
     ])
+    |> Enum.map(fn stat ->
+      case stat do
+        {:ok, x} -> x
+        _ -> nil
+      end
+    end)
     |> then(fn [interfaces, ram_stat, gpu_stat, cpu_stat] ->
       %{
         interfaces: interfaces,
@@ -320,7 +326,7 @@ defmodule TrackingStation.Scheduler.Domain do
         spec: spec,
         port: port
       }) do
-    Logger.info("#{domain_uuid} shuting down")
+    Logger.info("Destroying #{domain_uuid}")
     %{cpu_count: cpu_count, ram_size: ram_size, gpus: gpus} = spec
 
     if domain_id != nil do
@@ -342,9 +348,11 @@ defmodule TrackingStation.Scheduler.Domain do
       TrackingStation.Storage.LocalStorage.reclaim_running(running_disk_id)
     end
 
-    :ok = Network.free_spice_port(port)
+    Network.free_spice_port(port)
 
-    {:atomic, :ok} =
+    :ets.delete(:domain_res, domain_uuid)
+
+    result =
       Mnesia.transaction(fn ->
         Mnesia.delete({:active_domain, domain_uuid})
 
@@ -366,6 +374,14 @@ defmodule TrackingStation.Scheduler.Domain do
           )
         )
       end)
+
+    case result do
+      {:atomic, :ok} ->
+        Logger.info("#{domain_uuid} destroyed")
+
+      error ->
+        raise "Fatal: failed to release resources with error: #{inspect(error)}"
+    end
   end
 
   @impl true
@@ -374,25 +390,29 @@ defmodule TrackingStation.Scheduler.Domain do
     release_resources(domain_uuid, res)
   end
 
-  def execute_command(domain_id, cmd, args, parser \\ fn x -> x end, interval \\ 100) do
+  defp execute_command(domain_id, cmd, args, parser) do
+    interval = 100
+
     Task.Supervisor.async(TaskSupervisor, fn ->
-      pid = Libvirt.guest_exec(domain_id, cmd, args)
+      case Libvirt.guest_exec(domain_id, cmd, args) do
+        {:ok, pid} ->
+          Enum.reduce_while(1..10, {:error, :timeout}, fn _i, acc ->
+            case Libvirt.guest_exec_status(domain_id, pid) do
+              {:ok, %{exited: true, exitcode: 0, output: output}} ->
+                {:halt, {:ok, parser.(output)}}
 
-      output =
-        Enum.reduce_while(1..10, nil, fn _i, _acc ->
-          response = Libvirt.guest_exec_status(domain_id, pid)
+              {:ok, %{exited: false}} ->
+                Process.sleep(interval)
+                {:cont, acc}
 
-          case response do
-            %{output: nil} ->
-              Process.sleep(interval)
-              {:cont, nil}
+              error ->
+                {:halt, error}
+            end
+          end)
 
-            %{output: output} ->
-              {:halt, output}
-          end
-        end)
-
-      output |> parser.()
+        error ->
+          error
+      end
     end)
   end
 
