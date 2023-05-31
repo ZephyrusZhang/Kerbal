@@ -33,14 +33,9 @@ defmodule TrackingStation.Libvirt do
 
   def create_vm_from_xml(xml_config), do: Native.create_vm_from_xml(@libvirt_url, xml_config)
 
-  def poll_domain_stats(domain_id), do: Native.poll_domain_stats(@libvirt_url, domain_id)
-
   def destroy_domain(domain_id), do: Native.destroy_domain(@libvirt_url, domain_id)
 
   def start_network(name), do: Native.start_network(@libvirt_url, name)
-
-  def qemu_guest_agent(domain_id, data),
-    do: Native.qemu_guest_agent(@libvirt_url, domain_id, data)
 
   def init(), do: Native.reset(@libvirt_url)
 
@@ -58,6 +53,13 @@ defmodule TrackingStation.Libvirt do
 
   def shutdown(domain_id) do
     {_, 0} = System.cmd("virsh", ["-c", @libvirt_url, "shutdown", "#{domain_id}"])
+  end
+
+  def is_alive?(domain_id) do
+    case System.cmd("virsh", ~w(-c #{@libvirt_url} domstate #{domain_id})) do
+      {_, 0} -> true
+      {_, 1} -> false
+    end
   end
 
   def get_cpu_time(domain_id) do
