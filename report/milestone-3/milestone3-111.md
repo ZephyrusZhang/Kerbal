@@ -24,31 +24,10 @@
 
 ##### Documentation for end users (1 point)
 
+### 1.2 Documentation (2 points)
 
-##### Documentation for developers (1 point)
-
-We generated a .html documentation for developers:
-
-<img src="https://github.com/VSEJGFB/Cnblogs-Theme-SimpleMemory/assets/29839623/dbf8e22b-d3d5-40cb-9640-866e5876d4fe" alt="image" style="zoom:80%;" />
-
-
-
-screenshots:
-
-![image](https://github.com/VSEJGFB/Cnblogs-Theme-SimpleMemory/assets/29839623/5a67a9a4-04df-4f3b-8507-8186f72a46f5)
-
-<img src="https://github.com/VSEJGFB/Cnblogs-Theme-SimpleMemory/assets/29839623/490eb916-ca86-4848-8c6a-e733ecdfc00f" alt="image" style="zoom:80%;" />
-
-Describe:
-
- For every module in the project, the develop documentation contains:
-
-- A summary of the module, typically sourced from the module's `@moduledoc` attribute.
-
-- A list of all functions, macros, and types defined in the module. This list includes a brief summary of each item, typically sourced from the item's `@doc` or `@typedoc` attribute.
-
-- Detailed documentation for each function, macro, and type. This documentation includes the item's full doc attribute, along with any relevant metadata (such as the function's parameters and return type).
-
+- [User Documentaion](https://hackmd.io/@TIeSBeo8T9WrQ35o6IQ6-Q/Bk5oA2EU2)
+- [Developer Document](https://hackmd.io/@TIeSBeo8T9WrQ35o6IQ6-Q/B13FV6VI2)
 
 ### 1.3 Tests (2 points)
 
@@ -62,8 +41,6 @@ Frontend:
 
   ![KPKB) J 1{SJEAS75NMMYVL](https://github.com/VSEJGFB/Cnblogs-Theme-SimpleMemory/assets/29839623/2582bcfb-4910-45cf-93b7-68c3bb456d76)
 
-
-
 Backend:
 
 - Our frontend testing tool is ExUnit. ExUnit is a unit testing framework for Elixir, a functional programming language built on the Erlang virtual machine (BEAM). It is the default testing framework that comes with Elixir and provides a robust and easy-to-use testing environment for writing and running tests. Run `mix test --cover` to generate the test cover results.
@@ -76,9 +53,15 @@ Backend:
 
 ### 1.4 Build (2 points)
 
+### Frontend
 
+We use `npm` as frontend package manager, `react` as frontend framework, `create-react-app` as project cli.
 
-Backend:
+Run `npm build` to compile and build project. Then you can find all static file or js file in `build` directory.
+
+<img src="https://raw.githubusercontent.com/zephyrszwc/zephyrs-image/master/202305312145819.png" alt="image-20230531214513785" style="zoom:80%;" />
+
+### Backend
 
 The technology/tools/frameworks/approaches that you used for building the project:
 
