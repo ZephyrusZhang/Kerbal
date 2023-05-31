@@ -34,6 +34,8 @@
           rust-analyzer
           # for python
           python-env
+          # for nodejs
+          nodejs
         ];
       };
 
