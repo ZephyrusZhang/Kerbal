@@ -24,7 +24,13 @@ export const renew = () => {
 export const isAdmin = () => {
   if (localStorage.getItem('token')) {
     const payload = JSON.parse(decode((localStorage.getItem('token') as string).split('.')[1]))
-    console.log(payload['is_admin'] as boolean)
     return payload['is_admin'] as boolean
+  }
+}
+
+export const parsePayload = (key: string) => {
+  if (localStorage.getItem('token')) {
+    const payload = JSON.parse(decode((localStorage.getItem('token') as string).split('.')[1]))
+    return payload[key]
   }
 }

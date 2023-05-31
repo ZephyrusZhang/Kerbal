@@ -1,15 +1,21 @@
 import React, { useState } from 'react';
 import {
   Box,
+  Button,
   Container,
   Flex,
   Heading,
-  HStack, Icon,
+  HStack,
+  Icon,
   IconButton,
-  Menu,
-  MenuButton,
-  MenuItem,
-  MenuList, Text, useColorModeValue
+  Popover,
+  PopoverArrow, PopoverBody,
+  PopoverCloseButton,
+  PopoverContent,
+  PopoverHeader,
+  PopoverTrigger,
+  Text,
+  useColorModeValue, VStack
 } from '@chakra-ui/react'
 import { AiOutlineMenu } from 'react-icons/ai'
 import { IoIosSettings } from 'react-icons/io'
@@ -18,6 +24,7 @@ import { useNavigate } from "react-router-dom";
 import { useKerbalUIController } from "../context";
 import { parsePathSegments } from "../util/page";
 import { BiAperture } from "react-icons/bi";
+import { parsePayload } from "../util/jwt";
 
 const Navbar = () => {
   const navigate = useNavigate()
@@ -73,12 +80,21 @@ const Navbar = () => {
             bg='transparent'
             onClick={() => dispatch({...controller, toggleSidebar: !controller.toggleSidebar})}
           />
-          <Menu>
-            <MenuButton as={IconButton} icon={<IoIosSettings/>} bg='transparent'/>
-            <MenuList>
-              <MenuItem onClick={() => navigate('/account')}>Setting</MenuItem>
-            </MenuList>
-          </Menu>
+          <Popover>
+            <PopoverTrigger>
+              <IconButton aria-label='option' icon={<IoIosSettings/>} bg='transparent'/>
+            </PopoverTrigger>
+            <PopoverContent w='200px'>
+              <PopoverArrow />
+              <PopoverCloseButton />
+              <PopoverHeader>Signed as <b>{parsePayload('user_id')}</b></PopoverHeader>
+              <PopoverBody>
+                <VStack align='flex-start'>
+                  <Button w='full' variant='ghost' onClick={() => navigate('/account')}>Setting</Button>
+                </VStack>
+              </PopoverBody>
+            </PopoverContent>
+          </Popover>
         </HStack>
       </Container>
     </Box>
