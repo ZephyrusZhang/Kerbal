@@ -9,7 +9,8 @@ defmodule Kerbal.MixProject do
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
-      deps: deps()
+      deps: deps(),
+      test_coverage: [summary: [threshold: 80]]
     ]
   end
 
@@ -48,7 +49,7 @@ defmodule Kerbal.MixProject do
       {:gettext, "~> 0.20"},
       {:jason, "~> 1.2"},
       {:bandit, ">= 0.7.3"},
-      {:tracking_station, path: "../tracking_station"},
+      # {:tracking_station, path: "../tracking_station"},
       {:joken, "~> 2.5"},
       {:ex_doc, "~> 0.29.4", only: :dev, runtime: false},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false}
