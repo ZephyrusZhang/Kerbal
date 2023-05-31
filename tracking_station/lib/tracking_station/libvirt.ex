@@ -130,19 +130,35 @@ defmodule TrackingStation.Libvirt do
       }
     }
 
-    {response, 0} =
-      System.cmd("sudo", [
-        "virsh",
-        "qemu-agent-command",
-        "#{domain_id}",
-        Jason.encode!(request),
-        "--timeout",
-        "#{Keyword.get(options, :timeout)}"
-      ])
+    result =
+      System.cmd(
+        "sudo",
+        [
+          "virsh",
+          "qemu-agent-command",
+          "#{domain_id}",
+          Jason.encode!(request),
+          "--timeout",
+          "#{Keyword.get(options, :timeout)}"
+        ],
+        stderr_to_stdout: true
+      )
 
-    response
-    |> Jason.decode!()
-    |> get_in(["return", "pid"])
+    case result do
+      {response, 0} ->
+        response
+        |> Jason.decode!()
+        |> get_in(["return", "pid"])
+
+        case Jason.decode(response) do
+          {:ok, %{"return" => %{"pid" => pid}}} -> pid
+          {:ok, _} -> {:error, response}
+          {:error, json_err} -> {:error, json_err}
+        end
+
+      {error_msg, _} ->
+        {:error, error_msg}
+    end
   end
 
   def guest_exec_status(domain_id, pid, options \\ []) do
@@ -154,32 +170,48 @@ defmodule TrackingStation.Libvirt do
       arguments: %{pid: pid}
     }
 
-    {response, 0} =
-      System.cmd("sudo", [
-        "virsh",
-        "qemu-agent-command",
-        "#{domain_id}",
-        Jason.encode!(request),
-        "--timeout",
-        "#{Keyword.get(options, :timeout)}"
-      ])
+    result =
+      System.cmd(
+        "sudo",
+        [
+          "virsh",
+          "qemu-agent-command",
+          "#{domain_id}",
+          Jason.encode!(request),
+          "--timeout",
+          "#{Keyword.get(options, :timeout)}"
+        ],
+        stderr_to_stdout: true
+      )
 
-    response =
-      response
-      |> Jason.decode!()
-      |> Map.fetch!("return")
+    case result do
+      {response, 0} ->
+        case Jason.decode(response) do
+          {:ok, %{"return" => return}} ->
+            case return do
+              %{"exited" => true, "exitcode" => exitcode, "out-data" => outdata} ->
+                outdata = Base.decode64!(outdata)
+                {:ok, %{exited: true, exitcode: exitcode, output: outdata}}
 
-    output =
-      if Map.has_key?(response, "out-data") do
-        response
-        |> Map.fetch!("out-data")
-        |> Base.decode64!()
-      end
+              %{"exited" => true, "exitcode" => exitcode} ->
+                {:ok, %{exited: true, exitcode: exitcode}}
 
-    %{
-      exitcode: Map.get(response, "exitcode"),
-      exited: Map.fetch!(response, "exited"),
-      output: output
-    }
+              %{"exited" => false} ->
+                {:ok, %{exited: false}}
+
+              _ ->
+                {:error, :unknown_format}
+            end
+
+          {:ok, _} ->
+            {:error, response}
+
+          {:error, json_err} ->
+            {:error, json_err}
+        end
+
+      {error_msg, _} ->
+        {:error, error_msg}
+    end
   end
 end
