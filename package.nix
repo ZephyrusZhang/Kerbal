@@ -14,7 +14,7 @@ let
   mixFodDeps = packages.fetchMixDeps {
     pname = "mix-deps-${pname}";
     inherit src version;
-    sha256 = "sha256-mYT8FCoNIi9k0pEkwiuogQkIr1pzh9ZgzyejDZrLtdQ=";
+    sha256 = "sha256-dkCQr5Wirq+LWX2t3eWOztpAg0tEVi0c8jApzIdllVs=";
   };
 
   # compile nif
