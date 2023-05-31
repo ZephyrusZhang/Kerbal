@@ -50,7 +50,8 @@ defmodule Kerbal.MixProject do
       {:bandit, ">= 0.7.3"},
       {:tracking_station, path: "../tracking_station"},
       {:joken, "~> 2.5"},
-      {:ex_doc, "~> 0.29.4", only: :dev, runtime: false}
+      {:ex_doc, "~> 0.29.4", only: :dev, runtime: false},
+      {:credo, "~> 1.7", only: [:dev, :test], runtime: false}
     ]
   end
 
