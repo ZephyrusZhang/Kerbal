@@ -82,26 +82,27 @@ defmodule TrackingStation.Scheduler.Domain do
   end
 
   defp get_extra_info(domain_id) do
-    Task.await_many([
-      get_network_info(domain_id),
-      get_ram_stat(domain_id),
-      get_gpu_stat(domain_id),
-      get_cpu_stat(domain_id)
-    ])
-    |> Enum.map(fn stat ->
-      case stat do
-        {:ok, x} -> x
-        _ -> nil
+    extra_info =
+      Task.await_many([
+        get_network_info(domain_id),
+        get_ram_stat(domain_id),
+        get_gpu_stat(domain_id),
+        get_cpu_stat(domain_id)
+      ])
+
+    [:interfaces, :ram_stat, :gpu_stat, :cpu_stat]
+    |> Enum.zip(extra_info)
+    |> Enum.filter(fn data ->
+      case data do
+        {_name, {:ok, _stat}} -> true
+        _ -> false
       end
     end)
-    |> then(fn [interfaces, ram_stat, gpu_stat, cpu_stat] ->
-      %{
-        interfaces: interfaces,
-        ram_stat: ram_stat,
-        gpu_stat: gpu_stat,
-        cpu_stat: cpu_stat
-      }
+    |> Enum.map(fn data ->
+      {name, {:ok, stat}} = data
+      {name, stat}
     end)
+    |> Enum.into(%{})
   end
 
   defp read_info_from_ets(node, domain_uuid) when node == node() do
@@ -110,13 +111,18 @@ defmodule TrackingStation.Scheduler.Domain do
     res =
       if res.status == :running do
         # TODO don't query this by default
+        extra_info = get_extra_info(res.domain_id)
+
         extra_info =
-          get_extra_info(res.domain_id)
-          |> Map.update!(:cpu_stat, fn cpu_util ->
-            (cpu_util / res.spec.cpu_count)
-            |> min(1.0)
-            |> max(0.0)
-          end)
+          if Map.has_key?(extra_info, :cpu_stat) do
+            Map.update!(extra_info, :cpu_stat, fn cpu_util ->
+              (cpu_util / res.spec.cpu_count)
+              |> min(1.0)
+              |> max(0.0)
+            end)
+          else
+            extra_info
+          end
 
         Map.merge(res, extra_info)
       else
@@ -401,6 +407,9 @@ defmodule TrackingStation.Scheduler.Domain do
               {:ok, %{exited: true, exitcode: 0, output: output}} ->
                 {:halt, {:ok, parser.(output)}}
 
+              {:ok, %{exited: true, exitcode: _, output: output}} ->
+                {:halt, {:error, output}}
+
               {:ok, %{exited: false}} ->
                 Process.sleep(interval)
                 {:cont, acc}
@@ -608,7 +617,7 @@ defmodule TrackingStation.Scheduler.Domain do
 
     poll_task =
       Task.Supervisor.async_nolink(TaskSupervisor, fn ->
-        get_ip_addr(domain_id) |> Task.await()
+        {:ok, _} = get_ip_addr(domain_id) |> Task.await()
       end)
 
     Process.send_after(self(), :poll, @poll_interval)
