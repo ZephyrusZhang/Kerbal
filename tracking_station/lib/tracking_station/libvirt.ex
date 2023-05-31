@@ -56,7 +56,7 @@ defmodule TrackingStation.Libvirt do
   end
 
   def is_alive?(domain_id) do
-    case System.cmd("virsh", ~w(-c #{@libvirt_url} domstate #{domain_id})) do
+    case System.cmd("virsh", ~w(-c #{@libvirt_url} domstate #{domain_id}), stderr_to_stdout: true) do
       {_, 0} -> true
       {_, 1} -> false
     end
