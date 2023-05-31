@@ -5,7 +5,6 @@ import {
 import { Navigate, Route, Routes } from 'react-router-dom'
 import AccountLogin from './screens/AccountLogin'
 import Layout from './layouts/Layout'
-import Test from './test/Test'
 import PrivateRoute from "./routes/PrivateRoute";
 import DomainCreation from "./screens/domain/DomainCreation";
 import AccountSetting from "./screens/account-setting";
@@ -31,7 +30,6 @@ export const App = () => {
     <ChakraProvider theme={theme}>
       <Routes>
         <Route path='/login' element={<AccountLogin/>}/>
-        <Route path='/test' element={<Test/>}/>
         <Route path='/' element={<Layout/>}>
           <Route path='/' element={<PrivateRoute/>}>
             <Route path='/domain' element={<DomainOverview/>}/>
