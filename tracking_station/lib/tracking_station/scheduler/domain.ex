@@ -508,7 +508,7 @@ defmodule TrackingStation.Scheduler.Domain do
       second_measure = Libvirt.get_cpu_time(domain_id)
       duration = Time.diff(Time.utc_now(), now, :nanosecond)
 
-      (second_measure - first_measure) / duration
+      {:ok, (second_measure - first_measure) / duration}
     end)
   end
 
