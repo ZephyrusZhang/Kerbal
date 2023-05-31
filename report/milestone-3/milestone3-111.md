@@ -38,13 +38,13 @@ Frontend:
 
 Backend:
 
-- Our frontend testing tool is ExUnit. ExUnit is a unit testing framework for Elixir, a functional programming language built on the Erlang virtual machine (BEAM). It is the default testing framework that comes with Elixir and provides a robust and easy-to-use testing environment for writing and running tests.
+- Our frontend testing tool is ExUnit. ExUnit is a unit testing framework for Elixir, a functional programming language built on the Erlang virtual machine (BEAM). It is the default testing framework that comes with Elixir and provides a robust and easy-to-use testing environment for writing and running tests. Run `mix test --cover` to generate the test cover results.
 
 - The test code for backend is at [this link](https://github.com/sustech-cs304/team-project-111/tree/main/kerbal-backend/test).
 
 - The test results:
 
-
+<img src="https://github.com/VSEJGFB/Cnblogs-Theme-SimpleMemory/assets/29839623/2ed04cc7-5b7c-4408-a182-98db1e18904c" alt="image" style="zoom:80%;" />
 
 ### 1.4 Build (2 points)
 
@@ -54,28 +54,39 @@ Backend:
 
 The technology/tools/frameworks/approaches that you used for building the project:
 
-1. Phoenix Framework: Phoenix is a web framework for Elixir that follows the Model-View-Controller (MVC) architectural pattern. It provides features like routing, controllers, views, channels, and a powerful real-time framework for building scalable and high-performance web applications.
-2. Mix: Mix is the build tool and task runner for Elixir projects. It handles project compilation, dependency management, test execution, and more. It also provides code generation templates and project scaffolding.
+1. **Nix**: Nix is a powerful package manager for Linux and other Unix systems that makes package management reliable and reproducible. It provides atomic upgrades and rollbacks, side-by-side installation of multiple versions of a package, multi-user package management and easy setup of build environments.
+2. **Phoenix Framework**: Phoenix is a web framework for Elixir that follows the Model-View-Controller (MVC) architectural pattern. It provides features like routing, controllers, views, channels, and a powerful real-time framework for building scalable and high-performance web applications.
+3. **Mix**: Mix is the build tool and task runner for Elixir projects. It handles project compilation, dependency management, test execution, and more. It also provides code generation templates and project scaffolding.
 
 
 
-Explain the tasks executed in a build
+Explain the tasks executed in a build:
 
-use `mix release` to build the backend. The tasks executed is following:
+use `nix build` to build the backend. The tasks executed is following:
 
-1. **Compiling the application**: The first step in the release process is compiling your application's source code, including any dependencies, into bytecode.
+1. **Define Dependencies**: The initial set of dependencies (beam, libvirt, pkg-config, and rustPlatform) are defined for the Nix build.
 
-2. **Building the application release**: This involves generating a directory structure that follows the OTP release standard and copying over the compiled bytecode. This structure includes all the application's runtime dependencies, including the Elixir and Erlang/OTP runtimes.
+2. **Setup Elixir**: It is setting up the Elixir environment using the Beam programming language's libraries, with the specific Erlang interpreter.
 
-3. **Creating start scripts**: As part of the release, `mix release` generates scripts for starting the application. These scripts set up the necessary environment variables and boot the Erlang VM with your application's code.
+3. **Set Application Details**: It sets up the package name (pname) as "kerbal" and its version as "0.0.1". The source code for the application is located at `./tracking_station`.
+
+4. **Fetch Mix Dependencies**: Using the `fetchMixDeps` function, it fetches the mix dependencies for the Elixir application. A hash of the dependencies is provided to ensure reproducibility.
+
+5. **Setup Rust Environment**: This part sets up the Rust environment to compile a Rust NIF (Native Implemented Function) that interfaces with the Libvirt library. The Rust NIF is located in `./tracking_station/native/libvirt`.
+
+6. **Rust Build Inputs**: Specifies additional inputs needed for the Rust build process. `rustPlatform.bindgenHook` and `pkg-config` are used during the build process. Libvirt is an additional build input.
+
+7. **Creating the Mix Release**: Finally, it builds the Mix release for the Elixir application. It creates a directory for the NIF (Rust Native Implemented Function), links the compiled NIF from the Rust package, and modifies the Elixir code to skip compilation of the NIF since it's already compiled.
 
    
 
-Describe the final artifacts produced by a successful build
+Describe the final artifacts produced by a successful build:
 
-Once a release is assembled, you can start it by calling `bin/RELEASE_NAME start` inside the release. In our project, it will create directory: `_build/dev/rel/kerbal/`
+Once a release is assembled, you can start it by calling `bin/RELEASE_NAME start` inside the release. In our project, it will create directory: `./result`
 
-To start the project, run `/bin/kerbal start` in this directory.
+To start the project, run `./result/bin/tracking_station start` in this directory.
 
 
+
+Buildfile or related artifacts/scripts used for building: [nix build file](https://github.com/sustech-cs304/team-project-111/blob/main/package.nix).
 
