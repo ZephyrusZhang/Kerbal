@@ -55,9 +55,15 @@ Backend:
 
 We use `npm` as frontend package manager, `react` as frontend framework, `create-react-app` as project cli.
 
+Run `npm i` to install all dependencies.
+
 Run `npm build` to compile and build project. Then you can find all static file or js file in `build` directory.
 
 <img src="https://raw.githubusercontent.com/zephyrszwc/zephyrs-image/master/202305312145819.png" alt="image-20230531214513785" style="zoom:80%;" />
+
+Automatically deploy:  
+Please refer to our [github action script](https://github.com/sustech-cs304/team-project-111/blob/main/.github/workflows/check.yml) from ubuntu:20.04  
+Simply run `npm i` and `npm build` is all your need to fully compile our frontend.
 
 ### Backend
 
@@ -95,10 +101,12 @@ Once a release is assembled, you can start it by calling `bin/RELEASE_NAME start
 
 To start the final artifacts, run `./result/bin/tracking_station start` in this directory.
 
-
-
 Buildfile or related artifacts/scripts used for building: [nix build file](https://github.com/sustech-cs304/team-project-111/blob/main/package.nix).
 
+Automatically deploy:  
+Please refer to our github action [script](https://github.com/sustech-cs304/team-project-111/blob/main/.github/workflows/check.yml) from ubuntu:20.04 for host environment.  
+Please refer to our backend  [Dokcerfile](https://github.com/sustech-cs304/team-project-111/blob/main/Dockerfile) for setup NixOs image.  
+Also please refer to our environment setup [script](https://github.com/sustech-cs304/team-project-111/blob/main/check.sh) for automatically setup deploy environment in target host.  
 
 ### 1.5 Deployment (2 points)
 
