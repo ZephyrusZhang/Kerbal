@@ -24,10 +24,6 @@ Tools to get the metrics: `cloc`, `mix`
 
 ### 1.2 Documentation (2 points)
 
-##### Documentation for end users (1 point)
-
-### 1.2 Documentation (2 points)
-
 - [User Documentaion](https://hackmd.io/@TIeSBeo8T9WrQ35o6IQ6-Q/Bk5oA2EU2)
 - [Developer Document](https://hackmd.io/@TIeSBeo8T9WrQ35o6IQ6-Q/B13FV6VI2)
 
@@ -97,7 +93,7 @@ Describe the final artifacts produced by a successful build:
 
 Once a release is assembled, you can start it by calling `bin/RELEASE_NAME start` inside the release. In our project, it will create directory: `./result`
 
-To start the project, run `./result/bin/tracking_station start` in this directory.
+To start the final artifacts, run `./result/bin/tracking_station start` in this directory.
 
 
 
