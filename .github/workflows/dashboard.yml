@@ -17,12 +17,18 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Setup
-        run: sudo apt install npm
+        run: echo 'setup done'
 
       - name: Build
         run: |
           cd kerbal-dashboard
           npm i
+          cd ..
+          docker build -t backend:01 . 
+
+      - name: Test Backend
+        run: |
+          docker run backend:01 /check.sh
 
       - name: Test
         run: |
