@@ -22,6 +22,26 @@ Tools to get the metrics: `cloc`, `mix`
 
 ![image-20230531163552406](https://github.com/VSEJGFB/Cnblogs-Theme-SimpleMemory/assets/29839623/5cb39a5a-1f8f-4da5-ad30-c040ac5b1881)
 
+The maintainability of this project is decent.
+
+Since the we couldn't find any similar open source projects,
+we will use some metrics to analyze our maintainability.
+As we will show later, the test coverage of both frontend and backend is high.
+Our frontend code largely employs typescript which is ensures type safety.
+We also employed static code checking tools to ensure good maintainability.
+Here is the screenshot of our backend static code checking tool credo,
+which can checks code using many metrics like Cyclomatic Complexity, Unsafe Exec.
+
+We only have the following problems, most of them just are missing documentation.
+![credo](./assets/credo_screenshot.jpg)
+
+However, since our backend is written in functional programming language
+and not many people are familiar with these kind of programming languages,
+so this could result in fewer maintainers.
+
+Overall our project has decent maintainability.
+
+
 ### 1.2 Documentation (2 points)
 
 - [User Documentaion](https://hackmd.io/@TIeSBeo8T9WrQ35o6IQ6-Q/Bk5oA2EU2)
