@@ -16,21 +16,20 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Setup
-        run: echo 'setup done'
-
-      - name: Build
+      - name: Setup BackendC
         run: |
           cd kerbal-dashboard
           npm i
-          cd ..
+
+      - name: Build DashBoard
+        run: |
           docker build -t backend:01 . 
+
+      - name: Test DashBoard
+        run: |
+          cd kerbal-dashboard
+          npm run testall
 
       - name: Test Backend
         run: |
           docker run backend:01 /check.sh
-
-      - name: Test
-        run: |
-          cd kerbal-dashboard
-          npm run testall
