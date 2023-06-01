@@ -8,12 +8,14 @@
 | -------------------------------- | -------- | ------- | ----- |
 | Lines of Code                    | 2567     | 4190    | 6757  |
 | Number of modules/subprojects    |          | 76      |       |
-| Number of packages               |          |         |       |
+| Number of packages               |          | 3      |       |
 | Number of source files           | 41       | 76      | 117   |
 | Number of 3rd party dependencies | 59       | 33      | 92    |
 
+Note: In Elixir, Module is a fundamental unit for organizing code. In Elixir, every file is a module, and the file extension is .ex or .exs. There is no mechanism equivalent to the "package" concept in Java. Elixir uses different methods, such as modules and namespaces, to organize code. In our project there are 3 main module `Kerbal`, `Kerbal_Web`, `TrackingStation`. Then the other modules is the submodule of the main module, e.g. `Kerbal.Endpoint`
 
 
+Tools to get the metrics: `cloc`, `mix`
  `cloc` results:
 
 ![image](https://github.com/VSEJGFB/Cnblogs-Theme-SimpleMemory/assets/29839623/535a9df4-42dd-484a-ae4f-a2cb64bcce44)
@@ -100,4 +102,35 @@ To start the project, run `./result/bin/tracking_station start` in this director
 
 
 Buildfile or related artifacts/scripts used for building: [nix build file](https://github.com/sustech-cs304/team-project-111/blob/main/package.nix).
+
+
+### 1.5 Deployment (2 points)
+
+Backend:
+
+Introduce the containerization technology/tools/frameworks used in your project (0.5 points)   
+
+In our project, we use Nix for reproducible deployment and package management. Nix is a cross-platform package manager that utilizes a purely functional deployment model where software is installed into unique directories generated through cryptographic hashes. Nix provides a whole build system that allows for building packages in an isolated way. Therefore, we can use Nix to create a reproducible environment on new machine for deployment.
+
+
+
+The script or related artifacts used for containerization (URL links or snapshots). [script link](https://github.com/sustech-cs304/team-project-111/blob/main/flake.nix)
+
+
+
+A proof of successful containerization (0.5 points)
+
+Due to the direct control of hardware components such as CPU and GPU in our project, we have opted not to use containerization technology like Docker. Instead, we utilize Nix to build a reproducible environment and to deploy.
+
+Run `Nix develop .` It will create and enter the reproducible environment.
+
+It will automatically fetch the dependencies to create the environment in a new machine:
+
+![image](https://github.com/VSEJGFB/Cnblogs-Theme-SimpleMemory/assets/29839623/974bcf35-ac1c-4fae-8464-c2367b851453)
+
+After successful creating, the environment is setup. (For example, `rustc` is now in the environment)
+
+![image](https://github.com/VSEJGFB/Cnblogs-Theme-SimpleMemory/assets/29839623/c99cd210-297d-49c7-b62d-9fefc1e56b42)
+
+To start the backend server: `mix setup && mix phx.server` 
 
