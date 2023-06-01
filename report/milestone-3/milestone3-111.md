@@ -33,7 +33,8 @@ Here is the screenshot of our backend static code checking tool credo,
 which can checks code using many metrics like Cyclomatic Complexity, Unsafe Exec.
 
 We only have the following problems, most of them just are missing documentation.
-![credo](./assets/credo_screenshot.jpg)
+
+![credo](./assets/credo_screenshot.png)
 
 However, since our backend is written in functional programming language
 and not many people are familiar with these kind of programming languages,
