@@ -43,7 +43,7 @@ Frontend:
 
 Backend:
 
-- Our frontend testing tool is ExUnit. ExUnit is a unit testing framework for Elixir, a functional programming language built on the Erlang virtual machine (BEAM). It is the default testing framework that comes with Elixir and provides a robust and easy-to-use testing environment for writing and running tests. Run `mix test --cover` to generate the test cover results.
+- Our backend testing tool is ExUnit. ExUnit is a unit testing framework for Elixir, a functional programming language built on the Erlang virtual machine. It is the default testing framework that comes with Elixir and provides a robust and easy-to-use testing environment for writing and running tests. Run `mix test --cover` to generate the test cover results.
 
 - The test code for backend is at [this link](https://github.com/sustech-cs304/team-project-111/tree/main/kerbal-backend/test).
 
